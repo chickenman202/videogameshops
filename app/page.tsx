@@ -25,23 +25,23 @@ export const metadata: Metadata = pageMetadata({
 
 const facts = [
   {
-    title: "Only saved details",
-    body: "A shop page shows the name and country, plus a street, city, phone, website, or map point when that field was stored.",
+    title: "A page for every shop",
+    body: "Each listing names the shop and its country. A street, city, phone, website, or map point is shown when the listing includes it.",
   },
   {
-    title: "Nothing filled in",
-    body: "Hours, platforms, trade-ins, and used games stay off the page when the row does not say. The site does not guess.",
+    title: "Details that are on file",
+    body: "Hours, platforms, trade-ins, and used games appear only when the listing includes them.",
   },
   {
-    title: "Platforms when listed",
-    body: "PlayStation, Xbox, Nintendo, PC, handheld, retro, and VR appear only when that store's row names them.",
+    title: "Platforms that are listed",
+    body: "PlayStation, Xbox, Nintendo, PC, handheld, retro, and VR appear for shops whose listing names them.",
   },
 ];
 
 const questions = [
   {
     q: "What does a store page show?",
-    a: "Only the fields saved for that shop. A missing street, phone, website, or hours line is left blank. Nothing is invented to fill the gap.",
+    a: "The details on file for that shop. A street, phone, website, or hours line is left off the page when the listing does not include it.",
   },
   {
     q: "Why does a small city not have its own roundup?",
@@ -86,7 +86,7 @@ export default async function HomePage() {
               Video game stores near you
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-white/75">
-              Find a physical shop by country, region, and city. Each page shows only the details saved for that store.
+              Find physical video game stores by country, region, and city.
             </p>
           </div>
         </div>
@@ -142,7 +142,7 @@ export default async function HomePage() {
           </ul>
         ) : (
           <p className="mt-4 text-[#3c4550]">
-            Country pages fill in as stores are added. The full list is on the countries page.
+            The country list is on the countries page.
           </p>
         )}
       </section>
@@ -169,7 +169,7 @@ export default async function HomePage() {
           </ul>
         ) : (
           <p className="mt-4 text-[#3c4550]">
-            State pages fill in as stores are added. The full list is on the states page.
+            The state list is on the states page.
           </p>
         )}
       </section>

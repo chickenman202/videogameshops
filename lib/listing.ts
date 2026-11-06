@@ -358,7 +358,7 @@ async function buildListingUncached(input: ListingInput): Promise<ListingResult>
   const detail = cityName && platformLabel
     ? `Shops in ${cityName} that carry ${platformLabel}.`
     : cityName
-      ? `Shop pages list only the details saved for each store in ${cityName}.`
+      ? `Browse the shops listed in ${cityName}.`
       : regionName && platformLabel
         ? `${platformLabel} shops in ${regionName}.`
         : regionName

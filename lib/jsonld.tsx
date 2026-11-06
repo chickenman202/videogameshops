@@ -42,12 +42,14 @@ export function homeJsonLd() {
         "@type": "Organization",
         name: BRAND,
         url: SITE_URL,
+        description: "Find physical video game stores by country, region, and city.",
         logo: `${SITE_URL}/logo.svg`,
       },
       {
         "@type": "WebSite",
         name: BRAND,
         url: SITE_URL,
+        description: "Find physical video game stores by country, region, and city.",
         potentialAction: {
           "@type": "SearchAction",
           target: `${SITE_URL}/directory?q={search_term_string}`,

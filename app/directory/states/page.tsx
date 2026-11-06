@@ -82,7 +82,7 @@ export default async function StatesPage() {
             ))}
           </ul>
         ) : (
-          <p className="mt-8 text-[#3c4550]">No states have a public store yet.</p>
+          <p className="mt-8 text-[#3c4550]">No states are listed.</p>
         )}
       </div>
     </PageShell>

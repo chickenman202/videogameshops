@@ -57,7 +57,7 @@ export default async function PlatformsPage() {
           A platform page lists only stores that carry that platform. Retro is a platform tag, not a separate switch.
         </p>
         {listed.length === 0 ? (
-          <p className="mt-8 text-[#3c4550]">Platform pages appear when a listed shop carries that platform.</p>
+          <p className="mt-8 text-[#3c4550]">No platform lists are available.</p>
         ) : (
         <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {listed.map((platform) => (

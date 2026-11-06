@@ -70,7 +70,7 @@ export default async function CountriesPage() {
             ))}
           </ul>
         ) : (
-          <p className="mt-8 text-[#3c4550]">Country pages appear when a country has a public store.</p>
+          <p className="mt-8 text-[#3c4550]">No countries are listed.</p>
         )}
       </div>
     </PageShell>

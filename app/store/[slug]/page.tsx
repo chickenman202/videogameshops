@@ -210,7 +210,7 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
                 </tbody>
               </table>
             ) : (
-              <p className="mt-3 text-sm text-muted">Hours are not listed yet.</p>
+              <p className="mt-3 text-sm text-muted">Hours are not listed.</p>
             )}
           </aside>
         </div>

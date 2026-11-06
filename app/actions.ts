@@ -22,7 +22,7 @@ async function saveMessage(row: InboxInsert): Promise<FormState> {
   if (!supabase) {
     return {
       status: "error",
-      message: "Nothing was saved. The store database is not connected yet.",
+      message: "Nothing was saved. Please try again later.",
     };
   }
   const { error } = await supabase.from("inbox_messages").insert(row);
@@ -41,7 +41,7 @@ export async function submitContact(_previous: FormState, formData: FormData): P
   const email = text(formData, "email", 180);
   const message = text(formData, "message", 2000);
   if (name.length < 2 || !emailOk(email) || message.length < 10) {
-    return { status: "error", message: "Add your name, a real email, and a short message." };
+    return { status: "error", message: "Add your name, an email address, and a short message." };
   }
   return saveMessage({ kind: "contact", name, email, message });
 }

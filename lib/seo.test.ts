@@ -261,7 +261,7 @@ describe("titles and structured data", () => {
 describe("listing descriptions", () => {
   it("gives each later page its own description without adding hours or stock", () => {
     const intro = "12 video game stores in Austin, Texas.";
-    const detail = "Shop pages list only the details saved for each store in Austin.";
+    const detail = "Browse the shops listed in Austin.";
     const first = listingMetaDescription(1, intro, detail);
     const second = listingMetaDescription(2, intro, detail);
     assert.notEqual(first, second);
