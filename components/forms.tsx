@@ -15,8 +15,8 @@ function Note({ state }: { state: FormState }) {
       role={ok ? "status" : "alert"}
       className={
         ok
-          ? "rounded-xl bg-pine-soft px-4 py-3 text-sm font-semibold text-ok"
-          : "rounded-xl bg-danger-soft px-4 py-3 text-sm font-semibold text-danger"
+          ? "border-l-4 border-ok bg-card px-4 py-3 text-sm font-semibold text-ok"
+          : "border-l-4 border-danger bg-danger-soft px-4 py-3 text-sm font-semibold text-danger"
       }
     >
       {state.message}
@@ -42,7 +42,7 @@ function Field({
       <span className="text-sm font-bold text-ink">
         {label}
         {required ? (
-          <span className="text-clay" aria-hidden="true">
+          <span className="text-signal" aria-hidden="true">
             {" "}
             *
           </span>
@@ -56,13 +56,13 @@ function Field({
 export function ContactForm() {
   const [state, action, pending] = useActionState(submitContact, initial);
   return (
-    <form action={action} aria-busy={pending || undefined} className="mt-8 space-y-4 rounded-2xl border border-line bg-card p-4 shadow-card sm:p-6">
+    <form action={action} aria-busy={pending || undefined} className="mt-8 space-y-4 border-t border-ink pt-6">
       <Field label="Name" name="name" required autoComplete="name" />
       <Field label="Email" name="email" type="email" required autoComplete="email" />
       <label className="block">
         <span className="text-sm font-bold text-ink">
           Message
-          <span className="text-clay" aria-hidden="true">
+          <span className="text-signal" aria-hidden="true">
             {" "}
             *
           </span>
@@ -82,14 +82,14 @@ export function SubmitStoreForm() {
   return (
     <form action={action} aria-busy={pending || undefined} className="mt-8 space-y-6">
       <p className="text-sm text-muted">Fields with a star are required.</p>
-      <section className="rounded-2xl border border-line bg-card p-4 shadow-card sm:p-6">
+      <section className="border-t border-ink pt-6">
         <h2 className="text-2xl text-ink">About you</h2>
         <div className="mt-4 space-y-4">
           <Field label="Your name" name="name" autoComplete="name" />
           <Field label="Email" name="email" type="email" autoComplete="email" />
         </div>
       </section>
-      <section className="rounded-2xl border border-line bg-card p-4 shadow-card sm:p-6">
+      <section className="border-t border-ink pt-6">
         <h2 className="text-2xl text-ink">The shop</h2>
         <div className="mt-4 space-y-4">
           <Field label="Store name" name="storeName" required autoComplete="organization" />
@@ -99,7 +99,7 @@ export function SubmitStoreForm() {
             <label className="block">
               <span className="text-sm font-bold text-ink">
                 State
-                <span className="text-clay" aria-hidden="true">
+                <span className="text-signal" aria-hidden="true">
                   {" "}
                   *
                 </span>
@@ -120,7 +120,7 @@ export function SubmitStoreForm() {
           <Field label="Website" name="website" autoComplete="url" />
         </div>
       </section>
-      <section className="rounded-2xl border border-line bg-card p-4 shadow-card sm:p-6">
+      <section className="border-t border-ink pt-6">
         <h2 className="text-2xl text-ink">What the shop carries</h2>
         <fieldset className="mt-4">
           <legend className="text-sm font-bold text-ink">Platforms</legend>
@@ -128,7 +128,7 @@ export function SubmitStoreForm() {
             {PLATFORMS.map((platform) => (
               <label
                 key={platform.slug}
-                className="flex min-h-11 items-center gap-3 rounded-xl border border-line px-3 text-sm font-semibold has-[:checked]:border-pine has-[:checked]:bg-pine-soft"
+                className="flex min-h-11 items-center gap-3 border border-ink px-3 text-sm font-semibold has-[:checked]:bg-ink has-[:checked]:text-paper"
               >
                 <input type="checkbox" name={`platform-${platform.label}`} />
                 {platform.label}
@@ -160,7 +160,7 @@ export function SubmitStoreForm() {
 
 function Choice({ name, label }: { name: string; label: string }) {
   return (
-    <label className="flex min-h-11 items-center gap-3 rounded-xl border border-line px-3 text-sm font-semibold has-[:checked]:border-pine has-[:checked]:bg-pine-soft">
+    <label className="flex min-h-11 items-center gap-3 border border-ink px-3 text-sm font-semibold has-[:checked]:bg-ink has-[:checked]:text-paper">
       <input type="checkbox" name={name} />
       {label}
     </label>

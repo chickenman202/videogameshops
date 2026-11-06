@@ -18,23 +18,21 @@ export function StatusPanel({
 }) {
   return (
     <PageShell>
-      <div className="mx-auto w-full max-w-xl px-4 py-16 sm:py-24">
-        <div className="rounded-3xl border border-line bg-card p-6 shadow-card sm:p-8">
-          <p className="text-sm font-bold text-clay">{kicker}</p>
-          <h1 className="mt-2 text-4xl text-balance text-ink">{title}</h1>
-          <p className="mt-3 text-lg leading-relaxed text-ink-soft">{body}</p>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            {children}
-            {actions.map((action) => (
-              <Link
-                key={action.href + action.label}
-                href={action.href}
-                className={action.tone === "ghost" ? "btn btn-ghost" : "btn btn-primary"}
-              >
-                {action.label}
-              </Link>
-            ))}
-          </div>
+      <div className="mx-auto w-full max-w-3xl px-4 py-16 sm:py-24">
+        <p className="kicker text-signal">{kicker}</p>
+        <h1 className="mt-3 max-w-2xl text-5xl uppercase text-ink sm:text-7xl">{title}</h1>
+        <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-soft">{body}</p>
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          {children}
+          {actions.map((action) => (
+            <Link
+              key={action.href + action.label}
+              href={action.href}
+              className={action.tone === "ghost" ? "btn btn-ghost" : "btn btn-primary"}
+            >
+              {action.label}
+            </Link>
+          ))}
         </div>
       </div>
     </PageShell>

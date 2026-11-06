@@ -16,7 +16,7 @@ export default function ContactPage() {
       title="Contact"
       lede="Send a correction for a store that is already listed, or a question about the directory. Include the store name and city so the right page can be updated."
     >
-      <div className="mt-6 rounded-2xl border border-line bg-card p-4 text-base text-ink-soft">
+      <div className="mt-6 border-t border-ink pt-4 text-base text-ink-soft">
         <p className="font-bold text-ink">Helpful to include</p>
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>The store name and city</li>

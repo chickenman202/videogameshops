@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { LoadError } from "@/components/load-error";
 import { PageShell } from "@/components/page-shell";
 import { loadCatalog } from "@/lib/catalog";
+import { FIXTURE_SHOPS } from "@/lib/fixture-shops";
 import { toMetaDescription, toTitle } from "@/lib/copy";
 import { absoluteUrl } from "@/lib/jsonld";
 import { platformPath } from "@/lib/paths";
@@ -32,10 +34,11 @@ export default async function PlatformsPage() {
   const catalog = await loadCatalog();
   if (!catalog.ok) return <LoadError />;
 
+  const shops = catalog.stores.length === 0 ? FIXTURE_SHOPS : catalog.stores;
   const platforms = PLATFORMS.map((platform) => ({
     ...platform,
-    count: catalog.stores.filter((store) => store.platforms.includes(platform.label)).length,
-  }));
+    count: shops.filter((store) => store.platforms.includes(platform.label)).length,
+  })).filter((platform) => platform.count > 0);
 
   return (
     <PageShell>
@@ -43,26 +46,37 @@ export default async function PlatformsPage() {
         <Breadcrumbs
           crumbs={[{ name: "Home", href: "/" }, { name: "Stores", href: "/directory" }, { name: "Platforms" }]}
         />
-        <h1 className="mt-4 text-3xl text-balance text-ink sm:text-5xl">Video Game Stores by Platform</h1>
+        <h1 className="mt-4 text-5xl uppercase text-ink sm:text-7xl">Video Game Stores by Platform</h1>
         <p className="mt-3 max-w-3xl text-lg text-ink-soft">
           A platform page lists only stores that carry that platform. Retro is a platform tag, not a separate switch.
         </p>
-        <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {platforms.map((platform) => (
-            <li key={platform.slug}>
-              <a
-                href={platformPath(platform.slug)}
-                className="flex h-full flex-col rounded-2xl border border-line bg-card p-5 shadow-card hover:border-pine"
-              >
-                <span className="font-display text-2xl font-semibold text-ink">{platformHeading(platform.label)}</span>
-                <span className="mt-2 flex-1 text-sm leading-relaxed text-muted">{notes[platform.slug]}</span>
-                <span className="mt-4 text-sm font-semibold text-ink">
-                  {platform.count.toLocaleString("en-US")} {platform.count === 1 ? "store" : "stores"}
-                </span>
-              </a>
-            </li>
-          ))}
-        </ul>
+        {platforms.length > 0 ? (
+          <ul className="mt-8 border-t border-ink">
+            {platforms.map((platform) => (
+              <li key={platform.slug} className="border-b border-line">
+                <a href={platformPath(platform.slug)} className="block py-4 hover:text-signal">
+                  <span className="font-display text-3xl font-bold uppercase text-ink">{platformHeading(platform.label)}</span>
+                  <span className="mt-1 block text-sm text-muted">{notes[platform.slug]}</span>
+                  <span className="mt-2 block kicker text-ink">
+                    {platform.count.toLocaleString("en-US")} {platform.count === 1 ? "store" : "stores"}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="mt-8 border-t border-ink py-8">
+            <p className="text-ink-soft">No platform lists have shops yet.</p>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <Link href="/directory" className="btn btn-primary">
+                All stores
+              </Link>
+              <Link href="/submit" className="btn btn-ghost">
+                Submit a store
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </PageShell>
   );

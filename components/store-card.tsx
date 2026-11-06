@@ -1,66 +1,92 @@
-import type { CatalogStore } from "@/lib/catalog";
 import { storePath } from "@/lib/paths";
+import { hoursNote, shopLocation, type ShopView } from "@/lib/shop-view";
 
-function facts(store: CatalogStore): string[] {
-  const items: string[] = [];
-  if (store.sellsNew) items.push("New");
-  if (store.sellsUsed) items.push("Used");
-  if (store.tradeIns) items.push("Trade-ins");
-  if (store.repairs) items.push("Repairs");
-  return items;
+function gaps(store: ShopView): string {
+  const hours = store.hours || hoursNote(store) ? "Hours listed" : "Hours not listed yet";
+  const phone = store.phone ? "Phone listed" : "Phone not listed yet";
+  const site = store.website ? "Website listed" : "Website not listed yet";
+  return `${hours} · ${phone} · ${site}`;
 }
 
-function initial(name: string): string {
-  return name.trim().charAt(0).toUpperCase() || "?";
-}
-
-export function StoreCard({ store, priority = false }: { store: CatalogStore; priority?: boolean }) {
+export function StoreCard({
+  store,
+  scale = "row",
+  priority = false,
+}: {
+  store: ShopView;
+  scale?: "feature" | "photo" | "row";
+  priority?: boolean;
+}) {
   const href = storePath(store.slug);
-  return (
-    <a
-      href={href}
-      className="flex items-start gap-3 rounded-2xl border border-line bg-card p-3 shadow-card hover:border-pine sm:gap-4 sm:p-4"
-    >
-      {store.photo ? (
+  const place = shopLocation(store);
+  const meta = gaps(store);
+
+  if (scale === "feature") {
+    return (
+      <a href={href} className="group block border-t-2 border-ink">
+        {store.photo ? (
+          <img
+            src={store.photo}
+            alt=""
+            width={1200}
+            height={750}
+            loading={priority ? "eager" : "lazy"}
+            fetchPriority={priority ? "high" : "auto"}
+            className="aspect-[16/10] w-full object-cover"
+          />
+        ) : (
+          <div className="border-b border-ink bg-stage px-4 py-10 text-paper sm:py-14">
+            <p className="kicker text-signal">{place.line || place.country || "Shop"}</p>
+            <p className="mt-3 max-w-4xl font-display text-5xl font-bold uppercase leading-[0.88] break-words sm:text-7xl">
+              {store.name}
+            </p>
+          </div>
+        )}
+        <span className="block py-4">
+          <span className="kicker text-muted">{place.line || "Location not listed yet"}</span>
+          {store.photo ? (
+            <span className="mt-2 block font-display text-5xl font-bold leading-[0.9] break-words text-ink group-hover:underline sm:text-6xl">
+              {store.name}
+            </span>
+          ) : null}
+          {place.country ? <span className="mt-2 block kicker text-ink">{place.country}</span> : null}
+          <span className="mt-3 block font-mono text-xs text-muted">{meta}</span>
+        </span>
+      </a>
+    );
+  }
+
+  if (scale === "photo" && store.photo) {
+    return (
+      <a href={href} className="group grid border-t border-ink sm:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
         <img
           src={store.photo}
           alt=""
-          width={80}
-          height={80}
-          loading={priority ? "eager" : "lazy"}
-          fetchPriority={priority ? "high" : "auto"}
-          className="size-16 shrink-0 rounded-xl object-cover sm:size-20"
+          width={640}
+          height={480}
+          loading="lazy"
+          className="aspect-[4/3] h-full w-full object-cover"
         />
-      ) : (
-        <span
-          aria-hidden="true"
-          className="grid size-16 shrink-0 place-items-center rounded-xl bg-pine-soft font-display text-2xl font-semibold text-pine sm:size-20"
-        >
-          {initial(store.name)}
+        <span className="flex min-w-0 flex-col justify-end py-4 sm:px-5">
+          <span className="kicker text-muted">{place.line || "Location not listed yet"}</span>
+          <span className="mt-2 font-display text-4xl font-bold leading-[0.92] break-words text-ink group-hover:underline">
+            {store.name}
+          </span>
+          {place.country ? <span className="mt-2 kicker text-ink">{place.country}</span> : null}
+          <span className="mt-3 font-mono text-xs text-muted">{meta}</span>
         </span>
-      )}
-      <span className="min-w-0 flex-1">
-        <span className="block text-lg font-semibold break-words text-ink">{store.name}</span>
-        <span className="mt-1 block text-sm text-muted">
-          {store.address}, {store.city}, {store.stateAbbr}
-          {store.zip ? ` ${store.zip}` : ""}
-        </span>
-        <span className="mt-3 flex flex-wrap gap-1.5">
-          {store.platforms.map((platform) => (
-            <span key={platform} className="rounded-full bg-paper-deep px-2.5 py-1 text-xs font-semibold text-ink-soft">
-              {platform}
-            </span>
-          ))}
-          {facts(store).map((fact) => (
-            <span key={fact} className="rounded-full bg-pine-soft px-2.5 py-1 text-xs font-semibold text-pine">
-              {fact}
-            </span>
-          ))}
-        </span>
-        <span className="mt-3 inline-flex items-center text-sm font-bold text-pine" aria-hidden="true">
-          Details →
-        </span>
+      </a>
+    );
+  }
+
+  return (
+    <a href={href} className="group block border-t border-line py-4">
+      <span className="kicker text-muted">{place.line || "Location not listed yet"}</span>
+      <span className="mt-1 block font-display text-3xl font-bold leading-[0.95] break-words text-ink group-hover:underline">
+        {store.name}
       </span>
+      {place.country ? <span className="mt-2 block kicker text-ink">{place.country}</span> : null}
+      <span className="mt-2 block font-mono text-xs text-muted">{meta}</span>
     </a>
   );
 }

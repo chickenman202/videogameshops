@@ -3,29 +3,51 @@ import { CityIndex } from "@/components/city-index";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { PageShell } from "@/components/page-shell";
 import { Pagination } from "@/components/pagination";
+import { PreviewNote } from "@/components/preview-note";
 import { SearchForm } from "@/components/search-form";
 import { StoreCard } from "@/components/store-card";
+import { loadCatalog } from "@/lib/catalog";
 import { hasFilters, hrefWithFilters, type Filters } from "@/lib/filters";
 import { breadcrumbJsonLd, collectionJsonLd, JsonLd } from "@/lib/jsonld";
 import type { ListingOk } from "@/lib/listing";
-import { PLATFORMS } from "@/lib/platforms";
+import { PLATFORMS, type PlatformLabel } from "@/lib/platforms";
 import { platformPath } from "@/lib/paths";
+import { previewShopsFor, type ShopView } from "@/lib/shop-view";
 import { PAGE_SIZE } from "@/lib/site";
 
 function toggleHref(listing: ListingOk, patch: Partial<Filters>): string {
   return hrefWithFilters(listing.basePath, { ...listing.filters, ...patch });
 }
 
-export function DirectoryScreen({ listing }: { listing: ListingOk }) {
+export async function DirectoryScreen({ listing }: { listing: ListingOk }) {
+  const catalog = await loadCatalog();
+  const previewList =
+    catalog.ok && catalog.stores.length === 0
+      ? previewShopsFor({
+          liveCount: 0,
+          stateSlug: listing.state?.slug ?? null,
+          citySlug: listing.citySlug,
+          platformLabel: listing.platformLabel,
+          filters: listing.filters,
+        })
+      : null;
+  const preview = previewList !== null;
+  const pool: ShopView[] = preview ? previewList : listing.stores;
+  const visibleStores = preview
+    ? previewList.slice((listing.page - 1) * PAGE_SIZE, listing.page * PAGE_SIZE)
+    : listing.stores;
+  const total = preview ? previewList.length : listing.total;
   const crumbItems = listing.crumbs.map((crumb) => ({
     name: crumb.name,
     path: crumb.href ?? listing.canonicalPath,
   }));
   const showCities = listing.cities.length > 0 && !listing.filtered;
-  const showPlatforms = listing.platformLinks.length > 0 && !listing.filtered;
-  const platformNav = showPlatforms ? [] : platformChoices(listing);
-  const start = listing.total === 0 ? 0 : (listing.page - 1) * PAGE_SIZE + 1;
-  const end = start === 0 ? 0 : start + listing.stores.length - 1;
+  const platformNav = preview ? platformChoices(listing, pool) : livePlatforms(listing);
+  const start = total === 0 ? 0 : (listing.page - 1) * PAGE_SIZE + 1;
+  const end = start === 0 ? 0 : start + visibleStores.length - 1;
+  const intro = preview
+    ? `${total.toLocaleString("en-US")} ${total === 1 ? "shop" : "shops"} in this preview${listing.state ? ` for ${listing.state.name}` : ""}. The live catalog replaces this list when it is connected.`
+    : listing.intro;
 
   return (
     <PageShell>
@@ -39,83 +61,54 @@ export function DirectoryScreen({ listing }: { listing: ListingOk }) {
           page: listing.page,
         })}
       />
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
         <Breadcrumbs crumbs={listing.crumbs} />
-        <header className="mt-4 max-w-3xl">
-          <h1 className="text-3xl text-balance text-ink sm:text-5xl">{listing.h1}</h1>
-          <p className="mt-3 text-lg leading-relaxed text-ink-soft">{listing.intro}</p>
+        <header className="mt-6 max-w-4xl">
+          <p className="kicker text-signal">Directory</p>
+          <h1 className="mt-3 text-5xl uppercase text-ink sm:text-7xl">{listing.h1}</h1>
+          {preview || total > 0 ? <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink-soft">{intro}</p> : null}
+          {preview ? <PreviewNote /> : null}
         </header>
 
-        <div className="mt-6">
+        <div className="mt-8 max-w-2xl">
           <SearchForm
             id="directory-search"
             action={listing.basePath}
             filters={listing.filters}
             label="Search this list"
-            hint="City or shop name. Checked filters stay on."
+            hint="City, country, or shop name. Checked filters stay on."
           />
         </div>
 
+        <FilterBar listing={listing} platformNav={platformNav} />
+
         {showCities ? <CityIndex cities={listing.cities} /> : null}
 
-        {showPlatforms ? (
-          <section className="mt-8" aria-labelledby="platform-jump">
-            <h2 id="platform-jump" className="text-2xl text-ink sm:text-3xl">
-              Platforms
-            </h2>
-            <p className="mt-1 text-sm text-muted">Open a shorter list for one kind of game.</p>
-            <ul className="mt-4 flex flex-wrap gap-2">
-              {listing.platformLinks.map((platform) => (
-                <li key={platform.slug}>
-                  <a
-                    href={platform.href}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-card px-3 text-sm font-semibold text-ink hover:border-pine"
-                  >
-                    {platform.label}
-                    <span className="text-muted">{platform.count.toLocaleString("en-US")}</span>
-                  </a>
+        <div className="mt-10">
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <h2 className="text-4xl uppercase text-ink">Stores</h2>
+            {total > 0 ? (
+              <p className="kicker text-muted">
+                {start.toLocaleString("en-US")}–{end.toLocaleString("en-US")} of {total.toLocaleString("en-US")}
+              </p>
+            ) : null}
+          </div>
+          {visibleStores.length > 0 ? (
+            <ul className="mt-4">
+              {visibleStores.map((store, index) => (
+                <li key={store.id}>
+                  <StoreCard
+                    store={store}
+                    priority={index === 0 && listing.page === 1}
+                    scale={index === 0 ? "feature" : store.photo ? "photo" : "row"}
+                  />
                 </li>
               ))}
             </ul>
-          </section>
-        ) : null}
-
-        <div className="mt-8 grid gap-6 lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start">
-          <details className="rounded-2xl border border-line bg-card px-4 py-2 lg:hidden">
-            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 font-semibold text-ink [&::-webkit-details-marker]:hidden">
-              Filter this list
-              {listing.filters.sellsNew || listing.filters.sellsUsed || listing.filters.tradeIns || listing.filters.repairs ? (
-                <span className="text-sm font-bold text-pine">On</span>
-              ) : null}
-            </summary>
-            <FilterPanel listing={listing} platformNav={platformNav} labelled={false} />
-          </details>
-          <aside className="hidden h-fit rounded-2xl border border-line bg-card p-5 lg:sticky lg:top-24 lg:block">
-            <FilterPanel listing={listing} platformNav={platformNav} labelled />
-          </aside>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-end justify-between gap-2">
-              <h2 className="text-2xl text-ink">Stores</h2>
-              {listing.total > 0 ? (
-                <p className="text-sm text-muted">
-                  Showing {start.toLocaleString("en-US")}–{end.toLocaleString("en-US")} of{" "}
-                  {listing.total.toLocaleString("en-US")}
-                </p>
-              ) : null}
-            </div>
-            {listing.stores.length > 0 ? (
-              <ul className="mt-4 space-y-3">
-                {listing.stores.map((store, index) => (
-                  <li key={store.id}>
-                    <StoreCard store={store} priority={index === 0 && listing.page === 1} />
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyResults listing={listing} />
-            )}
-            <Pagination listing={listing} />
-          </div>
+          ) : (
+            <EmptyResults listing={listing} />
+          )}
+          <Pagination listing={listing} />
         </div>
       </div>
     </PageShell>
@@ -125,88 +118,74 @@ export function DirectoryScreen({ listing }: { listing: ListingOk }) {
 function EmptyResults({ listing }: { listing: ListingOk }) {
   const filtered = hasFilters(listing.filters) || Boolean(listing.filters.q);
   return (
-    <div className="mt-4 rounded-2xl border border-dashed border-line bg-card px-5 py-10 text-center">
-      <h3 className="text-2xl text-ink">{filtered ? "No stores match" : "No stores listed here yet"}</h3>
-      <p className="mx-auto mt-2 max-w-md text-ink-soft">
+    <div className="mt-4 border-t border-ink py-10">
+      <h3 className="text-4xl uppercase text-ink">{filtered ? "No stores match" : "No stores listed here yet"}</h3>
+      <p className="mt-3 max-w-md text-ink-soft">
         {listing.filters.q
           ? `Nothing matched “${listing.filters.q}”. Try another city or shop name.`
           : filtered
-            ? "Try clearing a filter, or search for a city or shop name."
-            : "Shops show up here after they are added to the directory."}
+            ? "Clear a filter, or search for a city or shop name."
+            : "Shops show up here after they are added."}
       </p>
-      <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
         {filtered ? (
           <a href={listing.basePath} className="btn btn-primary">
             Clear filters
           </a>
         ) : null}
-        <Link href="/directory/states" className="btn btn-ghost">
-          Browse states
+        <Link href="/directory" className="btn btn-ghost">
+          All stores
+        </Link>
+        <Link href="/submit" className="btn btn-ghost">
+          Submit a store
         </Link>
       </div>
     </div>
   );
 }
 
-function FilterPanel({
-  listing,
-  platformNav,
-  labelled,
-}: {
-  listing: ListingOk;
-  platformNav: PlatformChoice[];
-  labelled: boolean;
-}) {
+function FilterBar({ listing, platformNav }: { listing: ListingOk; platformNav: PlatformChoice[] }) {
+  const filtersOn =
+    listing.filters.sellsNew || listing.filters.sellsUsed || listing.filters.tradeIns || listing.filters.repairs;
   return (
-    <div className={labelled ? "" : "pt-1 pb-3"}>
-      {labelled ? (
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg text-ink">Filter this list</h2>
-          {hasFilters(listing.filters) ? (
-            <a href={listing.basePath} className="link text-sm">
-              Clear
-            </a>
-          ) : null}
-        </div>
-      ) : hasFilters(listing.filters) ? (
-        <a href={listing.basePath} className="link text-sm">
-          Clear filters
-        </a>
-      ) : null}
-      <FilterGroup title="What they carry">
-        <FilterLink href={toggleHref(listing, { sellsNew: !listing.filters.sellsNew })} active={listing.filters.sellsNew} label="New games" />
-        <FilterLink href={toggleHref(listing, { sellsUsed: !listing.filters.sellsUsed })} active={listing.filters.sellsUsed} label="Used games" />
-        <FilterLink href={toggleHref(listing, { tradeIns: !listing.filters.tradeIns })} active={listing.filters.tradeIns} label="Trade-ins" />
-        <FilterLink href={toggleHref(listing, { repairs: !listing.filters.repairs })} active={listing.filters.repairs} label="Console repair" />
-      </FilterGroup>
+    <div className="mt-8 border-y border-ink py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="kicker text-ink">Filter this list</p>
+        {hasFilters(listing.filters) ? (
+          <a href={listing.basePath} className="link text-sm">
+            Clear
+          </a>
+        ) : null}
+      </div>
+      <p className="mt-1 text-sm text-muted">New, used, trade-ins, repair{platformNav.length > 0 ? ", and platforms" : ""}.</p>
+      <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="What they carry">
+        <FilterLink href={toggleHref(listing, { sellsNew: !listing.filters.sellsNew })} active={listing.filters.sellsNew} label="New" />
+        <FilterLink href={toggleHref(listing, { sellsUsed: !listing.filters.sellsUsed })} active={listing.filters.sellsUsed} label="Used" />
+        <FilterLink
+          href={toggleHref(listing, { tradeIns: !listing.filters.tradeIns })}
+          active={listing.filters.tradeIns}
+          label="Trade-ins"
+        />
+        <FilterLink href={toggleHref(listing, { repairs: !listing.filters.repairs })} active={listing.filters.repairs} label="Repair" />
+      </div>
       {platformNav.length > 0 ? (
-        <FilterGroup title="Platforms">
+        <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Platforms">
           {listing.state && !listing.citySlug ? (
-            <p className="text-xs leading-relaxed text-muted">These lists cover every state, not only {listing.state.name}.</p>
+            <p className="w-full text-xs text-muted">These lists cover every state, not only {listing.state.name}.</p>
           ) : null}
           {platformNav.map((platform) => (
             <a
               key={platform.slug}
               href={platform.href}
-              className="flex min-h-11 items-center rounded-xl px-2 text-sm font-semibold text-ink hover:bg-paper"
+              className="inline-flex min-h-11 items-center gap-2 border border-ink px-3 font-display text-lg font-bold uppercase"
             >
               {platform.label}
-              {typeof platform.count === "number" ? (
-                <span className="ml-auto text-muted">{platform.count.toLocaleString("en-US")}</span>
-              ) : null}
+              <span className="font-mono text-xs normal-case">{platform.count.toLocaleString("en-US")}</span>
             </a>
           ))}
-        </FilterGroup>
+        </div>
       ) : null}
-    </div>
-  );
-}
-
-function FilterGroup({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="mt-4">
-      <p className="text-sm font-bold text-ink">{title}</p>
-      <div className="mt-1">{children}</div>
+      {filtersOn ? <p className="sr-only">Some filters are on.</p> : null}
     </div>
   );
 }
@@ -217,34 +196,36 @@ function FilterLink({ href, label, active }: { href: string; label: string; acti
       href={href}
       className={
         active
-          ? "flex min-h-11 items-center gap-3 rounded-xl bg-pine-soft px-2 text-sm font-semibold text-pine"
-          : "flex min-h-11 items-center gap-3 rounded-xl px-2 text-sm font-semibold text-ink hover:bg-paper"
+          ? "inline-flex min-h-11 items-center border border-ink bg-ink px-3 font-display text-lg font-bold uppercase text-paper"
+          : "inline-flex min-h-11 items-center border border-ink px-3 font-display text-lg font-bold uppercase text-ink"
       }
     >
-      <span
-        aria-hidden="true"
-        className={
-          active
-            ? "grid size-5 place-items-center rounded-md bg-pine text-xs text-card"
-            : "size-5 rounded-md border border-line bg-card"
-        }
-      >
-        {active ? "✓" : ""}
-      </span>
       {active ? <span className="sr-only">Selected: </span> : null}
       {label}
     </a>
   );
 }
 
-type PlatformChoice = { slug: string; label: string; href: string; count?: number };
+type PlatformChoice = { slug: string; label: string; href: string; count: number };
 
-function platformChoices(listing: ListingOk): PlatformChoice[] {
+function livePlatforms(listing: ListingOk): PlatformChoice[] {
   if (listing.platformSlug) return [];
-  if (listing.citySlug) return listing.platformLinks;
+  return listing.platformLinks
+    .filter((platform) => platform.count > 0)
+    .map((platform) => ({
+      slug: platform.slug,
+      label: platform.label,
+      href: platform.href,
+      count: platform.count,
+    }));
+}
+
+function platformChoices(listing: ListingOk, shops: ShopView[]): PlatformChoice[] {
+  if (listing.platformSlug) return [];
   return PLATFORMS.map((platform) => ({
     slug: platform.slug,
     label: platform.label,
     href: platformPath(platform.slug),
-  }));
+    count: shops.filter((store) => store.platforms.includes(platform.label as PlatformLabel)).length,
+  })).filter((platform) => platform.count > 0);
 }

@@ -24,7 +24,7 @@ export default function TermsPage() {
         </p>
         <p>
           Do not use the site to scrape private data or to send the contact form messages that are not about a
-          listing. The directory is for finding physical video game stores in the United States.
+          listing. The directory is for finding physical video game shops.
         </p>
       </div>
     </ArticlePage>

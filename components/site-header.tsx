@@ -29,27 +29,27 @@ export function SiteHeader() {
   }, [open]);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-white/15 bg-stage text-paper">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-        <Link href="/" className="flex min-w-0 items-center gap-2 font-display text-lg font-semibold tracking-tight text-ink">
-          <Mark className="size-8 shrink-0" />
-          <span className="truncate">videogameshops</span>
+        <Link href="/" className="flex min-w-0 items-center gap-2">
+          <Mark className="size-7 shrink-0" />
+          <span className="truncate font-display text-2xl font-bold uppercase tracking-tight">videogameshops</span>
         </Link>
-        <nav aria-label="Main" className="hidden items-center gap-5 text-sm font-semibold text-ink-soft lg:flex">
+        <nav aria-label="Main" className="hidden items-center gap-5 lg:flex">
           {links.map((link) => (
-            <Link key={link.href} href={link.href} className="hover:text-ink">
+            <Link key={link.href} href={link.href} className="kicker text-paper/80 hover:text-paper">
               {link.label}
             </Link>
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <Link href="/submit" className="btn btn-primary hidden lg:inline-flex">
+          <Link href="/submit" className="btn btn-light hidden lg:inline-flex">
             Add a store
           </Link>
           <button
             ref={buttonRef}
             type="button"
-            className="inline-flex size-11 items-center justify-center rounded-xl border border-line bg-card text-ink lg:hidden"
+            className="inline-flex size-11 items-center justify-center border border-white/30 text-paper lg:hidden"
             aria-expanded={open}
             aria-controls={menuId}
             onClick={() => setOpen((value) => !value)}
@@ -59,25 +59,23 @@ export function SiteHeader() {
           </button>
         </div>
       </div>
-      {open ? (
-        <nav id={menuId} aria-label="Mobile" className="border-t border-line px-4 py-3 lg:hidden">
-          <ul className="space-y-1">
-            {links.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className="flex min-h-11 items-center rounded-xl px-3 font-semibold text-ink hover:bg-paper-deep"
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-          <Link href="/submit" className="btn btn-primary mt-3 w-full lg:hidden">
-            Add a store
-          </Link>
-        </nav>
-      ) : null}
+      <nav id={menuId} aria-label="Mobile" hidden={!open} className="border-t border-white/15 px-4 py-3 lg:hidden">
+        <ul className="space-y-1">
+          {links.map((link) => (
+            <li key={link.href}>
+              <Link
+                href={link.href}
+                className="flex min-h-12 items-center font-display text-3xl font-bold uppercase tracking-tight"
+              >
+                {link.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <Link href="/submit" className="btn btn-light mt-3 w-full">
+          Add a store
+        </Link>
+      </nav>
     </header>
   );
 }

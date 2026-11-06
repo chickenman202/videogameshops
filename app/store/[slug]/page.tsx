@@ -5,12 +5,23 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { LoadError } from "@/components/load-error";
 import { PageShell } from "@/components/page-shell";
 import { StoreCard } from "@/components/store-card";
-import { loadCatalog, type CatalogStore } from "@/lib/catalog";
+import { PreviewNote } from "@/components/preview-note";
+import { loadCatalog } from "@/lib/catalog";
 import { storeTitle, toMetaDescription } from "@/lib/copy";
+import { FIXTURE_SHOPS } from "@/lib/fixture-shops";
 import { WEEKDAYS } from "@/lib/hours";
 import { absoluteUrl, breadcrumbJsonLd, JsonLd, storeCrumbs, storeJsonLd } from "@/lib/jsonld";
-import { storeAbout } from "@/lib/listing";
+import { storeAbout, type Crumb } from "@/lib/listing";
 import { cityPath, statePath, storePath } from "@/lib/paths";
+import {
+  directionsUrl,
+  hasAddress,
+  hoursNote,
+  shopCountry,
+  shopCountryName,
+  socialLinks,
+  type ShopView,
+} from "@/lib/shop-view";
 
 export const revalidate = 86400;
 export const dynamicParams = true;
@@ -20,23 +31,27 @@ export function generateStaticParams() {
 }
 
 async function loadStore(slug: string): Promise<
-  | { status: "ok"; store: CatalogStore; nearby: CatalogStore[] }
+  | { status: "ok"; store: ShopView; nearby: ShopView[]; preview: boolean }
   | { status: "missing" }
   | { status: "error" }
 > {
   const catalog = await loadCatalog();
   if (!catalog.ok) return { status: "error" };
-  const store = catalog.stores.find((item) => item.slug === slug);
+  const preview = catalog.stores.length === 0;
+  const pool: ShopView[] = preview ? FIXTURE_SHOPS : catalog.stores;
+  const store = pool.find((item) => item.slug === slug);
   if (!store) return { status: "missing" };
-  const nearby = catalog.stores
+  const nearby = pool
     .filter(
       (item) =>
         item.id !== store.id &&
-        item.stateSlug === store.stateSlug &&
-        item.citySlug === store.citySlug,
+        item.citySlug !== "" &&
+        item.citySlug === store.citySlug &&
+        shopCountry(item) === shopCountry(store) &&
+        item.state === store.state,
     )
     .slice(0, 4);
-  return { status: "ok", store, nearby };
+  return { status: "ok", store, nearby, preview };
 }
 
 export async function generateMetadata(props: PageProps<"/store/[slug]">): Promise<Metadata> {
@@ -55,13 +70,18 @@ export async function generateMetadata(props: PageProps<"/store/[slug]">): Promi
     };
   }
   const { store } = result;
-  const title = storeTitle(store.name, store.city, store.stateAbbr, store.platforms);
-  const description = toMetaDescription(storeAbout(store));
+  const placeLabel = store.city || shopCountryName(store) || "Shop";
+  const regionLabel = store.stateAbbr || shopCountry(store);
+  const title = storeTitle(store.name, placeLabel, regionLabel, store.platforms);
+  const description = toMetaDescription(
+    store.about?.trim() ||
+      (hasAddress(store) ? storeAbout(store) : `${store.name} is a physical video game shop.`),
+  );
   return {
     title: { absolute: title },
     description,
     alternates: { canonical: absoluteUrl(storePath(store.slug)) },
-    robots: { index: true, follow: true },
+    robots: result.preview ? { index: false, follow: true } : { index: true, follow: true },
     openGraph: {
       title,
       description,
@@ -78,39 +98,66 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
   if (result.status === "missing") notFound();
   if (result.status === "error") return <LoadError />;
 
-  const { store, nearby } = result;
-  const crumbs = storeCrumbs(store, {
-    slug: store.stateSlug,
-    name: store.state,
-    abbreviation: store.stateAbbr,
-  });
+  const { store, nearby, preview } = result;
+  const country = shopCountry(store);
+  const countryName = shopCountryName(store);
+  const crumbs =
+    store.stateSlug !== ""
+      ? storeCrumbs(store, {
+          slug: store.stateSlug,
+          name: store.state,
+          abbreviation: store.stateAbbr,
+        })
+      : [
+          { name: "Home", path: "/" },
+          { name: "Stores", path: "/directory" },
+          { name: store.name, path: storePath(store.slug) },
+        ];
   const facts = [
     store.sellsNew ? "Sells new games" : null,
     store.sellsUsed ? "Sells used games" : null,
     store.tradeIns ? "Accepts trade-ins" : null,
     store.repairs ? "Repairs consoles" : null,
   ].filter((item): item is string => Boolean(item));
-  const mapsQuery = encodeURIComponent(
-    `${store.address}, ${store.city}, ${store.stateAbbr}${store.zip ? ` ${store.zip}` : ""}`,
-  );
-
   const phoneHref = store.phone ? `tel:${store.phone.replace(/[^\d+]/g, "")}` : null;
   const websiteLabel = store.website ? store.website.replace(/^https?:\/\//, "").replace(/\/$/, "") : null;
+  const directions = directionsUrl(store);
+  const socials = socialLinks(store);
+  const listedHours = hoursNote(store);
+  const regionBit = [store.stateAbbr || store.state, store.zip].filter((part) => part && part.trim()).join(" ");
+  const localLine = [store.city, regionBit].filter(Boolean).join(", ");
+  const eyebrow = [store.city, store.stateAbbr || store.state, country && country !== "US" ? countryName : ""]
+    .filter(Boolean)
+    .join(", ");
+  const pageCrumbs: Crumb[] = [
+    { name: "Home", href: "/" },
+    { name: "Stores", href: "/directory" },
+  ];
+  if (store.stateSlug) {
+    pageCrumbs.push({ name: store.state, href: statePath(store.stateSlug) });
+    if (store.city && !preview && store.citySlug) {
+      pageCrumbs.push({ name: store.city, href: cityPath(store.stateSlug, store.citySlug) });
+    } else if (store.city) {
+      pageCrumbs.push({ name: store.city });
+    }
+  } else {
+    if (countryName) pageCrumbs.push({ name: countryName });
+    if (store.city) pageCrumbs.push({ name: store.city });
+  }
+  pageCrumbs.push({ name: store.name });
+  const about = store.about?.trim()
+    ? store.about.trim()
+    : hasAddress(store)
+      ? storeAbout(store)
+      : `${store.name} is a physical video game shop${store.city ? ` in ${store.city}` : ""}${countryName ? `, ${countryName}` : ""}.`;
 
   return (
     <PageShell>
-      <JsonLd data={storeJsonLd(store)} />
+      {!country || country === "US" ? <JsonLd data={storeJsonLd(store)} /> : null}
       <JsonLd data={breadcrumbJsonLd(crumbs)} />
-      <article className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
-        <Breadcrumbs
-          crumbs={[
-            { name: "Home", href: "/" },
-            { name: "Stores", href: "/directory" },
-            { name: store.state, href: statePath(store.stateSlug) },
-            { name: store.city, href: cityPath(store.stateSlug, store.citySlug) },
-            { name: store.name },
-          ]}
-        />
+      <article className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
+        <Breadcrumbs crumbs={pageCrumbs} />
+        {preview ? <PreviewNote /> : null}
         {store.photo ? (
           <img
             src={store.photo}
@@ -119,36 +166,69 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
             height={675}
             loading="eager"
             fetchPriority="high"
-            className="mt-6 aspect-video max-h-80 w-full rounded-2xl object-cover"
+            className="mt-6 aspect-[16/9] max-h-[28rem] w-full object-cover"
           />
         ) : null}
-        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
-          <header className="min-w-0 lg:col-start-1 lg:row-start-1">
-            <p className="text-sm font-bold text-clay">
-              {store.city}, {store.state}
+        <header className="mt-6 max-w-4xl border-t-2 border-ink pt-4">
+          <p className="kicker text-signal">{eyebrow || "Shop"}</p>
+          <h1 className="mt-3 text-5xl uppercase break-words text-ink sm:text-7xl">{store.name}</h1>
+        </header>
+        <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+          <div className="min-w-0">
+            <p className="max-w-3xl text-lg leading-relaxed text-ink-soft">{about}</p>
+            {store.platforms.length > 0 || facts.length > 0 ? (
+              <div className="mt-8">
+                <h2 className="text-3xl uppercase text-ink">What they carry</h2>
+                <ul className="mt-3 flex flex-wrap gap-2">
+                  {store.platforms.map((platform) => (
+                    <li key={platform} className="border border-ink px-3 py-1 font-mono text-xs uppercase">
+                      {platform}
+                    </li>
+                  ))}
+                  {facts.map((fact) => (
+                    <li key={fact} className="border border-ink bg-ink px-3 py-1 font-mono text-xs uppercase text-paper">
+                      {fact}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            <p className="mt-8 text-sm text-muted">
+              Something wrong on this page?{" "}
+              <Link className="link" href="/contact">
+                Send a correction
+              </Link>
             </p>
-            <h1 className="mt-2 text-4xl text-balance text-ink sm:text-5xl">{store.name}</h1>
-          </header>
-          <aside className="space-y-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
-            <section className="rounded-2xl border border-line bg-card p-5 shadow-card" aria-labelledby="visit-heading">
-              <h2 id="visit-heading" className="text-2xl text-ink">
+          </div>
+          <aside className="space-y-8">
+            <section aria-labelledby="visit-heading">
+              <h2 id="visit-heading" className="text-3xl uppercase text-ink">
                 Visit
               </h2>
-              <dl className="mt-4 space-y-4">
-                <div>
-                  <dt className="text-sm font-bold text-muted">Address</dt>
+              <dl className="mt-3 border-t border-ink">
+                <div className="border-b border-line py-3">
+                  <dt className="kicker text-muted">Address</dt>
                   <dd className="mt-1 text-base leading-relaxed text-ink">
-                    {store.address}
-                    <br />
-                    {store.city}, {store.stateAbbr}
-                    {store.zip ? ` ${store.zip}` : ""}
+                    {hasAddress(store) ? store.address : <span className="text-ink-soft">Not listed yet</span>}
+                    {localLine ? (
+                      <>
+                        <br />
+                        {localLine}
+                      </>
+                    ) : null}
                   </dd>
                 </div>
-                <div>
-                  <dt className="text-sm font-bold text-muted">Phone</dt>
+                {country || countryName ? (
+                  <div className="border-b border-line py-3">
+                    <dt className="kicker text-muted">Country</dt>
+                    <dd className="mt-1 text-base text-ink">{countryName || country}</dd>
+                  </div>
+                ) : null}
+                <div className="border-b border-line py-3">
+                  <dt className="kicker text-muted">Phone</dt>
                   <dd className="mt-1">
                     {phoneHref && store.phone ? (
-                      <a href={phoneHref} className="text-lg font-bold text-pine underline decoration-pine/30 underline-offset-4">
+                      <a href={phoneHref} className="link text-lg">
                         {store.phone}
                       </a>
                     ) : (
@@ -156,16 +236,11 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
                     )}
                   </dd>
                 </div>
-                <div>
-                  <dt className="text-sm font-bold text-muted">Website</dt>
+                <div className="border-b border-line py-3">
+                  <dt className="kicker text-muted">Website</dt>
                   <dd className="mt-1">
                     {store.website && websiteLabel ? (
-                      <a
-                        href={store.website}
-                        className="link break-all"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
+                      <a href={store.website} className="link break-all" target="_blank" rel="noopener noreferrer">
                         {websiteLabel}
                         <span className="sr-only"> (opens in a new tab)</span>
                       </a>
@@ -174,19 +249,29 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
                     )}
                   </dd>
                 </div>
+                {socials.length > 0 ? (
+                  <div className="border-b border-line py-3">
+                    <dt className="kicker text-muted">Social</dt>
+                    <dd className="mt-2 flex flex-wrap gap-3">
+                      {socials.map((link) => (
+                        <a key={link.href} href={link.href} className="link" target="_blank" rel="noopener noreferrer">
+                          {link.label}
+                          <span className="sr-only"> (opens in a new tab)</span>
+                        </a>
+                      ))}
+                    </dd>
+                  </div>
+                ) : null}
               </dl>
-              <a
-                href={`https://maps.google.com/?q=${mapsQuery}`}
-                className="btn btn-primary mt-5 w-full"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Directions
-                <span className="sr-only"> (opens in a new tab)</span>
-              </a>
+              {directions ? (
+                <a href={directions} className="btn btn-primary mt-4 w-full" target="_blank" rel="noopener noreferrer">
+                  Directions
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </a>
+              ) : null}
             </section>
-            <section className="rounded-2xl border border-line bg-card p-5 shadow-card" aria-labelledby="hours-heading">
-              <h2 id="hours-heading" className="text-2xl text-ink">
+            <section className="border-t border-ink pt-4" aria-labelledby="hours-heading">
+              <h2 id="hours-heading" className="text-3xl uppercase text-ink">
                 Hours
               </h2>
               {store.hours ? (
@@ -209,48 +294,18 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
                     })}
                   </tbody>
                 </table>
+              ) : listedHours ? (
+                <p className="mt-3 font-mono text-sm leading-relaxed text-ink">{listedHours}</p>
               ) : (
                 <p className="mt-3 text-sm text-muted">Hours are not listed yet.</p>
               )}
             </section>
           </aside>
-          <div className="min-w-0 lg:col-start-1 lg:row-start-2">
-            <p className="max-w-3xl text-lg leading-relaxed text-ink-soft">{storeAbout(store)}</p>
-            {store.platforms.length > 0 || facts.length > 0 ? (
-              <div className="mt-6">
-                <h2 className="text-2xl text-ink">What they carry</h2>
-                {store.platforms.length > 0 ? (
-                  <ul className="mt-3 flex flex-wrap gap-2">
-                    {store.platforms.map((platform) => (
-                      <li key={platform} className="rounded-full bg-paper-deep px-3 py-1 text-sm font-semibold text-ink">
-                        {platform}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-                {facts.length > 0 ? (
-                  <ul className="mt-3 flex flex-wrap gap-2">
-                    {facts.map((fact) => (
-                      <li key={fact} className="rounded-full bg-pine-soft px-3 py-1 text-sm font-semibold text-pine">
-                        {fact}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-            ) : null}
-            <p className="mt-8 text-sm text-muted">
-              Something wrong on this page?{" "}
-              <Link className="link" href="/contact">
-                Send a correction
-              </Link>
-            </p>
-          </div>
         </div>
         {nearby.length > 0 ? (
-          <section className="mt-12">
-            <h2 className="text-2xl text-ink">Other stores in {store.city}</h2>
-            <ul className="mt-4 space-y-3">
+          <section className="mt-14">
+            <h2 className="text-4xl uppercase text-ink">Other stores in {store.city}</h2>
+            <ul className="mt-4">
               {nearby.map((item) => (
                 <li key={item.id}>
                   <StoreCard store={item} />

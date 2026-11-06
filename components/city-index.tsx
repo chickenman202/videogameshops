@@ -14,13 +14,13 @@ export function CityIndex({ cities }: { cities: CityItem[] }) {
   }, [cities, query]);
 
   return (
-    <section className="mt-8" aria-labelledby="cities-heading">
+    <section className="mt-10" aria-labelledby="cities-heading">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 id="cities-heading" className="text-2xl text-ink sm:text-3xl">
+          <h2 id="cities-heading" className="text-4xl uppercase text-ink sm:text-5xl">
             Cities
           </h2>
-          <p className="mt-1 text-sm text-muted">Pick a city to see its shops. The number is how many are listed.</p>
+          <p className="mt-2 text-sm text-muted">Pick a city. The number is how many shops are listed.</p>
         </div>
         {cities.length > 8 ? (
           <label className="block w-full sm:max-w-xs">
@@ -36,15 +36,12 @@ export function CityIndex({ cities }: { cities: CityItem[] }) {
         ) : null}
       </div>
       {shown.length > 0 ? (
-        <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-4 border-t border-ink">
           {shown.map((city) => (
-            <li key={city.href}>
-              <a
-                href={city.href}
-                className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-card px-3 py-2 hover:border-pine"
-              >
-                <span className="font-semibold text-ink">{city.name}</span>
-                <span className="shrink-0 text-sm text-muted">
+            <li key={city.href} className="border-b border-line">
+              <a href={city.href} className="flex min-h-12 items-baseline justify-between gap-3 py-2 hover:text-signal">
+                <span className="font-display text-2xl font-bold uppercase">{city.name}</span>
+                <span className="kicker text-muted">
                   {city.count.toLocaleString("en-US")}
                   <span className="sr-only"> stores</span>
                 </span>

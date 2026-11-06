@@ -4,7 +4,7 @@ import { absoluteUrl } from "@/lib/jsonld";
 import { BRAND } from "@/lib/site";
 
 const description =
-  "videogameshops lists physical video game stores in the United States, including hours, platforms, trade-ins, and how to correct a listing.";
+  "videogameshops lists physical video game shops near you, including hours, platforms, trade-ins, and how to correct a listing.";
 
 export const metadata: Metadata = {
   title: { absolute: `About | ${BRAND}` },
@@ -16,13 +16,13 @@ export default function AboutPage() {
   return (
     <ArticlePage
       title="About videogameshops"
-      lede="videogameshops is an independent directory of physical video game stores in the United States. It is not a game publisher, a chain, or a marketplace. A store page answers where the shop is, when it is open, and what you can buy or trade there."
+      lede="videogameshops is an independent directory of physical video game shops near you. It is not a game publisher, a chain, or a marketplace. A store page answers where the shop is, when it is open, and what you can buy or trade there."
     >
       <div className="article-body">
         <h2>What a listing includes</h2>
         <p>
-          Each public store shows the street address, city, state, ZIP when we have it, phone, website, and weekly
-          hours. It also shows the platforms the shop carries: PlayStation, Xbox, Nintendo, PC, handheld, retro, and
+          Each public store shows the street address, city, and region or country when we have them, plus phone, website,
+          and weekly hours. It also shows the platforms the shop carries: PlayStation, Xbox, Nintendo, PC, handheld, retro, and
           VR. New games, used games, trade-ins, and console repair are separate yes-or-no facts. Retro is one of the
           platform tags, used the same way on every page.
         </p>

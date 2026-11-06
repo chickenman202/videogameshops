@@ -1,18 +1,26 @@
 import type { Metadata } from "next";
-import { Fraunces, Source_Sans_3 } from "next/font/google";
+import { Barlow_Condensed, IBM_Plex_Mono, Newsreader } from "next/font/google";
 import { BRAND, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
-const sans = Source_Sans_3({
+const display = Barlow_Condensed({
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
-  variable: "--font-source",
+  weight: ["600", "700"],
+  variable: "--font-barlow",
   display: "swap",
 });
 
-const display = Fraunces({
+const serif = Newsreader({
   subsets: ["latin"],
-  variable: "--font-fraunces",
+  weight: ["400", "600"],
+  variable: "--font-newsreader",
+  display: "swap",
+});
+
+const mono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "600"],
+  variable: "--font-plex",
   display: "swap",
 });
 
@@ -23,13 +31,13 @@ export const metadata: Metadata = {
     template: `%s | ${BRAND}`,
   },
   description:
-    "Find physical video game stores in the United States. Compare hours, trade-ins, used games, retro stock, and which platforms each shop carries.",
+    "Find physical video game shops near you. Compare hours, trade-ins, used games, retro stock, and which platforms each shop carries.",
   robots: { index: true, follow: true },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${sans.variable} ${display.variable} h-full antialiased`}>
+    <html lang="en" className={`${display.variable} ${serif.variable} ${mono.variable} h-full antialiased`}>
       <body className="min-h-screen bg-background text-foreground">{children}</body>
     </html>
   );
