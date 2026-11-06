@@ -54,7 +54,7 @@ export default async function PlatformsPage() {
           <ul className="mt-8 border-t border-ink">
             {platforms.map((platform) => (
               <li key={platform.slug} className="border-b border-line">
-                <a href={platformPath(platform.slug)} className="block py-4 hover:text-signal">
+                <a href={platformPath(platform.slug)} className="block py-4 hover:text-blue">
                   <span className="font-display text-3xl font-bold uppercase text-ink">{platformHeading(platform.label)}</span>
                   <span className="mt-1 block text-sm text-muted">{notes[platform.slug]}</span>
                   <span className="mt-2 block kicker text-ink">

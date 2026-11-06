@@ -44,7 +44,7 @@ export function SiteFooter() {
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
           {groups.map((group) => (
             <div key={group.title}>
-              <p className="kicker text-signal">{group.title}</p>
+              <p className="kicker text-blue">{group.title}</p>
               <ul className="mt-3 space-y-2">
                 {group.links.map((link) => (
                   <li key={link.href}>

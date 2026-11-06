@@ -28,7 +28,7 @@ export function StoreCard({
           />
         ) : (
           <div className="border-b border-ink bg-stage px-4 py-10 text-paper sm:py-14">
-            <p className="kicker text-signal">{place.line || place.country || "Shop"}</p>
+            <p className="kicker text-blue">{place.line || place.country || "Shop"}</p>
             <p className="mt-3 max-w-4xl font-display text-5xl font-bold uppercase leading-[0.88] break-words sm:text-7xl">
               {store.name}
             </p>

@@ -2,13 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageShell } from "@/components/page-shell";
 import { PreviewNote } from "@/components/preview-note";
-import { SearchForm } from "@/components/search-form";
-import { StoreCard } from "@/components/store-card";
 import { loadCatalog } from "@/lib/catalog";
 import { FIXTURE_SHOPS } from "@/lib/fixture-shops";
 import { homeJsonLd, JsonLd } from "@/lib/jsonld";
+import { storePath } from "@/lib/paths";
 import { BRAND, SITE_URL } from "@/lib/site";
-import { shopCountryName, type ShopView } from "@/lib/shop-view";
+import { shopCountryName, shopLocation, type ShopView } from "@/lib/shop-view";
 import { US_STATES } from "@/lib/states";
 
 const description =
@@ -34,7 +33,6 @@ export default async function HomePage() {
   const preview = catalog.ok && catalog.stores.length === 0;
   const shops = catalog.ok ? (preview ? FIXTURE_SHOPS : catalog.stores) : [];
   const featured = shops.find((store) => store.photo) ?? shops[0];
-  const rest = featured ? shops.filter((store) => store.id !== featured.id) : [];
   const states = US_STATES.map((state) => ({
     ...state,
     count: shops.filter((store) => store.stateSlug === state.slug).length,
@@ -46,62 +44,101 @@ export default async function HomePage() {
   return (
     <PageShell>
       <JsonLd data={homeJsonLd()} />
-      <section className="bg-stage text-paper">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:py-20">
-          <p className="kicker text-signal">Near you</p>
-          <h1 className="mt-4 max-w-5xl text-6xl uppercase leading-[0.84] text-paper sm:text-8xl">
-            Video game stores you can walk into
-          </h1>
-          <p className="mt-6 max-w-xl text-xl leading-relaxed text-paper/80">
+      <section className="overflow-hidden border-b border-silver bg-white">
+        <div className="mx-auto grid max-w-6xl items-end gap-6 px-4 pt-8 lg:grid-cols-12">
+          <div className="relative z-10 lg:col-span-7">
+            <p className="kicker text-blue">Worldwide index</p>
+            <h1 className="mt-2 font-display text-[22vw] leading-[0.76] font-bold uppercase text-ink sm:text-8xl lg:text-[7.4rem]">
+              Video
+              <br />
+              game
+              <br />
+              shops
+            </h1>
+          </div>
+          {featured?.photo ? (
+            <figure className="relative z-20 -mt-10 border-8 border-white bg-silver lg:col-span-5 lg:-ml-28 lg:mt-8">
+              <img
+                src={featured.photo}
+                alt=""
+                width={960}
+                height={720}
+                className="aspect-[4/3] w-full object-cover"
+              />
+              <figcaption className="bg-blue px-3 py-2 font-mono text-xs uppercase tracking-wide text-white">
+                {featured.name}
+                {shopLocation(featured).line ? ` · ${shopLocation(featured).line}` : ""}
+              </figcaption>
+            </figure>
+          ) : null}
+        </div>
+        <div className="mx-auto max-w-6xl px-4 pt-6 pb-10">
+          <p className="max-w-xl text-lg leading-relaxed text-ink-soft">
             A worldwide guide to physical shops. Address, hours, and what they carry, when a listing actually has them.
           </p>
           {shops.length > 0 ? (
-            <p className="mt-4 kicker text-paper">
+            <p className="mt-3 kicker text-muted">
               {preview
                 ? `${shops.length.toLocaleString("en-US")} shops in this preview`
                 : `${shops.length.toLocaleString("en-US")} shops`}
             </p>
           ) : null}
-          {preview ? <PreviewNote onDark /> : null}
-          <div className="mt-8 max-w-2xl">
-            <SearchForm onDark label="Find a shop" hint="City, country, or shop name." />
-          </div>
+          {preview ? <PreviewNote /> : null}
+          <ol className="mt-8 border-t-2 border-ink">
+            <li className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-3 border-b border-silver py-4">
+              <span className="pt-3 font-mono text-sm text-blue">00</span>
+              <form action="/directory" method="get" role="search">
+                <label htmlFor="home-lookup" className="kicker text-ink">
+                  Look up a shop
+                </label>
+                <p id="home-lookup-hint" className="mt-1 text-sm text-muted">
+                  City, country, or shop name.
+                </p>
+                <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                  <input
+                    id="home-lookup"
+                    name="q"
+                    placeholder="City, country, or shop name"
+                    autoComplete="off"
+                    aria-describedby="home-lookup-hint"
+                    className="field min-w-0 flex-1"
+                  />
+                  <button type="submit" className="btn btn-primary w-full sm:w-auto">
+                    Search
+                  </button>
+                </div>
+              </form>
+            </li>
+            {shops.slice(0, 6).map((store, index) => {
+              const place = shopLocation(store);
+              return (
+                <li key={store.id} className="border-b border-silver">
+                  <Link
+                    href={storePath(store.slug)}
+                    className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-3 py-4 hover:bg-background"
+                  >
+                    <span className="font-mono text-sm text-blue">{String(index + 1).padStart(2, "0")}</span>
+                    <span className="min-w-0">
+                      <span className="block font-display text-3xl leading-[0.95] font-bold uppercase break-words text-ink">
+                        {store.name}
+                      </span>
+                      {place.line || place.country ? (
+                        <span className="mt-1 block font-mono text-xs uppercase tracking-wide text-muted">
+                          {[place.line, place.country].filter(Boolean).join(" · ")}
+                        </span>
+                      ) : null}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ol>
+          <p className="mt-4">
+            <Link href="/directory" className="link">
+              All stores
+            </Link>
+          </p>
         </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
-        <h2 className="text-4xl uppercase text-ink sm:text-5xl">Places</h2>
-        {featured ? (
-          <div className="mt-6">
-            <StoreCard store={featured} scale="feature" priority />
-            {rest.length > 0 ? (
-              <ul className="mt-2">
-                {rest.map((store) => (
-                  <li key={store.id}>
-                    <StoreCard store={store} scale={store.photo ? "photo" : "row"} />
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            <p className="mt-6">
-              <Link href="/directory" className="link">
-                All stores
-              </Link>
-            </p>
-          </div>
-        ) : (
-          <div className="mt-6 border-t border-ink py-8">
-            <p className="max-w-xl text-lg text-ink-soft">No shops are connected yet.</p>
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-              <Link href="/directory" className="btn btn-primary">
-                All stores
-              </Link>
-              <Link href="/submit" className="btn btn-ghost">
-                Submit a store
-              </Link>
-            </div>
-          </div>
-        )}
       </section>
 
       <section className="mx-auto max-w-6xl px-4 pb-12">
@@ -116,7 +153,7 @@ export default async function HomePage() {
                     <li key={state.slug} className="border-b border-line">
                       <Link
                         href={`/directory/${state.slug}`}
-                        className="flex min-h-12 items-baseline justify-between gap-3 py-2 hover:text-signal"
+                        className="flex min-h-12 items-baseline justify-between gap-3 py-2 hover:text-blue"
                       >
                         <span className="font-display text-2xl font-bold uppercase">{state.name}</span>
                         <span className="kicker text-muted">{state.count.toLocaleString("en-US")}</span>
@@ -139,7 +176,7 @@ export default async function HomePage() {
                     <li key={country.name} className="border-b border-line">
                       <Link
                         href={`/directory?q=${encodeURIComponent(country.name)}`}
-                        className="flex min-h-12 items-baseline justify-between gap-3 py-2 hover:text-signal"
+                        className="flex min-h-12 items-baseline justify-between gap-3 py-2 hover:text-blue"
                       >
                         <span className="font-display text-2xl font-bold uppercase">{country.name}</span>
                         <span className="kicker text-muted">{country.count.toLocaleString("en-US")}</span>
@@ -165,13 +202,16 @@ export default async function HomePage() {
         )}
       </section>
 
-      <section className="bg-stage text-paper">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
-          <h2 className="max-w-xl text-5xl uppercase">Own a shop?</h2>
-          <p className="mt-4 max-w-xl text-lg leading-relaxed text-paper/80">
-            Send the address, hours, and platforms. A person checks the note before it goes on the public site.
-          </p>
-          <Link href="/submit" className="btn btn-light mt-6">
+      <section className="border-t border-silver bg-white">
+        <div className="mx-auto grid max-w-6xl gap-4 px-4 py-10 sm:grid-cols-[8rem_minmax(0,1fr)_auto] sm:items-center">
+          <p className="font-mono text-sm text-blue">ADD</p>
+          <div>
+            <h2 className="text-4xl uppercase text-ink">Own a shop?</h2>
+            <p className="mt-2 max-w-xl text-ink-soft">
+              Send the address, hours, and platforms. A person checks the note before it goes on the public site.
+            </p>
+          </div>
+          <Link href="/submit" className="btn btn-primary w-full sm:w-auto">
             Submit a store
           </Link>
         </div>

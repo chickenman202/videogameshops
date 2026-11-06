@@ -167,7 +167,7 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
           />
         ) : null}
         <header className="mt-6 max-w-4xl border-t-2 border-ink pt-4">
-          <p className="kicker text-signal">{eyebrow || "Shop"}</p>
+          <p className="kicker text-blue">{eyebrow || "Shop"}</p>
           <h1 className="mt-3 text-5xl uppercase break-words text-ink sm:text-7xl">{store.name}</h1>
         </header>
         <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">

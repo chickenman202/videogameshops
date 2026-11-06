@@ -64,7 +64,7 @@ export async function DirectoryScreen({ listing }: { listing: ListingOk }) {
       <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
         <Breadcrumbs crumbs={listing.crumbs} />
         <header className="mt-6 max-w-4xl">
-          <p className="kicker text-signal">Directory</p>
+          <p className="kicker text-blue">Directory</p>
           <h1 className="mt-3 text-5xl uppercase text-ink sm:text-7xl">{listing.h1}</h1>
           {preview || total > 0 ? <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink-soft">{intro}</p> : null}
           {preview ? <PreviewNote /> : null}
