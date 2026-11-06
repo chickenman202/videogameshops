@@ -32,7 +32,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-30 border-b border-white/15 bg-stage text-paper">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
         <Link href="/" className="flex min-w-0 items-center gap-2">
-          <Mark className="size-7 shrink-0" />
+          <Mark className="size-8 shrink-0" />
           <span className="truncate font-display text-2xl font-bold uppercase tracking-tight">videogameshops</span>
         </Link>
         <nav aria-label="Main" className="hidden items-center gap-5 lg:flex">

@@ -34,6 +34,13 @@ export const metadata: Metadata = {
   description:
     "A worldwide guide to physical shops. Address, hours, and what they carry, when a listing actually has them.",
   robots: { index: true, follow: true },
+  icons: {
+    icon: [
+      { url: "/logo.svg", type: "image/svg+xml" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

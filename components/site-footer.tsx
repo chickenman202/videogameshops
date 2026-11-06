@@ -34,7 +34,7 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.6fr)]">
         <div>
           <Link href="/" className="inline-flex items-center gap-2">
-            <Mark className="size-7" />
+            <Mark className="size-8 shrink-0" />
             <span className="font-display text-2xl font-bold uppercase">videogameshops</span>
           </Link>
           <p className="mt-4 max-w-sm font-serif text-base leading-relaxed text-paper/80">
