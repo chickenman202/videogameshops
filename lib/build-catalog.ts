@@ -1,5 +1,6 @@
 import { parseCsv } from "./csv";
-import { countStoresByCountry } from "./countries";
+import { toCatalogStore } from "./catalog";
+import { countStoresByCountry } from "./country-browse";
 import {
   dedupeDrafts,
   draftFromCsv,
@@ -44,9 +45,14 @@ export function catalogReport(csvRows: number, mergedGroups: number, dropped: nu
   const countries = countStoresByCountry(
     rows.map((row) => ({ country: row.country ?? "", countryName: row.country_name ?? "" })),
   );
+  const published = rows.map((row) => toCatalogStore(row)).filter((store) => store !== null);
+  const indexable = published.filter((store) => store.indexable).length;
   return {
     csv_rows: csvRows,
     listings: rows.length,
+    public_listings: published.length,
+    indexable_listings: indexable,
+    noindex_listings: published.length - indexable,
     merged_twin_groups: mergedGroups,
     dropped_blank_names: dropped,
     rows_folded_by_dedupe: csvRows - rows.length - dropped,

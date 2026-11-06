@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { redirectCountryAlias } from "@/lib/country-route";
 import { filtersFromRecord, hrefWithFilters } from "@/lib/filters";
 import { directoryMetadata, directoryPage, pathPage } from "@/lib/listing-page";
 import { countryPath } from "@/lib/paths";
@@ -16,6 +17,7 @@ export async function generateMetadata(
   const page = pathPage(pageNumber);
   if (!page) notFound();
   const searchParams = (await props.searchParams) as Search;
+  redirectCountryAlias({ countrySlug, page, searchParams });
   return directoryMetadata({ page, countrySlug, searchParams });
 }
 
@@ -26,6 +28,7 @@ export default async function CountryNumberPage(
   const page = pathPage(pageNumber);
   if (!page) notFound();
   const searchParams = (await props.searchParams) as Search;
+  redirectCountryAlias({ countrySlug, page, searchParams });
   if (page === 1) redirect(hrefWithFilters(countryPath(countrySlug), filtersFromRecord(searchParams)));
   return directoryPage({ page, countrySlug, searchParams });
 }

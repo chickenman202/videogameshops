@@ -9,7 +9,8 @@ import { createClient } from "@supabase/supabase-js";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { buildCatalog, catalogReport, existingFromRows, nearMisses } from "../lib/build-catalog";
-import { reviewNearMisses } from "../lib/near-miss-review";
+import { NEAR_MISS_RULE, reviewNearMisses } from "../lib/near-miss-review";
+import { toCatalogStore } from "../lib/catalog";
 import { parseCsv } from "../lib/csv";
 import type { Database } from "../lib/database.types";
 import { draftFromCsv, type ExistingStore, type StoreRow, type WikidataFill } from "../lib/shop-record";
@@ -23,6 +24,7 @@ const fillsPath = path.join(root, "data", "wikidata-fills.json");
 async function main() {
   loadEnvFile(path.join(root, ".env.local"));
   loadEnvFile(path.join(root, ".env"));
+  const supabaseMode = supabaseEnvMode();
 
   const csvText = readFileSync(csvPath, "utf8");
   const fills = JSON.parse(readFileSync(fillsPath, "utf8")) as Record<string, WikidataFill>;
@@ -30,19 +32,20 @@ async function main() {
     ? existingFromRows(JSON.parse(readFileSync(jsonPath, "utf8")) as StoreRow[])
     : [];
 
-  const database = await loadDatabaseRows();
+  const database = supabaseMode === "ready" ? await loadDatabaseRows() : { configured: false, client: null, existing: [] };
   const built = buildCatalog(csvText, fills, [...previous, ...database.existing]);
   const drafts = parseCsv(csvText)
     .map((record) => draftFromCsv(record, fills))
     .filter((shop) => shop.name && shop.source && shop.sourceId);
   const report = {
     ...catalogReport(built.csvRows, built.mergedGroups, built.dropped, built.rows),
+    near_miss_rule: NEAR_MISS_RULE,
     near_misses_within_40m: nearMisses(drafts),
     near_miss_decisions: reviewNearMisses(built.rows),
     supabase: database.configured ? "upserted" : "skipped_no_service_role",
   };
 
-  writeFileSync(jsonPath, `${JSON.stringify(built.rows)}\n`);
+  writeFileSync(jsonPath, `${JSON.stringify(built.rows.map(publishedShop))}\n`);
   writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`);
 
   if (database.client) {
@@ -56,7 +59,39 @@ async function main() {
   );
 }
 
-void main();
+void main().catch((error: unknown) => {
+  const message = error instanceof Error ? error.message : "Import failed.";
+  console.error(message);
+  process.exitCode = 1;
+});
+
+/**
+ * Both Supabase variables are required once either one is set.
+ * A missing partner is a failed import, not a quiet skip.
+ * When neither is set, the JSON catalog is still written.
+ */
+function supabaseEnvMode(): "ready" | "skip" {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() ?? "";
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ?? "";
+  if (url && key) return "ready";
+  if (!url && !key) return "skip";
+  const missing = url ? "SUPABASE_SERVICE_ROLE_KEY" : "NEXT_PUBLIC_SUPABASE_URL";
+  throw new Error(
+    `Cannot import into Supabase because ${missing} is missing. Set both NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY, or unset both to write only data/stores.json.`,
+  );
+}
+
+/** Fields the directory and the SEO pages read. Values come from the row, not from a guess. */
+function publishedShop(row: StoreRow) {
+  const store = toCatalogStore(row);
+  return {
+    ...row,
+    country_code: store?.countryCode ?? "",
+    country_slug: store?.countrySlug ?? "",
+    region_slug: store?.regionSlug ?? "",
+    indexable: store?.indexable ?? false,
+  };
+}
 
 function loadEnvFile(file: string) {
   if (!existsSync(file)) return;
@@ -95,9 +130,9 @@ async function loadDatabaseRows(): Promise<{
       .order("id", { ascending: true })
       .range(from, from + 999);
     if (error) {
-      console.error(`Supabase read failed: ${error.message}`);
-      console.error("The JSON catalog was still written. Apply supabase/migrations before importing to the database.");
-      return { configured: false, client: null, existing: [] };
+      throw new Error(
+        `Supabase read failed: ${error.message}. Apply supabase/migrations/0001_stores.sql and supabase/migrations/0002_store_import_fields.sql, then run npm run import:shops again.`,
+      );
     }
     for (const row of data ?? []) {
       existing.push({

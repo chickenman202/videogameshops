@@ -1,6 +1,9 @@
 {
   "csv_rows": 6732,
   "listings": 6704,
+  "public_listings": 6704,
+  "indexable_listings": 4539,
+  "noindex_listings": 2165,
   "merged_twin_groups": 28,
   "dropped_blank_names": 0,
   "rows_folded_by_dedupe": 28,
@@ -128,6 +131,7 @@
   "opening_hours_left_as_text": 184,
   "platforms_filled": 0,
   "sells_new": 0,
+  "near_miss_rule": "Merge a nearby pair only when the two rows are the same shop. Same street number plus a matching name or initials counts, as with CGR Games and Classic Games Revisited at 46 East State Street in Doylestown. Different names, different websites, or neighboring street numbers stay separate. The other eight pairs within 40 meters stay two listings.",
   "near_misses_within_40m": [
     "20m gameroute:FunTrade / osm:GameStop (Billings US)",
     "4m osm:Backlight Gamez / gameroute:Revival Games (Idaho Falls US)",

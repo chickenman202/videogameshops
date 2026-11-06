@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageShell } from "@/components/page-shell";
 import { loadCatalog } from "@/lib/catalog";
-import { countStoresByCountry } from "@/lib/countries";
+import { countStoresByCountry } from "@/lib/country-browse";
 import { LoadError } from "@/components/load-error";
 import { absoluteUrl } from "@/lib/jsonld";
 import { toMetaDescription, toTitle } from "@/lib/copy";

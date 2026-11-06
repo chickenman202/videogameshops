@@ -6,7 +6,8 @@ import { displayHours, WEEKDAYS } from "@/lib/hours";
 import { readableShopInfo } from "@/lib/shop-details";
 import { getPlatformByLabel, type PlatformLabel } from "@/lib/platforms";
 import { sourceLabel } from "@/lib/place";
-import { slugify, storeSlug } from "@/lib/slug";
+import { normalizeCountry } from "@/lib/countries";
+import { slugify, stableSlug, storeSlug } from "@/lib/slug";
 import { usStateFor } from "@/lib/regions";
 import { createReadClient } from "@/lib/supabase";
 
@@ -23,8 +24,20 @@ export type CatalogStore = {
   stateSlug: string;
   stateAbbr: string;
   zip: string | null;
+  /** ISO 3166-1 alpha-2, uppercase. Same value as `country`. */
+  countryCode: string;
   country: string;
+  /** Country name already stored on the row. Used in titles, not in the URL. */
   countryName: string;
+  /** Lowercase ISO code, such as "fr" or "us". This is the country URL. */
+  countrySlug: string;
+  /** Region URL piece. US states use the state slug. Blank when the row has no region. */
+  regionSlug: string;
+  /**
+   * True when the shop has a street, a phone, or a website.
+   * Thin shops stay in the catalog but are noindex and left out of the sitemap.
+   */
+  indexable: boolean;
   phone: string | null;
   website: string | null;
   about: string | null;
@@ -79,6 +92,15 @@ function httpList(value: string | null | undefined): string[] {
     .filter((item) => /^https?:\/\//i.test(item));
 }
 
+/** A shop can be indexed once it has a street, a phone, or a website. City alone is not enough. */
+export function shopIsIndexable(input: {
+  address?: string | null;
+  phone?: string | null;
+  website?: string | null;
+}): boolean {
+  return Boolean(input.address?.trim() || input.phone?.trim() || input.website?.trim());
+}
+
 /**
  * Every named shop stays in the list, including shops outside the US
  * and shops with no street address. Platforms stay empty unless the row
@@ -87,10 +109,13 @@ function httpList(value: string | null | undefined): string[] {
 export function toCatalogStore(row: StoreRow): CatalogStore | null {
   const name = row.name?.trim() ?? "";
   if (!name) return null;
-  const country = row.country?.trim().toUpperCase() ?? "";
+  const storedCountry = row.country?.trim() ?? "";
+  const normalized = normalizeCountry(storedCountry);
+  const country = normalized.code || storedCountry.toUpperCase();
   const city = row.city?.trim() ?? "";
   const region = row.state?.trim() ?? "";
-  const us = usStateFor(country, region);
+  const us = country === "US" ? usStateFor(country, region) : null;
+  const regionSlug = us?.slug || (region ? stableSlug(region) : "");
   const slug =
     row.slug?.trim() ||
     storeSlug(name, city, us?.abbreviation || country || "shop") ||
@@ -114,13 +139,21 @@ export function toCatalogStore(row: StoreRow): CatalogStore | null {
     name,
     address: row.address?.trim() ?? "",
     city,
-    citySlug: row.city_slug?.trim() || slugify(city),
+    citySlug: row.city_slug?.trim() || (city ? stableSlug(city) : ""),
     state: us?.name || region,
     stateSlug: us?.slug ?? "",
+    regionSlug,
     stateAbbr: us?.abbreviation ?? "",
     zip: row.zip_code?.trim() || null,
+    countryCode: country,
     country,
-    countryName: row.country_name?.trim() || "",
+    countryName: row.country_name?.trim() || normalized.name,
+    countrySlug: normalized.slug,
+    indexable: shopIsIndexable({
+      address: row.address,
+      phone: row.phone,
+      website: row.website,
+    }),
     phone: row.phone?.trim() || null,
     website: row.website?.trim() || null,
     about,

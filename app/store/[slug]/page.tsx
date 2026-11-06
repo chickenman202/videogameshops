@@ -4,7 +4,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { LoadError } from "@/components/load-error";
 import { PageShell } from "@/components/page-shell";
 import { loadCatalog, type CatalogStore } from "@/lib/catalog";
-import { countryBrowse } from "@/lib/countries";
+import { countryBrowse } from "@/lib/country-browse";
 import { storeTitle, toMetaDescription } from "@/lib/copy";
 import { WEEKDAYS } from "@/lib/hours";
 import { absoluteUrl, breadcrumbJsonLd, JsonLd, storeCrumbs, storeJsonLd } from "@/lib/jsonld";
@@ -73,7 +73,7 @@ export async function generateMetadata(props: PageProps<"/store/[slug]">): Promi
     title: { absolute: title },
     description,
     alternates: { canonical: absoluteUrl(storePath(store.slug)) },
-    robots: { index: true, follow: true },
+    robots: { index: store.indexable, follow: true },
     openGraph: {
       title,
       description,

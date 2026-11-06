@@ -1,124 +1,450 @@
-import { countryPath, countryRegionPath, statePath } from "@/lib/paths";
 import { slugify } from "@/lib/slug";
-import { MIN_CITY_STORES } from "@/lib/site";
-import { getStateBySlug } from "@/lib/states";
 
-export type CountryCount = {
+/**
+ * A country the directory knows by its two-letter code.
+ * Shop rows store a country string. This file only translates that string.
+ * It does not invent shops.
+ */
+export type Country = {
   code: string;
-  name: string;
-  count: number;
-};
-
-export type CountryEntry = CountryCount & { slug: string };
-
-export type RegionLink = {
-  name: string;
   slug: string;
-  count: number;
-  href: string;
+  name: string;
+  known: boolean;
 };
 
-type PlaceStore = {
-  country: string;
-  countryName: string;
-  state: string;
-  stateSlug: string;
+/**
+ * ISO 3166-1 alpha-2 codes and the English short name used on country pages.
+ * A code in this list is shown by that name. A code that is not here stays as written.
+ */
+const NAMES: Record<string, string> = {
+  AD: "Andorra",
+  AE: "United Arab Emirates",
+  AF: "Afghanistan",
+  AG: "Antigua and Barbuda",
+  AI: "Anguilla",
+  AL: "Albania",
+  AM: "Armenia",
+  AO: "Angola",
+  AQ: "Antarctica",
+  AR: "Argentina",
+  AS: "American Samoa",
+  AT: "Austria",
+  AU: "Australia",
+  AW: "Aruba",
+  AX: "Åland Islands",
+  AZ: "Azerbaijan",
+  BA: "Bosnia and Herzegovina",
+  BB: "Barbados",
+  BD: "Bangladesh",
+  BE: "Belgium",
+  BF: "Burkina Faso",
+  BG: "Bulgaria",
+  BH: "Bahrain",
+  BI: "Burundi",
+  BJ: "Benin",
+  BL: "Saint Barthélemy",
+  BM: "Bermuda",
+  BN: "Brunei",
+  BO: "Bolivia",
+  BQ: "Caribbean Netherlands",
+  BR: "Brazil",
+  BS: "Bahamas",
+  BT: "Bhutan",
+  BV: "Bouvet Island",
+  BW: "Botswana",
+  BY: "Belarus",
+  BZ: "Belize",
+  CA: "Canada",
+  CC: "Cocos (Keeling) Islands",
+  CD: "Congo (Democratic Republic)",
+  CF: "Central African Republic",
+  CG: "Congo",
+  CH: "Switzerland",
+  CI: "Côte d'Ivoire",
+  CK: "Cook Islands",
+  CL: "Chile",
+  CM: "Cameroon",
+  CN: "China",
+  CO: "Colombia",
+  CR: "Costa Rica",
+  CU: "Cuba",
+  CV: "Cabo Verde",
+  CW: "Curaçao",
+  CX: "Christmas Island",
+  CY: "Cyprus",
+  CZ: "Czechia",
+  DE: "Germany",
+  DJ: "Djibouti",
+  DK: "Denmark",
+  DM: "Dominica",
+  DO: "Dominican Republic",
+  DZ: "Algeria",
+  EC: "Ecuador",
+  EE: "Estonia",
+  EG: "Egypt",
+  EH: "Western Sahara",
+  ER: "Eritrea",
+  ES: "Spain",
+  ET: "Ethiopia",
+  FI: "Finland",
+  FJ: "Fiji",
+  FK: "Falkland Islands",
+  FM: "Micronesia",
+  FO: "Faroe Islands",
+  FR: "France",
+  GA: "Gabon",
+  GB: "United Kingdom",
+  GD: "Grenada",
+  GE: "Georgia",
+  GF: "French Guiana",
+  GG: "Guernsey",
+  GH: "Ghana",
+  GI: "Gibraltar",
+  GL: "Greenland",
+  GM: "Gambia",
+  GN: "Guinea",
+  GP: "Guadeloupe",
+  GQ: "Equatorial Guinea",
+  GR: "Greece",
+  GS: "South Georgia and the South Sandwich Islands",
+  GT: "Guatemala",
+  GU: "Guam",
+  GW: "Guinea-Bissau",
+  GY: "Guyana",
+  HK: "Hong Kong",
+  HM: "Heard Island and McDonald Islands",
+  HN: "Honduras",
+  HR: "Croatia",
+  HT: "Haiti",
+  HU: "Hungary",
+  ID: "Indonesia",
+  IE: "Ireland",
+  IL: "Israel",
+  IM: "Isle of Man",
+  IN: "India",
+  IO: "British Indian Ocean Territory",
+  IQ: "Iraq",
+  IR: "Iran",
+  IS: "Iceland",
+  IT: "Italy",
+  JE: "Jersey",
+  JM: "Jamaica",
+  JO: "Jordan",
+  JP: "Japan",
+  KE: "Kenya",
+  KG: "Kyrgyzstan",
+  KH: "Cambodia",
+  KI: "Kiribati",
+  KM: "Comoros",
+  KN: "Saint Kitts and Nevis",
+  KP: "North Korea",
+  KR: "South Korea",
+  KW: "Kuwait",
+  KY: "Cayman Islands",
+  KZ: "Kazakhstan",
+  LA: "Laos",
+  LB: "Lebanon",
+  LC: "Saint Lucia",
+  LI: "Liechtenstein",
+  LK: "Sri Lanka",
+  LR: "Liberia",
+  LS: "Lesotho",
+  LT: "Lithuania",
+  LU: "Luxembourg",
+  LV: "Latvia",
+  LY: "Libya",
+  MA: "Morocco",
+  MC: "Monaco",
+  MD: "Moldova",
+  ME: "Montenegro",
+  MF: "Saint Martin",
+  MG: "Madagascar",
+  MH: "Marshall Islands",
+  MK: "North Macedonia",
+  ML: "Mali",
+  MM: "Myanmar",
+  MN: "Mongolia",
+  MO: "Macao",
+  MP: "Northern Mariana Islands",
+  MQ: "Martinique",
+  MR: "Mauritania",
+  MS: "Montserrat",
+  MT: "Malta",
+  MU: "Mauritius",
+  MV: "Maldives",
+  MW: "Malawi",
+  MX: "Mexico",
+  MY: "Malaysia",
+  MZ: "Mozambique",
+  NA: "Namibia",
+  NC: "New Caledonia",
+  NE: "Niger",
+  NF: "Norfolk Island",
+  NG: "Nigeria",
+  NI: "Nicaragua",
+  NL: "Netherlands",
+  NO: "Norway",
+  NP: "Nepal",
+  NR: "Nauru",
+  NU: "Niue",
+  NZ: "New Zealand",
+  OM: "Oman",
+  PA: "Panama",
+  PE: "Peru",
+  PF: "French Polynesia",
+  PG: "Papua New Guinea",
+  PH: "Philippines",
+  PK: "Pakistan",
+  PL: "Poland",
+  PM: "Saint Pierre and Miquelon",
+  PN: "Pitcairn",
+  PR: "Puerto Rico",
+  PS: "Palestine",
+  PT: "Portugal",
+  PW: "Palau",
+  PY: "Paraguay",
+  QA: "Qatar",
+  RE: "Réunion",
+  RO: "Romania",
+  RS: "Serbia",
+  RU: "Russia",
+  RW: "Rwanda",
+  SA: "Saudi Arabia",
+  SB: "Solomon Islands",
+  SC: "Seychelles",
+  SD: "Sudan",
+  SE: "Sweden",
+  SG: "Singapore",
+  SH: "Saint Helena, Ascension and Tristan da Cunha",
+  SI: "Slovenia",
+  SJ: "Svalbard and Jan Mayen",
+  SK: "Slovakia",
+  SL: "Sierra Leone",
+  SM: "San Marino",
+  SN: "Senegal",
+  SO: "Somalia",
+  SR: "Suriname",
+  SS: "South Sudan",
+  ST: "Sao Tome and Principe",
+  SV: "El Salvador",
+  SX: "Sint Maarten",
+  SY: "Syria",
+  SZ: "Eswatini",
+  TC: "Turks and Caicos Islands",
+  TD: "Chad",
+  TF: "French Southern Territories",
+  TG: "Togo",
+  TH: "Thailand",
+  TJ: "Tajikistan",
+  TK: "Tokelau",
+  TL: "Timor-Leste",
+  TM: "Turkmenistan",
+  TN: "Tunisia",
+  TO: "Tonga",
+  TR: "Türkiye",
+  TT: "Trinidad and Tobago",
+  TV: "Tuvalu",
+  TW: "Taiwan",
+  TZ: "Tanzania",
+  UA: "Ukraine",
+  UG: "Uganda",
+  UM: "United States Minor Outlying Islands",
+  US: "United States",
+  UY: "Uruguay",
+  UZ: "Uzbekistan",
+  VA: "Vatican City",
+  VC: "Saint Vincent and the Grenadines",
+  VE: "Venezuela",
+  VG: "British Virgin Islands",
+  VI: "U.S. Virgin Islands",
+  VN: "Vietnam",
+  VU: "Vanuatu",
+  WF: "Wallis and Futuna",
+  WS: "Samoa",
+  YE: "Yemen",
+  YT: "Mayotte",
+  ZA: "South Africa",
+  ZM: "Zambia",
+  ZW: "Zimbabwe",
 };
 
-/** Turn a country or region name into a URL piece. Accents are folded, not translated. */
-export function placeSlug(value: string): string {
-  const folded = value.normalize("NFKD").replace(/\p{M}/gu, "");
-  return slugify(folded);
+/** Extra spellings people store in the country column. Values are two-letter codes. */
+const EXTRA_ALIASES: Record<string, string> = {
+  usa: "US",
+  "u.s.": "US",
+  "u.s.a.": "US",
+  "united states": "US",
+  "united states of america": "US",
+  america: "US",
+  uk: "GB",
+  "u.k.": "GB",
+  "great britain": "GB",
+  britain: "GB",
+  england: "GB",
+  scotland: "GB",
+  wales: "GB",
+  "northern ireland": "GB",
+  "united kingdom": "GB",
+  gbr: "GB",
+  fra: "FR",
+  france: "FR",
+  can: "CA",
+  canada: "CA",
+  ita: "IT",
+  italy: "IT",
+  esp: "ES",
+  spain: "ES",
+  aus: "AU",
+  australia: "AU",
+  jpn: "JP",
+  japan: "JP",
+  deu: "DE",
+  germany: "DE",
+  deutschland: "DE",
+  mex: "MX",
+  mexico: "MX",
+  bra: "BR",
+  brazil: "BR",
+  nld: "NL",
+  netherlands: "NL",
+  holland: "NL",
+  bel: "BE",
+  belgium: "BE",
+  che: "CH",
+  switzerland: "CH",
+  aut: "AT",
+  austria: "AT",
+  swe: "SE",
+  sweden: "SE",
+  nor: "NO",
+  norway: "NO",
+  dnk: "DK",
+  denmark: "DK",
+  fin: "FI",
+  finland: "FI",
+  pol: "PL",
+  poland: "PL",
+  cze: "CZ",
+  czechia: "CZ",
+  "czech republic": "CZ",
+  prt: "PT",
+  portugal: "PT",
+  irl: "IE",
+  ireland: "IE",
+  nzl: "NZ",
+  "new zealand": "NZ",
+  kor: "KR",
+  korea: "KR",
+  "south korea": "KR",
+  "republic of korea": "KR",
+  chn: "CN",
+  china: "CN",
+  twn: "TW",
+  taiwan: "TW",
+  hkg: "HK",
+  "hong kong": "HK",
+  sgp: "SG",
+  singapore: "SG",
+  ind: "IN",
+  india: "IN",
+  zaf: "ZA",
+  "south africa": "ZA",
+  are: "AE",
+  uae: "AE",
+  "united arab emirates": "AE",
+  geo: "GE",
+  georgia: "GE",
+  irn: "IR",
+  iran: "IR",
+  "islamic republic of iran": "IR",
+  civ: "CI",
+  "cote d'ivoire": "CI",
+  "côte d'ivoire": "CI",
+  "ivory coast": "CI",
+  tza: "TZ",
+  tanzania: "TZ",
+  "united republic of tanzania": "TZ",
+  irq: "IQ",
+  iraq: "IQ",
+  pak: "PK",
+  pakistan: "PK",
+  rus: "RU",
+  russia: "RU",
+  "russian federation": "RU",
+  tur: "TR",
+  turkey: "TR",
+  türkiye: "TR",
+  "north korea": "KP",
+  "cape verde": "CV",
+  "cabo verde": "CV",
+  swaziland: "SZ",
+  eswatini: "SZ",
+  macedonia: "MK",
+  "north macedonia": "MK",
+};
+
+const ALIASES = new Map<string, string>();
+for (const code of Object.keys(NAMES)) {
+  ALIASES.set(code.toLowerCase(), code);
+  ALIASES.set(NAMES[code]!.toLowerCase(), code);
+}
+for (const [alias, code] of Object.entries(EXTRA_ALIASES)) {
+  ALIASES.set(alias, code);
 }
 
-/** How many shops are in each country. The name is the one already on the rows. */
-export function countStoresByCountry(stores: { country: string; countryName: string }[]): CountryCount[] {
-  const groups = new Map<string, CountryCount>();
-  for (const store of stores) {
-    const code = store.country.trim().toUpperCase();
-    const named = store.countryName.trim();
-    const current = groups.get(code);
-    if (!current) {
-      groups.set(code, { code, name: named, count: 1 });
-    } else {
-      current.count += 1;
-      if (!current.name && named) current.name = named;
-    }
-  }
-  return [...groups.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "en"));
+function knownCountry(code: string): Country {
+  return {
+    code,
+    slug: code.toLowerCase(),
+    name: NAMES[code] ?? code,
+    known: true,
+  };
 }
 
-/** One entry per country code, with a stable URL slug taken from the stored name. */
-export function countryEntries(stores: { country: string; countryName: string }[]): CountryEntry[] {
-  const counts = countStoresByCountry(stores).filter((country) => country.code);
-  const bases = counts.map((country) => {
-    const base = placeSlug(country.name) || country.code.toLowerCase();
-    return base === "page" ? `${base}-${country.code.toLowerCase()}` : base;
-  });
-  const seen = new Map<string, number>();
-  for (const slug of bases) seen.set(slug, (seen.get(slug) ?? 0) + 1);
-  return counts.map((country, index) => {
-    const base = bases[index] ?? country.code.toLowerCase();
-    const slug = (seen.get(base) ?? 0) > 1 ? `${base}-${country.code.toLowerCase()}` : base;
-    return { ...country, name: country.name || country.code, slug };
-  });
-}
+export const UNITED_STATES = knownCountry("US");
 
-export function countryBySlug(
-  stores: { country: string; countryName: string }[],
-  slug: string,
-): CountryEntry | null {
-  return countryEntries(stores).find((country) => country.slug === slug) ?? null;
-}
+const BY_CODE = new Map(Object.keys(NAMES).map((code) => [code, knownCountry(code)]));
+const BY_SLUG = new Map([...BY_CODE.values()].map((country) => [country.slug, country]));
 
-/** URL piece for a shop's region. US regions use the existing state slug. */
-export function regionSlugFor(store: { country: string; state: string; stateSlug: string }): string {
-  if (store.country === "US") return store.stateSlug;
-  return placeSlug(store.state);
+const BLANK_COUNTRY: Country = { code: "", slug: "", name: "", known: false };
+
+/**
+ * Turn the stored country text into one country record.
+ * A blank value stays blank. It is not rewritten to the United States.
+ * An unknown value is kept as written. It is not dropped and not renamed.
+ */
+export function normalizeCountry(input: string | null | undefined): Country {
+  const raw = input?.trim() ?? "";
+  if (!raw) return BLANK_COUNTRY;
+  const code = ALIASES.get(raw.toLowerCase());
+  if (code) return BY_CODE.get(code) ?? knownCountry(code);
+  const slug = slugify(raw);
+  return {
+    code: /^[A-Za-z]{2}$/.test(raw) ? raw.toUpperCase() : "",
+    slug: slug || "unknown",
+    name: raw,
+    known: false,
+  };
 }
 
 /**
- * Region pages exist when a region has enough shops to be its own list.
- * The cutoff matches city pages. Smaller regions stay on the country page.
- * US regions link to the existing state pages.
+ * Read a country from a URL piece such as "fr" or "uk".
+ * `redirectSlug` is set when the URL should move to the one official slug.
  */
-export function regionLinks(stores: PlaceStore[], country: CountryEntry): RegionLink[] {
-  const groups = new Map<string, { name: string; count: number }>();
-  for (const store of stores) {
-    if (store.country !== country.code) continue;
-    const slug = regionSlugFor(store);
-    if (!slug) continue;
-    const current = groups.get(slug);
-    if (!current) groups.set(slug, { name: store.state, count: 1 });
-    else current.count += 1;
-  }
-  return [...groups.entries()]
-    .filter(([, group]) => group.count >= MIN_CITY_STORES)
-    .map(([slug, group]) => ({
-      name: group.name,
-      slug,
-      count: group.count,
-      href:
-        country.code === "US" && getStateBySlug(slug)
-          ? statePath(slug)
-          : countryRegionPath(country.slug, slug),
-    }))
-    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "en"));
+export function countryBySlug(slug: string): { country: Country; redirectSlug: string | null } | null {
+  const normalized = slug.trim().toLowerCase();
+  if (!normalized) return null;
+  const direct = BY_SLUG.get(normalized);
+  if (direct) return { country: direct, redirectSlug: null };
+  const alias = ALIASES.get(normalized) ?? ALIASES.get(normalized.replace(/-/g, " "));
+  if (!alias) return null;
+  const country = BY_CODE.get(alias) ?? knownCountry(alias);
+  return {
+    country,
+    redirectSlug: country.slug === normalized ? null : country.slug,
+  };
 }
 
-export type BrowseLink = { name: string; href: string };
-
-/** Country and, when a region page exists, region links for one shop. */
-export function countryBrowse(
-  store: PlaceStore,
-  stores: PlaceStore[],
-): { country: BrowseLink | null; region: BrowseLink | null } {
-  const country = countryEntries(stores).find((item) => item.code === store.country);
-  if (!country) return { country: null, region: null };
-  const countryLink = { name: country.name, href: countryPath(country.slug) };
-  const slug = regionSlugFor(store);
-  if (!slug || !store.state.trim()) return { country: countryLink, region: null };
-  const link = regionLinks(stores, country).find((item) => item.slug === slug);
-  if (!link) return { country: countryLink, region: null };
-  return { country: countryLink, region: { name: store.state, href: link.href } };
+export function isUnitedStatesSlug(slug: string): boolean {
+  return countryBySlug(slug)?.country.code === "US";
 }

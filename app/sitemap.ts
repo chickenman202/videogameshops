@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { loadCatalog } from "@/lib/catalog";
-import { countryEntries, regionLinks, regionSlugFor } from "@/lib/countries";
+import { countryEntries, regionLinks, regionSlugFor } from "@/lib/country-browse";
 import { cityPath, countriesPath, countryPath, platformCityPath, platformPath, statePath, storePath } from "@/lib/paths";
 import { PLATFORMS } from "@/lib/platforms";
 import { CONTENT_UPDATED, MIN_CITY_STORES, MIN_PLATFORM_CITY_STORES, SITE_URL } from "@/lib/site";
@@ -110,7 +110,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }),
     );
 
-  const storeEntries = catalog.stores.map((store) => entry(storePath(store.slug), store.updatedAt));
+  const storeEntries = catalog.stores
+    .filter((store) => store.indexable)
+    .map((store) => entry(storePath(store.slug), store.updatedAt));
 
   return [
     ...staticPages,

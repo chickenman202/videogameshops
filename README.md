@@ -2,7 +2,11 @@
 
 A directory of physical video game shops. The shop list can come from Supabase, or from `data/stores.json` when the database is not connected. That fallback is what `npm run build` uses in CI.
 
-Shops are not only in the United States. Each row has a country code. US states still have their own directory pages, such as `/directory/texas`. Every country also has a page under `/directory/countries`, for example `/directory/countries/france`, `/directory/countries/canada`, and `/directory/countries/japan`. A region inside a country gets its own page when that region has at least three shops, such as `/directory/countries/france/ile-de-france`. The United States page links to the existing state pages. Country and region names are the ones already stored on each shop.
+Shops are not only in the United States. Each row has a country code. The country page uses that code in lowercase, such as `/directory/countries/fr`, `/directory/countries/ca`, `/directory/countries/jp`, and `/directory/countries/us`. The country name, such as France, is only used in the title. Older spellings redirect: `/directory/countries/france` goes to `/directory/countries/fr`, `/directory/countries/uk` goes to `/directory/countries/gb`, and `/directory/countries/usa` goes to `/directory/countries/us`.
+
+US state pages stay at `/directory/texas`. A United States address written under the country prefix, such as `/directory/countries/us/texas`, redirects there. A region inside another country gets its own page when that region has at least three shops, such as `/directory/countries/fr/ile-de-france`. Smaller regions stay on the country page. Region and city names on the page are the ones already stored on each shop.
+
+A shop with a name and a country stays in the catalog even when the street, phone, and website are blank. Those thin shops are marked `indexable: false`. Their pages use `noindex, follow` and are left out of the sitemap until a street, phone, or website is added from a real source.
 
 ## Show the site
 
@@ -29,11 +33,18 @@ That command:
 2. Folds a shop that appears in both OpenStreetMap and Game-Route into one listing when the name, initials, address, or website shows it is the same place. Pairs that are only nearby stay as two listings. Those decisions are listed in `data/import-report.json`.
 3. Keeps the existing web address (`slug`) when that shop was already imported.
 4. Writes `data/stores.json` and a short `data/import-report.json`.
-5. If `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set in the environment or in `.env.local`, it also saves the rows to Supabase.
+5. If `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are both set, it also saves the rows to Supabase. If only one of those two is set, the command stops and names the missing variable. If neither is set, it only writes the JSON file.
 
 Do not commit `.env.local`. The service role key must never be pasted into the repo.
 
-Before the first database save, run the SQL in `supabase/migrations` (including `0002_store_import_fields.sql`) in the Supabase SQL editor. The JSON file is still written if that step has not been done.
+To save into Supabase the first time:
+
+1. In the Supabase SQL editor, run `supabase/migrations/0001_stores.sql`.
+2. Then run `supabase/migrations/0002_store_import_fields.sql`.
+3. Put `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`.
+4. Run `npm run import:shops`.
+
+`data/import-report.json` records `public_listings`, the number of shops that become public pages. That is the count to use everywhere. It also records which nearby pairs were merged and which were kept separate.
 
 Platforms, trade-ins, and repair flags are left off. The import does not guess which consoles a shop sells. A blank phone, website, hour, or photo stays blank.
 

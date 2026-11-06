@@ -4,6 +4,16 @@
  * A pair is "merged" only when both source ids landed on the same listing.
  */
 
+/**
+ * Merge a nearby pair only when the two rows are the same shop.
+ * Same street number plus a matching name or initials counts, as with
+ * CGR Games and Classic Games Revisited at 46 East State Street in Doylestown.
+ * Different names, different websites, or neighboring street numbers stay separate.
+ * The other eight pairs within 40 meters stay two listings.
+ */
+export const NEAR_MISS_RULE =
+  "Merge a nearby pair only when the two rows are the same shop. Same street number plus a matching name or initials counts, as with CGR Games and Classic Games Revisited at 46 East State Street in Doylestown. Different names, different websites, or neighboring street numbers stay separate. The other eight pairs within 40 meters stay two listings.";
+
 export type NearMissDecision = {
   label: string;
   meters: number;

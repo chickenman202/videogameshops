@@ -1,6 +1,7 @@
 import type { CatalogStore } from "@/lib/catalog";
 import { loadCatalog } from "@/lib/catalog";
-import { countryBySlug, regionLinks, regionSlugFor } from "@/lib/countries";
+import { regionLinks, regionSlugFor } from "@/lib/country-browse";
+import { countryBySlug } from "@/lib/countries";
 import { joinList, toMetaDescription, toTitle } from "@/lib/copy";
 import {
   emptyFilters,
@@ -161,8 +162,22 @@ export async function buildListing(input: {
   const catalog = await loadCatalog();
   if (!catalog.ok) return { status: "error" };
 
-  const country = input.countrySlug ? countryBySlug(catalog.stores, input.countrySlug) : null;
-  if (input.countrySlug && !country) return { status: "not-found" };
+  const knownCountry = input.countrySlug ? countryBySlug(input.countrySlug) : null;
+  const requestedCountrySlug = knownCountry?.country.slug ?? input.countrySlug ?? "";
+  const countryStores = input.countrySlug
+    ? catalog.stores.filter((store) => store.countrySlug === requestedCountrySlug)
+    : [];
+  if (input.countrySlug && countryStores.length === 0) return { status: "not-found" };
+  const country = input.countrySlug
+    ? {
+        code: knownCountry?.country.code || countryStores[0]?.countryCode || "",
+        slug: requestedCountrySlug,
+        name:
+          countryStores.find((store) => store.countryName)?.countryName ||
+          knownCountry?.country.name ||
+          requestedCountrySlug.toUpperCase(),
+      }
+    : null;
   // US regions already have state pages. Those URLs redirect before this runs.
   if (country?.code === "US" && input.regionSlug) return { status: "not-found" };
 
@@ -175,7 +190,7 @@ export async function buildListing(input: {
 
   let pool = catalog.stores;
   if (state) pool = pool.filter((store) => store.stateSlug === state.slug);
-  if (country) pool = pool.filter((store) => store.country === country.code);
+  if (country) pool = countryStores;
 
   let cityName: string | null = null;
   if (input.citySlug) {

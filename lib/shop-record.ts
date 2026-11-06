@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { Database } from "./database.types";
-import { slugify, storeSlug } from "./slug";
+import { slugify, stableSlug, storeSlug } from "./slug";
 import { canonicalRegion, usStateFor } from "./regions";
 import { aboutFromShopInfo } from "./shop-details";
 import { parseOsmOpeningHours } from "./osm-hours";
@@ -384,7 +384,11 @@ export function shopsToRows(shops: ShopDraft[], existing: ExistingStore[]): Stor
       name: item.shop.name,
       address: item.shop.address,
       city: item.shop.city,
-      city_slug: slugify(item.shop.city ?? ""),
+      city_slug: item.shop.city
+        ? item.shop.country === "US"
+          ? slugify(item.shop.city)
+          : stableSlug(item.shop.city)
+        : "",
       state: item.shop.region || null,
       zip_code: item.shop.postalCode,
       country: item.shop.country,
