@@ -3,31 +3,25 @@ import { PageShell } from "@/components/page-shell";
 import { SearchForm } from "@/components/search-form";
 import { SiteHeader } from "@/components/site-header";
 import { loadCatalog } from "@/lib/catalog";
+import { countryLinks } from "@/lib/links";
 import { homeJsonLd, JsonLd } from "@/lib/jsonld";
 import { platformPath } from "@/lib/paths";
 import { PLATFORMS } from "@/lib/platforms";
-import { toMetaDescription } from "@/lib/copy";
-import { BRAND, SITE_URL } from "@/lib/site";
+import { toMetaDescription, toTitle } from "@/lib/copy";
+import { pageMetadata } from "@/lib/seo";
 import { US_STATES } from "@/lib/states";
 
 const description = toMetaDescription(
-  "Find physical video game stores in the United States. Compare hours, trade-ins, used games, retro stock, and which platforms each shop carries.",
+  "Find physical video game stores by country, region, and city. Compare hours, trade-ins, used games, and which platforms each shop carries.",
 );
 
 export const revalidate = 86400;
 
-export const metadata: Metadata = {
-  title: { absolute: `Video Game Stores Near You | ${BRAND}` },
+export const metadata: Metadata = pageMetadata({
+  title: toTitle("Video Game Stores Near You"),
   description,
-  alternates: { canonical: SITE_URL },
-  openGraph: {
-    title: `Video Game Stores Near You | ${BRAND}`,
-    description,
-    url: SITE_URL,
-    siteName: BRAND,
-    type: "website",
-  },
-};
+  canonicalPath: "/",
+});
 
 const facts = [
   {
@@ -65,9 +59,12 @@ export default async function HomePage() {
   const states = catalog.ok
     ? US_STATES.map((state) => ({
         ...state,
-        count: catalog.stores.filter((store) => store.stateSlug === state.slug).length,
+        count: catalog.stores.filter(
+          (store) => store.countryCode === "US" && store.stateSlug === state.slug,
+        ).length,
       })).filter((state) => state.count > 0)
     : [];
+  const countries = catalog.ok ? countryLinks(catalog.stores) : [];
 
   return (
     <PageShell header="none">
@@ -121,6 +118,33 @@ export default async function HomePage() {
             <p className="mt-3 text-[#3c4550]">{fact.body}</p>
           </article>
         ))}
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-8">
+        <div className="flex items-end justify-between gap-4">
+          <h2 className="text-3xl font-semibold tracking-tight">Browse by country</h2>
+          <a href="/directory/countries" className="text-sm font-medium text-[#155eef]">
+            All countries
+          </a>
+        </div>
+        {countries.length > 0 ? (
+          <ul className="mt-6 flex flex-wrap gap-2">
+            {countries.slice(0, 12).map((country) => (
+              <li key={country.slug}>
+                <a
+                  href={country.href}
+                  className="inline-flex rounded-full border border-[#d5dbe3] bg-white px-3 py-1.5 text-sm hover:border-[#155eef]"
+                >
+                  {country.name} ({country.count})
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-4 text-[#3c4550]">
+            Country pages fill in as stores are added. The full list is on the countries page.
+          </p>
+        )}
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-8">

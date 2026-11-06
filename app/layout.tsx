@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     template: `%s | ${BRAND}`,
   },
   description:
-    "Find physical video game stores in the United States. Compare hours, trade-ins, used games, retro stock, and which platforms each shop carries.",
+    "Find physical video game stores by country, region, and city. Compare hours, trade-ins, used games, and which platforms each shop carries.",
   robots: { index: true, follow: true },
 };
 

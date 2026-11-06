@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { PageShell } from "@/components/page-shell";
-import { absoluteUrl } from "@/lib/jsonld";
-import { BRAND } from "@/lib/site";
+import { toMetaDescription, toTitle } from "@/lib/copy";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: { absolute: `Privacy | ${BRAND}` },
-  description: "How videogameshops handles store listings and messages sent through the contact form.",
-  alternates: { canonical: absoluteUrl("/privacy") },
-};
+export const metadata: Metadata = pageMetadata({
+  title: toTitle("Privacy for the Video Game Store Directory"),
+  description: toMetaDescription(
+    "How videogameshops handles store listings and messages sent through the contact and submit forms.",
+  ),
+  canonicalPath: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (

@@ -81,13 +81,17 @@ export function hrefWithFilters(path: string, filters: Filters): string {
   return query ? `${path}?${query}` : path;
 }
 
-/** /directory/texas/page/2 and /directory/platforms/retro are store lists. */
+/**
+ * Store lists can use ?page= and filter queries.
+ * Country and state hubs are not lists, so a page query is not rewritten onto them.
+ */
 export function isDirectoryListPath(pathname: string): boolean {
   if (pathname === "/directory") return true;
   if (!pathname.startsWith("/directory/")) return false;
-  if (pathname === "/directory/states" || pathname.startsWith("/directory/states/")) {
-    return false;
-  }
+  if (pathname === "/directory/states" || pathname.startsWith("/directory/states/")) return false;
+  if (pathname === "/directory/countries") return false;
+  const parts = pathname.split("/").filter(Boolean);
+  if (parts[1] === "countries" && parts.length === 3) return false;
   return true;
 }
 

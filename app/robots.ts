@@ -1,27 +1,16 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 
-const disallow = ["/admin", "/admin/", "/account", "/account/", "/dashboard", "/dashboard/", "/api", "/api/"];
+const privatePaths = ["/admin", "/admin/", "/account", "/account/", "/dashboard", "/dashboard/", "/api", "/api/"];
 
-const agents = [
-  "*",
-  "Googlebot",
-  "Bingbot",
-  "GPTBot",
-  "ChatGPT-User",
-  "Google-Extended",
-  "PerplexityBot",
-  "ClaudeBot",
-  "Applebot-Extended",
-];
-
+/** Public pages are allowed. Private tools and form handlers are not. */
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: agents.map((userAgent) => ({
-      userAgent,
+    rules: {
+      userAgent: "*",
       allow: "/",
-      disallow,
-    })),
+      disallow: privatePaths,
+    },
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,
   };

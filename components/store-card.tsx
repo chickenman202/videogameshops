@@ -1,4 +1,5 @@
 import type { CatalogStore } from "@/lib/catalog";
+import { formatAddressLine } from "@/lib/links";
 import { storePath } from "@/lib/paths";
 
 function facts(store: CatalogStore): string[] {
@@ -15,6 +16,7 @@ export function StoreCard({ store, priority = false }: { store: CatalogStore; pr
   return (
     <a
       href={href}
+      aria-label={`View ${store.name} in ${store.city}`}
       className="flex flex-col gap-4 rounded-3xl border border-[#d5dbe3] bg-white p-4 shadow-[0_8px_24px_rgba(9,11,16,0.04)] transition hover:border-[#155eef] sm:flex-row sm:items-center"
     >
       {store.photo ? (
@@ -37,10 +39,7 @@ export function StoreCard({ store, priority = false }: { store: CatalogStore; pr
       )}
       <span className="min-w-0 flex-1">
         <span className="block text-lg font-semibold text-[#090b10]">{store.name}</span>
-        <span className="mt-1 block text-sm text-muted">
-          {store.address}, {store.city}, {store.stateAbbr}
-          {store.zip ? ` ${store.zip}` : ""}
-        </span>
+        <span className="mt-1 block text-sm text-muted">{formatAddressLine(store)}</span>
         <span className="mt-3 flex flex-wrap gap-2">
           {store.platforms.map((platform) => (
             <span key={platform} className="rounded-full bg-[#f4f6f8] px-2.5 py-1 text-xs text-[#3c4550]">

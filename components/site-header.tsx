@@ -1,5 +1,6 @@
 const links = [
   { href: "/directory", label: "Stores" },
+  { href: "/directory/countries", label: "Countries" },
   { href: "/directory/states", label: "States" },
   { href: "/directory/platforms", label: "Platforms" },
   { href: "/about", label: "About" },

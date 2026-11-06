@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import { SubmitStoreForm } from "@/components/forms";
 import { PageShell } from "@/components/page-shell";
-import { absoluteUrl } from "@/lib/jsonld";
-import { BRAND } from "@/lib/site";
+import { toMetaDescription, toTitle } from "@/lib/copy";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: { absolute: `Submit a Store | ${BRAND}` },
-  description:
-    "Submit a physical video game store in the United States. Listings are reviewed before they are published.",
-  alternates: { canonical: absoluteUrl("/submit") },
-};
+export const metadata: Metadata = pageMetadata({
+  title: toTitle("Submit a Video Game Store"),
+  description: toMetaDescription(
+    "Submit a physical video game store. Listings are reviewed before they are published.",
+  ),
+  canonicalPath: "/submit",
+});
 
 export default function SubmitPage() {
   return (

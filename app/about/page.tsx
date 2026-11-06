@@ -1,31 +1,40 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { PageShell } from "@/components/page-shell";
-import { absoluteUrl } from "@/lib/jsonld";
-import { BRAND } from "@/lib/site";
+import { toMetaDescription, toTitle } from "@/lib/copy";
+import { breadcrumbJsonLd, JsonLd } from "@/lib/jsonld";
+import { pageMetadata } from "@/lib/seo";
 
-const description =
-  "videogameshops lists physical video game stores in the United States, including hours, platforms, trade-ins, and how to correct a listing.";
+const description = toMetaDescription(
+  "About videogameshops, a directory of physical video game stores by country, region, and city. See what a listing includes and how to correct one.",
+);
 
-export const metadata: Metadata = {
-  title: { absolute: `About | ${BRAND}` },
+export const metadata: Metadata = pageMetadata({
+  title: toTitle("About the Video Game Store Directory"),
   description,
-  alternates: { canonical: absoluteUrl("/about") },
-};
+  canonicalPath: "/about",
+});
 
 export default function AboutPage() {
+  const crumbs = [
+    { name: "Home", path: "/" },
+    { name: "About", path: "/about" },
+  ];
   return (
     <PageShell>
+      <JsonLd data={breadcrumbJsonLd(crumbs)} />
       <article className="mx-auto max-w-3xl px-4 py-16">
-        <h1 className="text-4xl font-semibold tracking-tight">About videogameshops</h1>
+        <Breadcrumbs crumbs={crumbs.map((crumb) => ({ name: crumb.name, href: crumb.path }))} />
+        <h1 className="mt-4 text-4xl font-semibold tracking-tight">About videogameshops</h1>
         <div className="mt-8 space-y-4 text-lg leading-relaxed text-[#3c4550]">
           <p>
-            videogameshops is an independent directory of physical video game stores in the United States.
-            It is not a game publisher, a chain, or a marketplace. A store page answers where the shop is,
-            when it is open, and what you can buy or trade there.
+            videogameshops is an independent directory of physical video game stores. It is not a game
+            publisher, a chain, or a marketplace. A store page answers where the shop is, when it is open,
+            and what you can buy or trade there.
           </p>
           <h2 className="pt-4 text-2xl font-semibold text-[#090b10]">What a listing includes</h2>
           <p>
-            Each public store shows the street address, city, state, ZIP when we have it, phone, website,
+            Each public store shows the street address, city, region, postal code when we have it, phone, website,
             and weekly hours. It also shows the platforms the shop carries: PlayStation, Xbox, Nintendo, PC,
             handheld, retro, and VR. New games, used games, trade-ins, and console repair are separate
             yes-or-no facts. Retro is one of the platform tags, used the same way on every page.
@@ -40,10 +49,12 @@ export default function AboutPage() {
           </p>
           <h2 className="pt-4 text-2xl font-semibold text-[#090b10]">How a store gets listed</h2>
           <p>
-            Use the submit page with the store name, street address, city, and state. A person reviews the
+            Use the submit page with the store name, street address, city, and region. A person reviews the
             note before the store becomes a public page. Placeholder names and empty addresses are not
-            published. The first public batch is a set of real shops in a few large states, then more states
-            after those city pages look complete.
+            published. United States state and city pages stay at addresses like /directory/texas/austin.
+            Other countries use /directory/countries, then the country, the region, and the city. A shop
+            keeps one address under /store, and the slug includes the city so two shops with the same name
+            do not share a page.
           </p>
           <h2 className="pt-4 text-2xl font-semibold text-[#090b10]">How to fix a wrong listing</h2>
           <p>

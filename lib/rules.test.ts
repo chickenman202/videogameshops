@@ -107,11 +107,12 @@ describe("titles and descriptions", () => {
     assert.equal(title.includes("videogameshops"), false);
   });
 
-  it("uses one platform only when the store carries just that platform", () => {
+  it("names the shop and the place, and one platform only when that is all it carries", () => {
     const single = storeTitle("Muv Games", "Austin", "TX", ["Retro"]);
+    assert.match(single, /Muv Games in Austin, TX/);
     assert.match(single, /Retro/);
     const multi = storeTitle("Muv Games", "Austin", "TX", ["Retro", "PlayStation"]);
-    assert.match(multi, /Video Game Store/);
+    assert.equal(multi, "Muv Games in Austin, TX");
     assert.equal(multi.includes("Retro"), false);
   });
 
@@ -119,6 +120,19 @@ describe("titles and descriptions", () => {
     const text = toMetaDescription(
       "12 video game stores in Austin, Texas. Compare hours, trade-ins, and retro stock.",
     );
-    assert.ok(text.length >= 140 && text.length <= 160, text);
+    assert.ok(text.length <= 160, text);
+    assert.equal(text.endsWith("."), true, text);
+    assert.equal(
+      text,
+      "12 video game stores in Austin, Texas. Compare hours, trade-ins, and retro stock. Addresses, phone numbers, and weekly hours are on each store page.",
+    );
+  });
+
+  it("does not cut an extra sentence in half", () => {
+    const lead =
+      "Find physical video game stores by country, region, and city. Compare hours, trade-ins, used games, and which platforms each shop carries.";
+    const text = toMetaDescription(lead);
+    assert.equal(text, lead);
+    assert.ok(text.length <= 160, text);
   });
 });
