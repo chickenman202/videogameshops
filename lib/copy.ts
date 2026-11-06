@@ -1,19 +1,11 @@
 import { BRAND } from "./site";
 
-/** Keep search descriptions in the length Google usually shows in full. */
+/**
+ * Keep a description in the length Google usually shows.
+ * The text is not padded. A listing must not claim hours, phones, or stock it does not have.
+ */
 export function toMetaDescription(lead: string): string {
-  let text = lead.replace(/\s+/g, " ").trim();
-  const extras = [
-    "Addresses, phone numbers, and weekly hours are on each store page.",
-    "See what each shop sells before you go.",
-  ];
-  // Only add a whole extra sentence. A cut-off sentence reads like "Addresses, phone".
-  for (const extra of extras) {
-    if (text.length >= 150) break;
-    const next = `${text} ${extra}`.trim();
-    if (next.length > 160) break;
-    text = next;
-  }
+  const text = lead.replace(/\s+/g, " ").trim();
   if (text.length <= 160) return text;
   const sliced = text.slice(0, 157);
   const space = sliced.lastIndexOf(" ");
@@ -34,14 +26,15 @@ export function toTitle(text: string): string {
  * A long name keeps the place and drops the brand.
  */
 export function storeTitle(name: string, city: string, region: string, platforms: string[]): string {
-  const place = `${city}, ${region}`;
-  const located = `${name} in ${place}`;
+  const place = [city, region].filter((part) => part.trim()).join(", ");
+  const located = place ? `${name} in ${place}` : name;
   const single = platforms.length === 1 ? platforms[0] : null;
   if (single) {
     const withPlatform = `${located} | ${single}`;
     if (withPlatform.length <= 60) return withPlatform;
   }
   if (located.length <= 60) return located;
+  if (!place) return name.slice(0, 60).trimEnd();
   const suffix = ` in ${place}`;
   if (suffix.length >= 59) return place.slice(0, 60);
   const room = 60 - suffix.length;

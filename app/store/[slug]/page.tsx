@@ -98,7 +98,12 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
     store.tradeIns ? "Accepts trade-ins" : null,
     store.repairs ? "Repairs consoles" : null,
   ].filter((item): item is string => Boolean(item));
-  const mapsQuery = encodeURIComponent(formatAddressLine(store));
+  const addressLine = formatAddressLine(store);
+  const mapsQuery = addressLine
+    ? encodeURIComponent(addressLine)
+    : store.lat != null && store.lng != null
+      ? `${store.lat},${store.lng}`
+      : "";
   const places = storePlaceLinks(store);
 
   return (
@@ -123,10 +128,12 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
             <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">{store.name}</h1>
             <p className="mt-4 max-w-3xl text-lg text-[#3c4550]">{storeAbout(store)}</p>
             <dl className="mt-8 space-y-3 text-[#090b10]">
-              <div>
-                <dt className="text-sm text-muted">Address</dt>
-                <dd>{formatAddressLine(store)}</dd>
-              </div>
+              {addressLine ? (
+                <div>
+                  <dt className="text-sm text-muted">{store.address ? "Address" : "Place"}</dt>
+                  <dd>{addressLine}</dd>
+                </div>
+              ) : null}
               {store.phone ? (
                 <div>
                   <dt className="text-sm text-muted">Phone</dt>
@@ -148,15 +155,17 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
                 </div>
               ) : null}
             </dl>
-            <p className="mt-4">
-              <a
-                href={`https://maps.google.com/?q=${mapsQuery}`}
-                className="text-sm font-medium text-[#155eef]"
-                rel="noopener noreferrer"
-              >
-                Directions to {store.name}
-              </a>
-            </p>
+            {mapsQuery ? (
+              <p className="mt-4">
+                <a
+                  href={`https://maps.google.com/?q=${mapsQuery}`}
+                  className="text-sm font-medium text-[#155eef]"
+                  rel="noopener noreferrer"
+                >
+                  Directions to {store.name}
+                </a>
+              </p>
+            ) : null}
             {store.platforms.length > 0 ? (
               <ul className="mt-6 flex flex-wrap gap-2">
                 {store.platforms.map((platform) => (
@@ -214,7 +223,7 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
             ))}
           </ul>
         </nav>
-        {nearby.length > 0 ? (
+        {nearby.length > 0 && store.city ? (
           <section className="mt-8">
             <h2 className="text-2xl font-semibold">Other stores in {store.city}</h2>
             <ul className="mt-4 space-y-2">

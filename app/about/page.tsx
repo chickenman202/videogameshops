@@ -29,29 +29,30 @@ export default function AboutPage() {
         <div className="mt-8 space-y-4 text-lg leading-relaxed text-[#3c4550]">
           <p>
             videogameshops is an independent directory of physical video game stores. It is not a game
-            publisher, a chain, or a marketplace. A store page answers where the shop is, when it is open,
-            and what you can buy or trade there.
+            publisher, a chain, or a marketplace. A store page shows the place details that were saved for
+            that shop.
           </p>
           <h2 className="pt-4 text-2xl font-semibold text-[#090b10]">What a listing includes</h2>
           <p>
-            Each public store shows the street address, city, region, postal code when we have it, phone, website,
-            and weekly hours. It also shows the platforms the shop carries: PlayStation, Xbox, Nintendo, PC,
-            handheld, retro, and VR. New games, used games, trade-ins, and console repair are separate
-            yes-or-no facts. Retro is one of the platform tags, used the same way on every page.
+            A listing needs a real shop name and a country. A missing street, city, region, or map point
+            does not hide the shop. Phone, website, hours, and platforms are shown only
+            when they are stored. PlayStation, Xbox, Nintendo, PC, handheld, retro, and VR are the platform
+            tags. New games, used games, trade-ins, and console repair are separate yes-or-no facts, and
+            they stay off the page when the row does not say.
           </p>
           <h2 className="pt-4 text-2xl font-semibold text-[#090b10]">Where the facts come from</h2>
           <p>
-            Hours and platforms come from public business listings and from store owners who submit or
-            correct a page. If a stored description is too short to be a sentence, reads like a review, or
-            only points at an official website, the page replaces it with two factual sentences built from
-            the address and the shop’s facts. Hours that cannot be read stay on the page as text and are
-            left out of the search-engine hours block. The site does not invent a clock time.
+            Saved facts come from public business listings and from store owners who submit or correct a
+            page. If a stored description is too short to be a sentence, reads like a review, or only points
+            at an official website, the page uses a short sentence built from the place fields that exist.
+            Hours that cannot be read stay on the page as text and are left out of the search-engine hours
+            block. The site does not invent a clock time, a phone number, or a street.
           </p>
           <h2 className="pt-4 text-2xl font-semibold text-[#090b10]">How a store gets listed</h2>
           <p>
-            Use the submit page with the store name, street address, city, and region. A person reviews the
-            note before the store becomes a public page. Placeholder names and empty addresses are not
-            published. United States state and city pages stay at addresses like /directory/texas/austin.
+            Use the submit page with the store name and where it is. A person reviews the note before the
+            store becomes a public page. Keyboard-mash names are not published. United States state and city
+            pages stay at addresses like /directory/texas/austin.
             Other countries use /directory/countries, then the country, the region, and the city. A shop
             keeps one address under /store, and the slug includes the city so two shops with the same name
             do not share a page.

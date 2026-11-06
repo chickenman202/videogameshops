@@ -47,19 +47,25 @@ export function buildSitemap(stores: CatalogStore[], contentUpdated = CONTENT_UP
   let hasUnitedStates = false;
 
   for (const store of stores) {
-    if (store.countryCode === "US") hasUnitedStates = true;
-    touch(countries, store.countrySlug, store.updatedAt);
-    touch(regions, `${store.countrySlug}/${store.stateSlug}`, store.updatedAt);
-    touch(cities, `${store.countrySlug}/${store.stateSlug}/${store.citySlug}`, store.updatedAt);
+    if (store.countryCode === "US" && store.stateSlug) hasUnitedStates = true;
+    if (store.countrySlug) touch(countries, store.countrySlug, store.updatedAt);
+    if (store.countrySlug && store.stateSlug) {
+      touch(regions, `${store.countrySlug}/${store.stateSlug}`, store.updatedAt);
+    }
+    if (store.countrySlug && store.stateSlug && store.citySlug) {
+      touch(cities, `${store.countrySlug}/${store.stateSlug}/${store.citySlug}`, store.updatedAt);
+    }
     for (const label of store.platforms) {
       const platform = PLATFORMS.find((item) => item.label === label);
       if (!platform) continue;
       touch(platforms, platform.slug, store.updatedAt);
-      touch(
-        platformCities,
-        `${store.countrySlug}/${store.stateSlug}/${store.citySlug}/${platform.slug}`,
-        store.updatedAt,
-      );
+      if (store.countrySlug && store.stateSlug && store.citySlug) {
+        touch(
+          platformCities,
+          `${store.countrySlug}/${store.stateSlug}/${store.citySlug}/${platform.slug}`,
+          store.updatedAt,
+        );
+      }
     }
   }
 
@@ -73,15 +79,19 @@ export function buildSitemap(stores: CatalogStore[], contentUpdated = CONTENT_UP
   const sampleByRegion = new Map<string, CatalogStore>();
   const sampleByCity = new Map<string, CatalogStore>();
   for (const store of stores) {
-    if (!sampleByCountry.has(store.countrySlug)) sampleByCountry.set(store.countrySlug, store);
+    if (store.countrySlug && !sampleByCountry.has(store.countrySlug)) {
+      sampleByCountry.set(store.countrySlug, store);
+    }
+    if (!store.stateSlug) continue;
     const regionKey = `${store.countrySlug}/${store.stateSlug}`;
     if (!sampleByRegion.has(regionKey)) sampleByRegion.set(regionKey, store);
+    if (!store.citySlug) continue;
     const cityKey = `${regionKey}/${store.citySlug}`;
     if (!sampleByCity.has(cityKey)) sampleByCity.set(cityKey, store);
   }
 
   for (const [slug, group] of countries) {
-    if (group.count < 1) continue;
+    if (!slug || group.count < 1) continue;
     pages.push(entry(countryPath(slug), group.updated));
   }
 

@@ -26,6 +26,7 @@ export type LoadedCountry =
 function regionsFor(stores: CatalogStore[]): CountryRegionLink[] {
   const groups = new Map<string, { name: string; count: number; sample: CatalogStore }>();
   for (const store of stores) {
+    if (!store.stateSlug || !store.state) continue;
     const current = groups.get(store.stateSlug);
     if (!current) groups.set(store.stateSlug, { name: store.state, count: 1, sample: store });
     else current.count += 1;

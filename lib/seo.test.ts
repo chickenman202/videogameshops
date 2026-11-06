@@ -6,7 +6,7 @@ import { cityStoresTitle, storeTitle } from "./copy";
 import type { Database } from "./database.types";
 import { isDirectoryListPath } from "./filters";
 import { absoluteUrl, storeJsonLd } from "./jsonld";
-import { listingCacheKey } from "./listing";
+import { listingCacheKey, storeAbout } from "./listing";
 import { unitedStatesDirectoryPath } from "./paths";
 import { slugify, storeSlug } from "./slug";
 import { buildSitemap } from "./sitemap-data";
@@ -14,15 +14,15 @@ import { SITE_URL } from "./site";
 
 type StoreRow = Database["public"]["Tables"]["stores"]["Row"];
 
-function row(partial: Partial<StoreRow> & Pick<StoreRow, "id" | "name" | "city" | "state">): StoreRow {
+function row(partial: Partial<StoreRow> & Pick<StoreRow, "id" | "name">): StoreRow {
   return {
     id: partial.id,
     slug: partial.slug ?? "",
     name: partial.name,
-    address: partial.address ?? "100 Main Street",
-    city: partial.city,
+    address: partial.address === undefined ? "100 Main Street" : partial.address,
+    city: partial.city === undefined ? "Austin" : partial.city,
     city_slug: partial.city_slug ?? "",
-    state: partial.state,
+    state: partial.state === undefined ? "Texas" : partial.state,
     zip_code: partial.zip_code ?? "78701",
     country: partial.country ?? "US",
     phone: partial.phone ?? null,
@@ -44,7 +44,7 @@ function row(partial: Partial<StoreRow> & Pick<StoreRow, "id" | "name" | "city" 
   };
 }
 
-function mustStore(partial: Partial<StoreRow> & Pick<StoreRow, "id" | "name" | "city" | "state">): CatalogStore {
+function mustStore(partial: Partial<StoreRow> & Pick<StoreRow, "id" | "name">): CatalogStore {
   const store = toCatalogStore(row(partial));
   assert.ok(store, partial.name);
   return store;
@@ -66,8 +66,18 @@ describe("country and slug helpers", () => {
   });
 
   it("reads country names without dropping an unknown country", () => {
-    assert.equal(normalizeCountry("").code, "US");
+    assert.equal(normalizeCountry("").code, "");
+    assert.equal(normalizeCountry("").name, "");
+    assert.equal(normalizeCountry(null).code, "");
     assert.equal(normalizeCountry("USA").slug, "us");
+    assert.equal(normalizeCountry("IR").name, "Iran");
+    assert.equal(normalizeCountry("CI").name, "Côte d'Ivoire");
+    assert.equal(normalizeCountry("TZ").name, "Tanzania");
+    assert.equal(normalizeCountry("IQ").name, "Iraq");
+    assert.equal(normalizeCountry("PK").name, "Pakistan");
+    assert.equal(normalizeCountry("RU").name, "Russia");
+    assert.equal(countryBySlug("ir")?.country.name, "Iran");
+    assert.equal(countryBySlug("ir")?.country.slug, "ir");
     assert.equal(normalizeCountry("France").code, "FR");
     assert.equal(normalizeCountry("UK").slug, "gb");
     assert.equal(countryBySlug("uk")?.redirectSlug, "gb");
@@ -182,6 +192,67 @@ describe("titles and structured data", () => {
     assert.equal(hours[0]?.closes, "20:00");
     assert.equal(french.description?.toString().includes("used games"), true);
     assert.equal(french.sameAs, "https://example.com/game-one");
+  });
+
+  it("publishes a shop with no street and does not invent an address", () => {
+    const store = mustStore({
+      id: "no-street",
+      name: "Esports Bauseli",
+      address: null,
+      city: "la Massana",
+      state: "La Massana",
+      country: "AD",
+      zip_code: null,
+      phone: null,
+    });
+    assert.equal(store.address, "");
+    assert.equal(store.countryName, "Andorra");
+    const about = storeAbout(store);
+    assert.equal(about.includes(" at "), false);
+    assert.equal(about.includes("hours"), false);
+    assert.equal(about.includes("Phone"), false);
+    assert.match(about, /Esports Bauseli is a video game store in la Massana, La Massana, Andorra/);
+    const data = storeJsonLd(store);
+    const address = data.address as Record<string, unknown>;
+    assert.equal("streetAddress" in address, false);
+    assert.equal(address.addressLocality, "la Massana");
+    assert.equal(address.addressCountry, "AD");
+    assert.equal("telephone" in data, false);
+    assert.equal("openingHoursSpecification" in data, false);
+  });
+
+  it("keeps a blank country blank and still publishes a located shop in Iran", () => {
+    const blank = toCatalogStore(
+      row({
+        id: "blank-country",
+        name: "No Country Games",
+        city: "Austin",
+        state: "Texas",
+        country: "",
+      }),
+    );
+    assert.equal(blank, null);
+
+    const iran = mustStore({
+      id: "iran-1",
+      name: "Game Shop Tehran",
+      address: null,
+      city: null,
+      state: null,
+      country: "IR",
+      latitude: 35.7,
+      longitude: 51.4,
+      phone: null,
+    });
+    assert.equal(iran.countryCode, "IR");
+    assert.equal(iran.countryName, "Iran");
+    assert.equal(iran.countrySlug, "ir");
+    assert.equal(iran.city, "");
+    const data = storeJsonLd(iran);
+    const address = data.address as Record<string, unknown>;
+    assert.equal("streetAddress" in address, false);
+    assert.equal(address.addressCountry, "IR");
+    assert.equal((data.geo as { latitude: number }).latitude, 35.7);
   });
 });
 

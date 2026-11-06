@@ -16,7 +16,7 @@ export function StoreCard({ store, priority = false }: { store: CatalogStore; pr
   return (
     <a
       href={href}
-      aria-label={`View ${store.name} in ${store.city}`}
+      aria-label={store.city ? `View ${store.name} in ${store.city}` : `View ${store.name}`}
       className="flex flex-col gap-4 rounded-3xl border border-[#d5dbe3] bg-white p-4 shadow-[0_8px_24px_rgba(9,11,16,0.04)] transition hover:border-[#155eef] sm:flex-row sm:items-center"
     >
       {store.photo ? (

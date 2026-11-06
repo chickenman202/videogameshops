@@ -99,6 +99,7 @@ function applyUserFilters(stores: CatalogStore[], filters: Filters): CatalogStor
 function cityGroups(stores: CatalogStore[], hrefFor: (citySlug: string) => string): CityLink[] {
   const groups = new Map<string, { name: string; count: number }>();
   for (const store of stores) {
+    if (!store.citySlug || !store.city) continue;
     const current = groups.get(store.citySlug);
     if (!current) groups.set(store.citySlug, { name: store.city, count: 1 });
     else current.count += 1;
@@ -162,22 +163,32 @@ function regionIsAmbiguous(stores: CatalogStore[], region: string): boolean {
 
 export function storeAbout(store: CatalogStore): string {
   if (isUsableAbout(store.about)) return store.about?.trim() ?? "";
+  const place: string[] = [];
+  if (store.city) place.push(store.city);
+  if (store.countryCode === "US") {
+    const region = store.stateAbbr || store.state;
+    if (region) place.push(region);
+  } else {
+    if (store.state) place.push(store.state);
+    if (store.countryName) place.push(store.countryName);
+  }
+  const where = place.join(", ");
+  let sentence = `${store.name} is a video game store`;
+  if (store.address && where) sentence += ` at ${store.address}, ${where}`;
+  else if (store.address) sentence += ` at ${store.address}`;
+  else if (where) sentence += ` in ${where}`;
+  sentence += ".";
+
   const facts: string[] = [];
   if (store.sellsNew) facts.push("new games");
   if (store.sellsUsed) facts.push("used games");
   if (store.tradeIns) facts.push("trade-ins");
   if (store.repairs) facts.push("console repair");
-  const offer = facts.length
-    ? `It offers ${joinList(facts)}.`
-    : "The page lists the address and the hours on file.";
-  const platforms = store.platforms.length ? ` Platforms: ${joinList(store.platforms)}.` : "";
-  const where =
-    store.countryCode === "US"
-      ? `${store.city}, ${store.state}`
-      : `${store.city}, ${store.state}, ${store.countryName}`;
-  return `${store.name} is a video game store at ${store.address}, ${where}. ${offer}${platforms}`
-    .replace(/\s+/g, " ")
-    .trim();
+  if (facts.length) sentence += ` It offers ${joinList(facts)}.`;
+  if (store.platforms.length) sentence += ` Platforms: ${joinList(store.platforms)}.`;
+  if (store.phone) sentence += ` Phone: ${store.phone}.`;
+  if (store.hours) sentence += " Weekly hours are listed on this page.";
+  return sentence.replace(/\s+/g, " ").trim();
 }
 
 async function buildListingUncached(input: ListingInput): Promise<ListingResult> {
@@ -331,7 +342,7 @@ async function buildListingUncached(input: ListingInput): Promise<ListingResult>
   const detail = cityName && platformLabel
     ? `Shops in ${cityName} that carry ${platformLabel}.`
     : cityName
-      ? `Compare hours, trade-ins, and used games at shops in ${cityName}.`
+      ? `Shop pages list only the details saved for each store in ${cityName}.`
       : regionName && platformLabel
         ? `${platformLabel} shops in ${regionName}.`
         : regionName

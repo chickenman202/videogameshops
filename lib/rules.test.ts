@@ -52,33 +52,11 @@ describe("slugs and publish rules", () => {
   it("refuses placeholder stores", () => {
     assert.equal(isKeyboardMash("vvvvvvv"), true);
     assert.equal(isKeyboardMash("sadfadf"), true);
-    assert.equal(
-      isPublishableStore({
-        name: "vvvvvvv",
-        address: "1 Main St",
-        city: "Austin",
-        state: "Texas",
-      }),
-      false,
-    );
-    assert.equal(
-      isPublishableStore({
-        name: "Muv Games",
-        address: "",
-        city: "Austin",
-        state: "Texas",
-      }),
-      false,
-    );
-    assert.equal(
-      isPublishableStore({
-        name: "Muv Games",
-        address: "123 Main St",
-        city: "Austin",
-        state: "Texas",
-      }),
-      true,
-    );
+    assert.equal(isPublishableStore({ name: "vvvvvvv", country: "US" }), false);
+    assert.equal(isPublishableStore({ name: "n/a", country: "US" }), false);
+    assert.equal(isPublishableStore({ name: "Muv Games", country: "US" }), true);
+    assert.equal(isPublishableStore({ name: "Muv Games", country: "" }), false);
+    assert.equal(isPublishableStore({ name: "8", country: "CO" }), true);
   });
 
   it("throws away review text and website blurbs", () => {
@@ -116,23 +94,12 @@ describe("titles and descriptions", () => {
     assert.equal(multi.includes("Retro"), false);
   });
 
-  it("builds a description in the usual search length", () => {
-    const text = toMetaDescription(
-      "12 video game stores in Austin, Texas. Compare hours, trade-ins, and retro stock.",
-    );
-    assert.ok(text.length <= 160, text);
-    assert.equal(text.endsWith("."), true, text);
-    assert.equal(
-      text,
-      "12 video game stores in Austin, Texas. Compare hours, trade-ins, and retro stock. Addresses, phone numbers, and weekly hours are on each store page.",
-    );
-  });
-
-  it("does not cut an extra sentence in half", () => {
-    const lead =
-      "Find physical video game stores by country, region, and city. Compare hours, trade-ins, used games, and which platforms each shop carries.";
+  it("keeps a description as written and does not add hours or stock claims", () => {
+    const lead = "12 video game stores in Austin, Texas.";
     const text = toMetaDescription(lead);
     assert.equal(text, lead);
-    assert.ok(text.length <= 160, text);
+    assert.equal(text.includes("phone"), false);
+    assert.equal(text.includes("hours"), false);
+    assert.ok(text.length <= 160);
   });
 });

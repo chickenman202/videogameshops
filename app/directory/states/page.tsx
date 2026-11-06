@@ -39,7 +39,7 @@ export default async function StatesPage() {
       .length,
   })).filter((state) => state.count > 0);
 
-  const total = states.reduce((sum, state) => sum + state.count, 0);
+  const total = catalog.stores.filter((store) => store.countryCode === "US").length;
   const crumbs = [
     { name: "Home", path: "/" },
     { name: "United States", path: countryPath("us") },

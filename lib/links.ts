@@ -7,6 +7,7 @@ export type PlaceLink = { name: string; slug: string; count: number; href: strin
 export function countryLinks(stores: CatalogStore[]): PlaceLink[] {
   const groups = new Map<string, { name: string; count: number }>();
   for (const store of stores) {
+    if (!store.countrySlug || !store.countryName) continue;
     const current = groups.get(store.countrySlug);
     if (!current) groups.set(store.countrySlug, { name: store.countryName, count: 1 });
     else current.count += 1;
@@ -23,6 +24,7 @@ export function countryLinks(stores: CatalogStore[]): PlaceLink[] {
 
 /** Other shops in the same city. Same city name in another country is not included. */
 export function relatedInCity(stores: CatalogStore[], store: CatalogStore, limit = 6): CatalogStore[] {
+  if (!store.citySlug) return [];
   return stores
     .filter(
       (item) =>
@@ -36,13 +38,18 @@ export function relatedInCity(stores: CatalogStore[], store: CatalogStore, limit
 
 /** Links from a shop page back up to its city, region, country, and the home page. */
 export function storePlaceLinks(store: CatalogStore): { href: string; label: string }[] {
-  return [
-    { href: cityPathFor(store), label: `Video game stores in ${store.city}` },
-    { href: regionPathFor(store), label: `Video game stores in ${store.state}` },
-    { href: countryPath(store.countrySlug), label: `Video game stores in ${store.countryName}` },
-    { href: "/directory", label: "All video game stores" },
-    { href: "/", label: "Home" },
-  ];
+  const links: { href: string; label: string }[] = [];
+  if (store.city && store.citySlug && store.stateSlug) {
+    links.push({ href: cityPathFor(store), label: `Video game stores in ${store.city}` });
+  }
+  if (store.state && store.stateSlug) {
+    links.push({ href: regionPathFor(store), label: `Video game stores in ${store.state}` });
+  }
+  if (store.countryName && store.countrySlug) {
+    links.push({ href: countryPath(store.countrySlug), label: `Video game stores in ${store.countryName}` });
+  }
+  links.push({ href: "/directory", label: "All video game stores" }, { href: "/", label: "Home" });
+  return links;
 }
 
 export function storeHref(store: CatalogStore): string {
@@ -51,8 +58,13 @@ export function storeHref(store: CatalogStore): string {
 
 /** One line address. The country is added outside the United States so cities are not mixed up. */
 export function formatAddressLine(store: CatalogStore): string {
-  const region = store.countryCode === "US" ? store.stateAbbr : store.state;
-  const zip = store.zip ? ` ${store.zip}` : "";
-  const country = store.countryCode === "US" ? "" : `, ${store.countryName}`;
-  return `${store.address}, ${store.city}, ${region}${zip}${country}`;
+  const parts: string[] = [];
+  if (store.address) parts.push(store.address);
+  if (store.city) parts.push(store.city);
+  const region = store.countryCode === "US" ? store.stateAbbr || store.state : store.state;
+  if (region && store.zip) parts.push(`${region} ${store.zip}`);
+  else if (region) parts.push(region);
+  else if (store.zip) parts.push(store.zip);
+  if (store.countryName && store.countryCode !== "US") parts.push(store.countryName);
+  return parts.join(", ");
 }

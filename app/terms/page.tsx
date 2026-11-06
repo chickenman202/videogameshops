@@ -24,8 +24,8 @@ export default function TermsPage() {
           </p>
           <p>
             A listing is informational. It is not an offer to sell a game, and it is not a claim that every
-            title is in stock. Submissions can be edited or declined. Placeholder names and empty addresses
-            are not published.
+            title is in stock. Submissions can be edited or declined. Keyboard-mash names are not published.
+            A shop can be listed with a country even when the street, city, or map point was not saved.
           </p>
           <p>
             Do not use the site to scrape private data or to send the contact form messages that are not

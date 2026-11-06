@@ -12,7 +12,7 @@ import { pageMetadata } from "@/lib/seo";
 import { US_STATES } from "@/lib/states";
 
 const description = toMetaDescription(
-  "Find physical video game stores by country, region, and city. Compare hours, trade-ins, used games, and which platforms each shop carries.",
+  "Find physical video game stores by country, region, and city.",
 );
 
 export const revalidate = 86400;

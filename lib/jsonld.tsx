@@ -155,12 +155,10 @@ export function storeJsonLd(store: CatalogStore) {
     }
   }
 
-  const address: Record<string, unknown> = {
-    "@type": "PostalAddress",
-    streetAddress: store.address,
-    addressLocality: store.city,
-    addressRegion: store.state,
-  };
+  const address: Record<string, unknown> = { "@type": "PostalAddress" };
+  if (store.address) address.streetAddress = store.address;
+  if (store.city) address.addressLocality = store.city;
+  if (store.state) address.addressRegion = store.state;
   if (store.zip) address.postalCode = store.zip;
   if (store.countryCode) address.addressCountry = store.countryCode;
   else if (store.countryName) address.addressCountry = store.countryName;
@@ -172,8 +170,8 @@ export function storeJsonLd(store: CatalogStore) {
     "@id": pageUrl,
     name: store.name,
     url: pageUrl,
-    address,
   };
+  if (Object.keys(address).length > 1) business.address = address;
   if (isUsableAbout(store.about)) business.description = store.about?.trim();
   if (store.phone) business.telephone = store.phone;
   const website = httpUrl(store.website);
@@ -193,13 +191,18 @@ export function storeJsonLd(store: CatalogStore) {
   return business;
 }
 
-/** Home → country → region → city → shop. One path on each step. */
+/** Home → country → region → city → shop. A step is left out when that place was not stored. */
 export function storeCrumbs(store: CatalogStore) {
-  return [
-    { name: "Home", path: "/" },
-    { name: store.countryName, path: countryPath(store.countrySlug) },
-    { name: store.state, path: regionPathFor(store) },
-    { name: store.city, path: cityPathFor(store) },
-    { name: store.name, path: storePath(store.slug) },
-  ];
+  const crumbs = [{ name: "Home", path: "/" }];
+  if (store.countryName && store.countrySlug) {
+    crumbs.push({ name: store.countryName, path: countryPath(store.countrySlug) });
+  }
+  if (store.state && store.stateSlug) {
+    crumbs.push({ name: store.state, path: regionPathFor(store) });
+  }
+  if (store.city && store.citySlug && store.stateSlug) {
+    crumbs.push({ name: store.city, path: cityPathFor(store) });
+  }
+  crumbs.push({ name: store.name, path: storePath(store.slug) });
+  return crumbs;
 }
