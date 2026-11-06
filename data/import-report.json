@@ -1,0 +1,143 @@
+{
+  "csv_rows": 6732,
+  "listings": 6705,
+  "merged_twin_groups": 27,
+  "dropped_blank_names": 0,
+  "rows_folded_by_dedupe": 27,
+  "by_source": {
+    "osm": 6029,
+    "dallasretrogamers": 6,
+    "wikidata": 2,
+    "gameroute": 668
+  },
+  "countries": [
+    {
+      "code": "US",
+      "name": "United States",
+      "count": 3124
+    },
+    {
+      "code": "FR",
+      "name": "France",
+      "count": 388
+    },
+    {
+      "code": "CA",
+      "name": "Canada",
+      "count": 289
+    },
+    {
+      "code": "IT",
+      "name": "Italy",
+      "count": 273
+    },
+    {
+      "code": "GB",
+      "name": "United Kingdom",
+      "count": 201
+    },
+    {
+      "code": "ES",
+      "name": "Spain",
+      "count": 173
+    },
+    {
+      "code": "AU",
+      "name": "Australia",
+      "count": 150
+    },
+    {
+      "code": "JP",
+      "name": "Japan",
+      "count": 125
+    },
+    {
+      "code": "BR",
+      "name": "Brazil",
+      "count": 120
+    },
+    {
+      "code": "IR",
+      "name": "Iran",
+      "count": 111
+    },
+    {
+      "code": "DE",
+      "name": "Germany",
+      "count": 102
+    },
+    {
+      "code": "TW",
+      "name": "Taiwan",
+      "count": 93
+    },
+    {
+      "code": "MX",
+      "name": "Mexico",
+      "count": 75
+    },
+    {
+      "code": "CI",
+      "name": "Côte d'Ivoire",
+      "count": 68
+    },
+    {
+      "code": "AR",
+      "name": "Argentina",
+      "count": 64
+    },
+    {
+      "code": "PK",
+      "name": "Pakistan",
+      "count": 53
+    },
+    {
+      "code": "RU",
+      "name": "Russia",
+      "count": 52
+    },
+    {
+      "code": "IQ",
+      "name": "Iraq",
+      "count": 49
+    },
+    {
+      "code": "TZ",
+      "name": "Tanzania",
+      "count": 48
+    },
+    {
+      "code": "PL",
+      "name": "Poland",
+      "count": 47
+    }
+  ],
+  "country_count": 154,
+  "blank": {
+    "address": 3018,
+    "city": 11,
+    "region": 188,
+    "country": 0,
+    "phone": 5118,
+    "website": 3867,
+    "opening_hours": 5002,
+    "image": 6550,
+    "social": 6080
+  },
+  "opening_hours_parsed": 1519,
+  "opening_hours_left_as_text": 184,
+  "platforms_filled": 0,
+  "sells_new": 0,
+  "near_misses_within_40m": [
+    "20m gameroute:FunTrade / osm:GameStop (Billings US)",
+    "6m osm:CGR Games / gameroute:Classic Games Revisited (Doylestown US)",
+    "4m osm:Backlight Gamez / gameroute:Revival Games (Idaho Falls US)",
+    "11m osm:Dial Up Games / gameroute:Gameroom Lincoln (Lincoln US)",
+    "7m gameroute:Mega Media Xchange Madison / osm:Preplayed East (Madison US)",
+    "5m osm:GameStar / gameroute:GameTime (McMinnville US)",
+    "22m osm:On the Draw / gameroute:Player's Choice Video Games (Pottstown US)",
+    "21m osm:Gamestersbay / gameroute:Level Up Racine Video Game Store & Lounge (Racine US)",
+    "5m gameroute:Game Mechanix - West Monroe / osm:Retro Fix (West Monroe US)"
+  ],
+  "supabase": "skipped_no_service_role"
+}

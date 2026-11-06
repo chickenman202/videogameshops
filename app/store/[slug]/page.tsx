@@ -7,7 +7,8 @@ import { loadCatalog, type CatalogStore } from "@/lib/catalog";
 import { storeTitle, toMetaDescription } from "@/lib/copy";
 import { WEEKDAYS } from "@/lib/hours";
 import { absoluteUrl, breadcrumbJsonLd, JsonLd, storeCrumbs, storeJsonLd } from "@/lib/jsonld";
-import { storeAbout } from "@/lib/listing";
+import { storeAbout, type Crumb } from "@/lib/listing";
+import { formatStorePlace, linkLabel } from "@/lib/place";
 import { cityPath, statePath, storePath } from "@/lib/paths";
 
 export const revalidate = 86400;
@@ -30,8 +31,10 @@ async function loadStore(slug: string): Promise<
     .filter(
       (item) =>
         item.id !== store.id &&
-        item.stateSlug === store.stateSlug &&
-        item.citySlug === store.citySlug,
+        item.citySlug !== "" &&
+        item.citySlug === store.citySlug &&
+        item.country === store.country &&
+        item.state === store.state,
     )
     .slice(0, 4);
   return { status: "ok", store, nearby };
@@ -53,7 +56,12 @@ export async function generateMetadata(props: PageProps<"/store/[slug]">): Promi
     };
   }
   const { store } = result;
-  const title = storeTitle(store.name, store.city, store.stateAbbr, store.platforms);
+  const title = storeTitle(
+    store.name,
+    store.city || store.countryName || "Shop",
+    store.country === "US" ? store.stateAbbr : store.country,
+    store.platforms,
+  );
   const description = toMetaDescription(storeAbout(store));
   return {
     title: { absolute: title },
@@ -77,35 +85,47 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
   if (result.status === "error") return <LoadError />;
 
   const { store, nearby } = result;
-  const crumbs = storeCrumbs(store, {
-    slug: store.stateSlug,
-    name: store.state,
-    abbreviation: store.stateAbbr,
-  });
+  const crumbs = storeCrumbs(store);
+  const place = formatStorePlace(store);
+  const directions = store.lat != null && store.lng != null
+    ? `https://maps.google.com/?q=${store.lat},${store.lng}`
+    : place
+      ? `https://maps.google.com/?q=${encodeURIComponent(place)}`
+      : null;
+  const links = [
+    store.website ? { label: "Website", href: store.website } : null,
+    store.facebook ? { label: "Facebook", href: store.facebook } : null,
+    store.instagram ? { label: "Instagram", href: store.instagram } : null,
+    store.twitter ? { label: "X", href: store.twitter } : null,
+    ...store.otherSocials.map((href) => ({ label: linkLabel(href), href })),
+  ].filter((item): item is { label: string; href: string } => Boolean(item));
   const facts = [
     store.sellsNew ? "Sells new games" : null,
     store.sellsUsed ? "Sells used games" : null,
     store.tradeIns ? "Accepts trade-ins" : null,
     store.repairs ? "Repairs consoles" : null,
   ].filter((item): item is string => Boolean(item));
-  const mapsQuery = encodeURIComponent(
-    `${store.address}, ${store.city}, ${store.stateAbbr}${store.zip ? ` ${store.zip}` : ""}`,
-  );
+  const pageCrumbs: Crumb[] = [
+    { name: "Home", href: "/" },
+    { name: "Stores", href: "/directory" },
+  ];
+  if (store.stateSlug) {
+    pageCrumbs.push({ name: store.state, href: statePath(store.stateSlug) });
+    if (store.city && store.citySlug) {
+      pageCrumbs.push({ name: store.city, href: cityPath(store.stateSlug, store.citySlug) });
+    }
+  } else {
+    if (store.countryName) pageCrumbs.push({ name: store.countryName });
+    if (store.city) pageCrumbs.push({ name: store.city });
+  }
+  pageCrumbs.push({ name: store.name });
 
   return (
     <PageShell>
       <JsonLd data={storeJsonLd(store)} />
       <JsonLd data={breadcrumbJsonLd(crumbs)} />
       <article className="mx-auto max-w-6xl px-4 py-10">
-        <Breadcrumbs
-          crumbs={[
-            { name: "Home", href: "/" },
-            { name: "Stores", href: "/directory" },
-            { name: store.state, href: statePath(store.stateSlug) },
-            { name: store.city, href: cityPath(store.stateSlug, store.citySlug) },
-            { name: store.name },
-          ]}
-        />
+        <Breadcrumbs crumbs={pageCrumbs} />
         <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div>
             {store.photo ? (
@@ -120,15 +140,18 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
               />
             ) : null}
             <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">{store.name}</h1>
+            {store.brand && store.brand.toLowerCase() !== store.name.toLowerCase() ? (
+              <p className="mt-2 text-sm text-muted">{store.brand}</p>
+            ) : null}
             <p className="mt-4 max-w-3xl text-lg text-[#3c4550]">{storeAbout(store)}</p>
+            {store.details ? <p className="mt-3 max-w-3xl text-[#3c4550]">{store.details}</p> : null}
             <dl className="mt-8 space-y-3 text-[#090b10]">
-              <div>
-                <dt className="text-sm text-muted">Address</dt>
-                <dd>
-                  {store.address}, {store.city}, {store.stateAbbr}
-                  {store.zip ? ` ${store.zip}` : ""}
-                </dd>
-              </div>
+              {place ? (
+                <div>
+                  <dt className="text-sm text-muted">Address</dt>
+                  <dd>{place}</dd>
+                </div>
+              ) : null}
               {store.phone ? (
                 <div>
                   <dt className="text-sm text-muted">Phone</dt>
@@ -139,26 +162,38 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
                   </dd>
                 </div>
               ) : null}
-              {store.website ? (
-                <div>
-                  <dt className="text-sm text-muted">Website</dt>
+              {links.map((link) => (
+                <div key={link.href}>
+                  <dt className="text-sm text-muted">{link.label}</dt>
                   <dd>
-                    <a href={store.website} className="text-[#155eef]" rel="noopener noreferrer">
-                      {store.website.replace(/^https?:\/\//, "")}
+                    <a href={link.href} className="text-[#155eef]" rel="noopener noreferrer">
+                      {link.href.replace(/^https?:\/\//, "")}
                     </a>
+                  </dd>
+                </div>
+              ))}
+              {store.sourceLabel ? (
+                <div>
+                  <dt className="text-sm text-muted">Source</dt>
+                  <dd>
+                    {store.sourceUrl ? (
+                      <a href={store.sourceUrl} className="text-[#155eef]" rel="noopener noreferrer">
+                        {store.sourceLabel}
+                      </a>
+                    ) : (
+                      store.sourceLabel
+                    )}
                   </dd>
                 </div>
               ) : null}
             </dl>
-            <p className="mt-4">
-              <a
-                href={`https://maps.google.com/?q=${mapsQuery}`}
-                className="text-sm font-medium text-[#155eef]"
-                rel="noopener noreferrer"
-              >
-                Directions
-              </a>
-            </p>
+            {directions ? (
+              <p className="mt-4">
+                <a href={directions} className="text-sm font-medium text-[#155eef]" rel="noopener noreferrer">
+                  Directions
+                </a>
+              </p>
+            ) : null}
             {store.platforms.length > 0 ? (
               <ul className="mt-6 flex flex-wrap gap-2">
                 {store.platforms.map((platform) => (
@@ -194,6 +229,8 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
                   ))}
                 </tbody>
               </table>
+            ) : store.hoursRaw ? (
+              <p className="mt-3 text-sm text-[#3c4550]">{store.hoursRaw}</p>
             ) : (
               <p className="mt-3 text-sm text-muted">Hours are not listed yet.</p>
             )}

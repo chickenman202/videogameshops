@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# videogameshops
 
-## Getting Started
+A directory of physical video game shops. The shop list can come from Supabase, or from `data/stores.json` when the database is not connected. That fallback is what `npm run build` uses in CI.
 
-First, run the development server:
+Shops are not only in the United States. Each row has a country code. US states still have their own directory pages. Shops in other countries show up in the full store list and on their own store page.
+
+## Show the site
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+No Supabase keys are required for the pages to show the imported shops.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Import or update shops
 
-## Learn More
+The source file is `data/video-game-stores.csv`.
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run import:shops
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+That command:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Reads every row in the CSV.
+2. Folds a shop that appears in both OpenStreetMap and Game-Route into one listing when the name, address, or website shows it is the same place.
+3. Keeps the existing web address (`slug`) when that shop was already imported.
+4. Writes `data/stores.json` and a short `data/import-report.json`.
+5. If `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set in the environment or in `.env.local`, it also saves the rows to Supabase.
 
-## Deploy on Vercel
+Do not commit `.env.local`. The service role key must never be pasted into the repo.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Before the first database save, run the SQL in `supabase/migrations` (including `0002_store_import_fields.sql`) in the Supabase SQL editor. The JSON file is still written if that step has not been done.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Platforms, trade-ins, and repair flags are left off. The import does not guess which consoles a shop sells. A blank phone, website, hour, or photo stays blank.
+
+A few missing fields were filled from Wikidata records that were already linked in the CSV. Those fills are listed in `data/wikidata-fills.json`. The notes on each row say where a filled value came from.
+
+## Checks
+
+```bash
+npm test
+npm run build
+```
+
+## Sources
+
+Shop locations include data from OpenStreetMap contributors, Game-Route, Wikidata, and Dallas Retro Gamers. OpenStreetMap data is used under the Open Database License. Each store page links to its source when a link was in the file.

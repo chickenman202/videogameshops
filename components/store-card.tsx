@@ -1,4 +1,5 @@
 import type { CatalogStore } from "@/lib/catalog";
+import { formatStorePlace } from "@/lib/place";
 import { storePath } from "@/lib/paths";
 
 function facts(store: CatalogStore): string[] {
@@ -38,8 +39,7 @@ export function StoreCard({ store, priority = false }: { store: CatalogStore; pr
       <span className="min-w-0 flex-1">
         <span className="block text-lg font-semibold text-[#090b10]">{store.name}</span>
         <span className="mt-1 block text-sm text-muted">
-          {store.address}, {store.city}, {store.stateAbbr}
-          {store.zip ? ` ${store.zip}` : ""}
+          {formatStorePlace(store) || store.countryName || "Address not listed"}
         </span>
         <span className="mt-3 flex flex-wrap gap-2">
           {store.platforms.map((platform) => (

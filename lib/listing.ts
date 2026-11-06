@@ -8,6 +8,7 @@ import {
   recordHasFilters,
   type Filters,
 } from "@/lib/filters";
+import { formatStorePlace } from "@/lib/place";
 import { isUsableAbout } from "@/lib/publish";
 import {
   cityPath,
@@ -66,7 +67,10 @@ function applyUserFilters(stores: CatalogStore[], filters: Filters): CatalogStor
     return (
       store.name.toLowerCase().includes(query) ||
       store.city.toLowerCase().includes(query) ||
-      store.state.toLowerCase().includes(query)
+      store.state.toLowerCase().includes(query) ||
+      store.country.toLowerCase().includes(query) ||
+      store.countryName.toLowerCase().includes(query) ||
+      (store.brand ?? "").toLowerCase().includes(query)
     );
   });
 }
@@ -120,15 +124,11 @@ export function storeAbout(store: CatalogStore): string {
   if (store.sellsUsed) facts.push("used games");
   if (store.tradeIns) facts.push("trade-ins");
   if (store.repairs) facts.push("console repair");
-  const offer = facts.length
-    ? `It offers ${joinList(facts)}.`
-    : "The page lists the address and the hours on file.";
-  const platforms = store.platforms.length
-    ? ` Platforms: ${joinList(store.platforms)}.`
-    : "";
-  return `${store.name} is a video game store at ${store.address}, ${store.city}, ${store.state}. ${offer}${platforms}`
-    .replace(/\s+/g, " ")
-    .trim();
+  const offer = facts.length ? `It offers ${joinList(facts)}.` : "";
+  const platforms = store.platforms.length ? ` Platforms: ${joinList(store.platforms)}.` : "";
+  const place = formatStorePlace(store);
+  const where = place ? ` at ${place}` : "";
+  return `${store.name} is a video game store${where}. ${offer}${platforms}`.replace(/\s+/g, " ").trim();
 }
 
 export async function buildListing(input: {

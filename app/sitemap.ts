@@ -43,6 +43,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const cityKeys = new Map<string, { stateSlug: string; citySlug: string; updated: string[] }>();
   for (const store of catalog.stores) {
+    if (!store.stateSlug || !store.citySlug) continue;
     const key = `${store.stateSlug}/${store.citySlug}`;
     const current = cityKeys.get(key);
     if (!current) {
@@ -70,6 +71,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const groups = new Map<string, { stateSlug: string; citySlug: string; updated: string[] }>();
     for (const store of catalog.stores) {
       if (!store.platforms.includes(platform.label)) continue;
+      if (!store.stateSlug || !store.citySlug) continue;
       const key = `${store.stateSlug}/${store.citySlug}`;
       const current = groups.get(key);
       if (!current) {

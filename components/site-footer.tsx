@@ -45,7 +45,8 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-white/10">
         <p className="mx-auto max-w-6xl px-4 py-4 text-sm text-[#8b95a3]">
-          videogameshops lists physical video game stores in the United States.
+          Shop locations include data from OpenStreetMap contributors, Game-Route, Wikidata, and Dallas Retro
+          Gamers.
         </p>
       </div>
     </footer>
