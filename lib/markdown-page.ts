@@ -135,7 +135,7 @@ function staticPage(path: string): MarkdownDoc | null {
   const pages: Record<string, { title: string; text: string }> = {
     "/about": {
       title: "About videogameshops",
-      text: "videogameshops is a worldwide directory of physical video game stores. Find physical video game stores by country, region, and city. A listing needs a shop name and a country. Phone, website, hours, and platforms are shown when the listing includes them.",
+      text: "videogameshops is a worldwide directory of physical video game stores. Find physical video game stores by country, region, and city. Add a shop from any country on the submit page. The form asks for the shop name, the street, the city, and the country. Use the contact page to correct a listing that is already public. A city or region page is included in search when that place has at least three stores. A smaller place stays public.",
     },
     "/contact": {
       title: "Contact",

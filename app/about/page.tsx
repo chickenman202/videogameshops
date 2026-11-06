@@ -47,18 +47,22 @@ export default function AboutPage() {
           </p>
           <h2 className="pt-4 text-2xl font-semibold text-[#090b10]">How a store gets listed</h2>
           <p>
-            Use the submit page with the store name and where it is. Submissions are reviewed before a page
-            goes public. Names that are not shop names are left off. United States state and city pages use
-            addresses like /directory/texas/austin. Other countries use /directory/countries, then the
-            country code, the region, and the city. Each shop has one address under /store. The address
-            includes the city when two shops share a name.
+            Add a shop from any country on the submit page. The form asks for the shop name, the street, the
+            city, and the country. A region or state can be included when you have one. Submissions are
+            reviewed before a page goes public. Names that are not shop names are left off.
+          </p>
+          <p>
+            United States state and city pages use addresses like /directory/texas/austin. Other countries
+            use /directory/countries, then the country code, the region, and the city. Each shop has one
+            address under /store. The address includes the city when two shops share a name.
           </p>
           <h2 className="pt-4 text-2xl font-semibold text-[#090b10]">How to fix a wrong listing</h2>
           <p>
-            Use the contact page. Include the store name, the city, and what should change: the address, a
-            phone number, a closed day, or a platform the shop does not carry. After the listing is updated,
-            the public page refreshes within a day. A city page is published for search when that city has
-            at least three stores. A town with one shop still keeps that store’s page.
+            Use the contact page to correct a shop that is already listed. Include the store name, the city,
+            and what should change: the address, a phone number, a closed day, or a platform the shop does
+            not carry. After the listing is updated, the public page refreshes within a day. A city or region
+            page is included in search when that place has at least three stores. A smaller place stays
+            public, and its store pages stay public.
           </p>
         </div>
       </article>

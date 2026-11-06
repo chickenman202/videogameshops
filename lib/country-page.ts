@@ -1,6 +1,7 @@
 import { loadCatalog, type CatalogStore } from "@/lib/catalog";
 import { countryBySlug } from "@/lib/countries";
 import { countryPath, countryRegionPath, regionPathFor } from "@/lib/paths";
+import { preferredPlaceName } from "@/lib/place-name";
 import { MIN_CITY_STORES } from "@/lib/site";
 
 export type CountryRegionLink = {
@@ -25,16 +26,20 @@ export type LoadedCountry =
   | { status: "ok"; page: CountryPageData };
 
 function regionsFor(stores: CatalogStore[]): CountryRegionLink[] {
-  const groups = new Map<string, { name: string; count: number; sample: CatalogStore }>();
+  const groups = new Map<string, { names: Map<string, number>; count: number; sample: CatalogStore }>();
   for (const store of stores) {
     if (!store.stateSlug || !store.state) continue;
     const current = groups.get(store.stateSlug);
-    if (!current) groups.set(store.stateSlug, { name: store.state, count: 1, sample: store });
-    else current.count += 1;
+    if (!current) {
+      groups.set(store.stateSlug, { names: new Map([[store.state, 1]]), count: 1, sample: store });
+    } else {
+      current.names.set(store.state, (current.names.get(store.state) ?? 0) + 1);
+      current.count += 1;
+    }
   }
   return [...groups.entries()]
     .map(([slug, group]) => ({
-      name: group.name,
+      name: preferredPlaceName(group.names),
       slug,
       count: group.count,
       href: group.sample.countryCode === "US" ? regionPathFor(group.sample) : countryRegionPath(group.sample.countrySlug, slug),

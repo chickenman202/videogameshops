@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, it } from "node:test";
 import { assignUniqueSlugs, toCatalogStore, type CatalogStore } from "./catalog";
 import { countryBySlug, normalizeCountry } from "./countries";
@@ -376,5 +378,35 @@ describe("sitemap", () => {
       assert.equal(urls.includes(`${SITE_URL}${path === "/" ? "" : path}`), true, path);
     }
     assert.equal(urls.some((url) => url.includes("/store/")), false);
+  });
+});
+
+describe("place folding from the import file", () => {
+  const rows = JSON.parse(readFileSync(path.join(process.cwd(), "data/stores.json"), "utf8")) as Array<
+    StoreRow & { region_slug?: string; country_code?: string }
+  >;
+
+  it("keeps Tirana and Tiranë on one city slug and one region slug", () => {
+    const tirana = rows.filter((item) => item.country_code === "AL" && (item.city === "Tirana" || item.city === "Tiranë"));
+    assert.ok(tirana.some((item) => item.city === "Tirana"));
+    assert.ok(tirana.some((item) => item.city === "Tiranë"));
+    const stores = tirana.map((item) => toCatalogStore(item));
+    assert.ok(stores.every((store) => store?.citySlug === "tirana"));
+    assert.ok(stores.every((store) => store?.stateSlug === "tirane"));
+    const spelled = stores.find((store) => store?.city === "Tiranë");
+    assert.equal(spelled?.city, "Tiranë");
+  });
+
+  it("keeps São Paulo and Sao Paulo on one region slug", () => {
+    const sao = rows.filter(
+      (item) => item.country_code === "BR" && (item.state === "São Paulo" || item.state === "Sao Paulo"),
+    );
+    assert.ok(sao.some((item) => item.state === "São Paulo"));
+    assert.ok(sao.some((item) => item.state === "Sao Paulo"));
+    const stores = sao.map((item) => toCatalogStore(item));
+    assert.ok(stores.every((store) => store?.stateSlug === "sao-paulo"));
+    const cities = stores.filter((store) => store?.city === "São Paulo" || store?.city === "Sao Paulo");
+    assert.ok(cities.length >= 2);
+    assert.ok(cities.every((store) => store?.citySlug === "sao-paulo"));
   });
 });

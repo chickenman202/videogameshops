@@ -75,12 +75,24 @@ function text(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
+type StoredPlace = StoreRow & {
+  country_name?: string | null;
+  region_slug?: string | null;
+  state_slug?: string | null;
+};
+
 function countryOf(row: StoreRow): Country {
   const fromCode = normalizeCountry(text(row.country));
   if (fromCode.code || fromCode.name) return fromCode;
-  const storedName = text((row as StoreRow & { country_name?: string | null }).country_name);
+  const storedName = text((row as StoredPlace).country_name);
   if (!storedName) return fromCode;
   return normalizeCountry(storedName);
+}
+
+/** The import already folded accents and Tirana/Tiranë. Keep that slug. */
+function storedRegionSlug(row: StoreRow): string {
+  const place = row as StoredPlace;
+  return text(place.region_slug) || text(place.state_slug);
 }
 
 export function toCatalogStore(row: StoreRow): CatalogStore | null {
@@ -105,11 +117,12 @@ export function toCatalogStore(row: StoreRow): CatalogStore | null {
       regionAbbr = state.abbreviation;
     } else {
       regionName = regionRaw;
+      regionSlug = storedRegionSlug(row);
       regionAbbr = shortRegionCode(regionRaw) ?? "";
     }
   } else if (regionRaw) {
     regionName = regionRaw;
-    regionSlug = stableSlug(regionRaw);
+    regionSlug = storedRegionSlug(row) || stableSlug(regionRaw);
     regionAbbr = shortRegionCode(regionRaw) ?? regionName;
   }
 

@@ -17,6 +17,7 @@ import {
   type Filters,
 } from "@/lib/filters";
 import { countryLinks, type PlaceLink } from "@/lib/links";
+import { nameCounts, preferredPlaceName } from "@/lib/place-name";
 import { isUsableAbout } from "@/lib/publish";
 import {
   cityPathFor,
@@ -97,18 +98,18 @@ function applyUserFilters(stores: CatalogStore[], filters: Filters): CatalogStor
 }
 
 function cityGroups(stores: CatalogStore[], hrefFor: (citySlug: string) => string): CityLink[] {
-  const groups = new Map<string, { name: string; count: number }>();
+  const groups = new Map<string, Map<string, number>>();
   for (const store of stores) {
     if (!store.citySlug || !store.city) continue;
-    const current = groups.get(store.citySlug);
-    if (!current) groups.set(store.citySlug, { name: store.city, count: 1 });
-    else current.count += 1;
+    const names = groups.get(store.citySlug) ?? new Map<string, number>();
+    names.set(store.city, (names.get(store.city) ?? 0) + 1);
+    groups.set(store.citySlug, names);
   }
   return [...groups.entries()]
-    .map(([slug, group]) => ({
-      name: group.name,
+    .map(([slug, names]) => ({
+      name: preferredPlaceName(names),
       slug,
-      count: group.count,
+      count: [...names.values()].reduce((sum, count) => sum + count, 0),
       href: hrefFor(slug),
     }))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "en"));
@@ -259,10 +260,10 @@ async function buildListingUncached(input: ListingInput): Promise<ListingResult>
   } else if (input.stateSlug) {
     const inRegion = pool.filter((store) => store.stateSlug === input.stateSlug);
     if (inRegion.length === 0) return { status: "not-found" };
-    regionName = inRegion[0]?.state ?? null;
-    regionSlug = input.stateSlug;
     countryCode = inRegion[0]?.countryCode ?? countryCode;
     if (countryCode === "US") state = getStateBySlug(input.stateSlug);
+    regionName = state?.name || preferredPlaceName(nameCounts(inRegion.map((store) => store.state))) || null;
+    regionSlug = input.stateSlug;
     pool = inRegion;
   }
 
@@ -270,7 +271,7 @@ async function buildListingUncached(input: ListingInput): Promise<ListingResult>
   if (input.citySlug) {
     const inCity = pool.filter((store) => store.citySlug === input.citySlug);
     if (inCity.length === 0) return { status: "not-found" };
-    cityName = inCity[0]?.city ?? null;
+    cityName = preferredPlaceName(nameCounts(inCity.map((store) => store.city))) || null;
     pool = inCity;
   }
 
