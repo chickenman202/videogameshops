@@ -3,11 +3,15 @@ import type { PlatformLabel } from "@/lib/platforms";
 /**
  * A shop title drops a keyword list only when it is appended after a dash,
  * colon, bar, or slash, or as a comma-separated category list. The stored name
- * stays the original string. A platform tag is filled only when that list
- * names exactly one platform this site already has. Nothing else is filled in.
+ * stays the original string. A name written entirely in capitals is shown in
+ * title case. A token of three letters or fewer stays in capitals, and so does
+ * a token that contains & or a digit. GameStop, EB Games, and CeX keep those
+ * spellings. A name that already mixes capitals and lowercase is left as
+ * written. A platform tag is filled only when a keyword list names exactly one
+ * platform this site already has. Nothing else is filled in.
  */
 export const DISPLAY_NAME_RULE =
-  "The stored name is the original text. A title hides a keyword list when that list is appended after a dash, colon, bar, or slash, or as a comma-separated category list, and every word in it is a category such as video games, anime, or retro. The list is kept when it is a place, a translation, or part of the name, as in Hi-Score or West Monroe. The platforms field is filled only when that list names exactly one of Retro, PlayStation, Xbox, Nintendo, PC, Handheld, or VR. No phone, website, hour, or address is created.";
+  "The stored name is the original text. A title hides a keyword list when that list is appended after a dash, colon, bar, or slash, or as a comma-separated category list, and every word in it is a category such as video games, anime, or retro. The list is kept when it is a place, a translation, or part of the name, as in Hi-Score or West Monroe. A name written in all capitals is shown in title case. A token of three letters or fewer stays in capitals, as do tokens that contain & or a digit, including EB, GS, TCG, VR, USA, UK, and C&AS. GAMESTOP is shown as GameStop, EB GAMES as EB Games, and CEX as CeX. A name that already mixes capitals and lowercase is left as written. The platforms field is filled only when that list names exactly one of Retro, PlayStation, Xbox, Nintendo, PC, Handheld, or VR. No phone, website, hour, or address is created.";
 
 const CATEGORIES = [
   "pop culture",
@@ -54,14 +58,68 @@ export type CleanedShopName = {
   platforms: PlatformLabel[];
 };
 
+const BRAND_CASE: Record<string, string> = {
+  GAMESTOP: "GameStop",
+  CEX: "CeX",
+};
+
 /** Title text for a shop. The raw name is not changed. */
 export function cleanShopName(raw: string): CleanedShopName {
+  const prepared = prepareShopTitle(raw);
+  return { displayName: titleCaseAllCaps(prepared.title), platforms: prepared.platforms };
+}
+
+/** Which display adjustments applied. The stored name is not one of them. */
+export function shopTitleAdjustments(raw: string): { hidKeywordList: boolean; titleCased: boolean } {
+  const prepared = prepareShopTitle(raw);
+  return {
+    hidKeywordList: prepared.hidList,
+    titleCased: titleCaseAllCaps(prepared.title) !== prepared.title,
+  };
+}
+
+function prepareShopTitle(raw: string): { title: string; platforms: PlatformLabel[]; hidList: boolean } {
   const name = raw.trim();
   const split = appendedList(name);
-  if (!split) return { displayName: name, platforms: [] };
+  if (!split) return { title: name, platforms: [], hidList: false };
   const phrases = categoryPhrases(split.suffix);
-  if (!phrases || phrases.length < 2) return { displayName: name, platforms: [] };
-  return { displayName: split.title, platforms: platformsIn(phrases) };
+  if (!phrases || phrases.length < 2) return { title: name, platforms: [], hidList: false };
+  return { title: split.title, platforms: platformsIn(phrases), hidList: true };
+}
+
+/** A name whose letters are all capitals becomes title case. Mixed case stays. */
+function titleCaseAllCaps(value: string): string {
+  if (!isAllCapsName(value)) return value;
+  return value
+    .split(/(\s+)/)
+    .map((part) => (/^\s+$/.test(part) ? part : titleCaseToken(part)))
+    .join("");
+}
+
+function isAllCapsName(value: string): boolean {
+  const letters = [...value].filter((char) => /\p{L}/u.test(char));
+  if (letters.length === 0) return false;
+  return letters.every((char) => {
+    const upper = char.toLocaleUpperCase("en");
+    const lower = char.toLocaleLowerCase("en");
+    return char === upper && upper !== lower;
+  });
+}
+
+function titleCaseToken(token: string): string {
+  if (/[&\d]/.test(token)) return token;
+  const letters = token.match(/\p{L}/gu)?.join("") ?? "";
+  const brand = BRAND_CASE[letters.toLocaleUpperCase("en")];
+  if (brand) return token.replace(/\p{L}+/u, brand);
+  const runs = token.match(/\p{L}+/gu) ?? [];
+  if (runs.length > 0 && runs.every((run) => [...run].length <= 3)) return token;
+  return token.replace(/\p{L}+/gu, (run: string, offset: number) => {
+    const mark = token.slice(offset - 1, offset);
+    if ((mark === "'" || mark === "’") && [...run].length === 1) return run.toLocaleLowerCase("en");
+    if ([...run].length <= 3) return run;
+    const chars = [...run];
+    return (chars[0] ?? "").toLocaleUpperCase("en") + chars.slice(1).join("").toLocaleLowerCase("en");
+  });
 }
 
 function appendedList(name: string): { title: string; suffix: string } | null {

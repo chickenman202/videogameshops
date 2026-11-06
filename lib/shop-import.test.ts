@@ -6,7 +6,7 @@ import { describe, it } from "node:test";
 import { buildCatalog, existingFromRows } from "./build-catalog";
 import { shopIsIndexable, toCatalogStore } from "./catalog";
 import { countryEntries, regionLinks } from "./country-browse";
-import { DISPLAY_NAME_RULE, cleanShopName } from "./display-name";
+import { DISPLAY_NAME_RULE, cleanShopName, shopTitleAdjustments } from "./display-name";
 import { COUNTRY_URL_SCHEME } from "./country-route";
 import { countryBySlug, normalizeCountry } from "./countries";
 import { NEAR_MISS_RULE, reviewNearMisses } from "./near-miss-review";
@@ -213,13 +213,42 @@ describe("shop titles", () => {
     assert.equal(cleanShopName("Disc Traders - Battle Creek").displayName, "Disc Traders - Battle Creek");
     assert.equal(cleanShopName("Matt's Games, Collectibles & More").displayName, "Matt's Games");
     assert.equal(cleanShopName("CheatCide Video Games, Cards & More").displayName, "CheatCide Video Games");
-    assert.equal(cleanShopName("BASCO, INC.").displayName, "BASCO, INC.");
+    assert.equal(cleanShopName("BASCO, INC.").displayName, "Basco, INC.");
     assert.deepEqual(cleanShopName("Xbox 360/Ps3/Nintendo/Curso de Games").platforms, []);
     assert.equal(cleanShopName("Game Mechanix - West Monroe").displayName, "Game Mechanix - West Monroe");
     const retro = cleanShopName("Summit Gaming & Collectibles - Retro Games, Records & Toys");
     assert.equal(retro.displayName, "Summit Gaming & Collectibles");
     assert.deepEqual(retro.platforms, ["Retro"]);
     assert.equal(DISPLAY_NAME_RULE.includes("original text"), true);
+  });
+
+  it("shows an all-caps name in title case and keeps short acronyms", () => {
+    assert.equal(cleanShopName("ARM ARENA").displayName, "ARM Arena");
+    assert.equal(cleanShopName("GAME POINT").displayName, "Game Point");
+    assert.equal(cleanShopName("C&AS VIDEO GABRYEL").displayName, "C&AS Video Gabryel");
+    assert.equal(cleanShopName("SHOCK SPRING GAMES INC.").displayName, "Shock Spring Games INC.");
+    assert.equal(cleanShopName("SIM RACING HQ").displayName, "SIM Racing HQ");
+    assert.equal(cleanShopName("PC - GAMER").displayName, "PC - Gamer");
+    assert.equal(cleanShopName("PSP-GAME").displayName, "PSP-Game");
+    assert.equal(cleanShopName("IRONBLAST'S GAME ZONE").displayName, "Ironblast's Game Zone");
+    assert.equal(cleanShopName("G.A.M.E.S.").displayName, "G.A.M.E.S.");
+    assert.equal(cleanShopName("PS3").displayName, "PS3");
+    assert.equal(cleanShopName("NP4GAME").displayName, "NP4GAME");
+    assert.equal(cleanShopName("GS").displayName, "GS");
+    assert.equal(cleanShopName("TCG").displayName, "TCG");
+    assert.equal(cleanShopName("VR").displayName, "VR");
+    assert.equal(cleanShopName("USA").displayName, "USA");
+    assert.equal(cleanShopName("UK").displayName, "UK");
+    assert.equal(cleanShopName("EB GAMES").displayName, "EB Games");
+    assert.equal(cleanShopName("GAMESTOP").displayName, "GameStop");
+    assert.equal(cleanShopName("CEX").displayName, "CeX");
+    assert.equal(cleanShopName("GameStop").displayName, "GameStop");
+    assert.equal(cleanShopName("EB Games").displayName, "EB Games");
+    assert.equal(cleanShopName("Cex").displayName, "Cex");
+    assert.equal(cleanShopName("Hi-Score Video Games").displayName, "Hi-Score Video Games");
+    assert.equal(shopTitleAdjustments("GAME POINT").titleCased, true);
+    assert.equal(shopTitleAdjustments("GAME POINT").hidKeywordList, false);
+    assert.equal(shopTitleAdjustments("GameStop").titleCased, false);
   });
 });
 
@@ -401,6 +430,7 @@ describe("shop file", () => {
       display_name_rule: string;
       display_names_cleaned: number;
       display_names_cleaned_beyond_dash: number;
+      display_names_title_cased: number;
       stores_json_sha256: string;
       supabase: string;
       country_url_scheme: { canonical: string };
@@ -461,13 +491,19 @@ describe("shop file", () => {
     assert.equal(report.display_name_rule, DISPLAY_NAME_RULE);
     assert.equal(
       report.display_names_cleaned,
-      built.rows.filter((row) => cleanShopName(row.name).displayName !== row.name.trim()).length,
+      built.rows.filter((row) => shopTitleAdjustments(row.name).hidKeywordList).length,
     );
     assert.equal(
       report.display_names_cleaned_beyond_dash,
-      built.rows.filter((row) => cleanShopName(row.name).displayName !== row.name.trim() && !/[-–—]/.test(row.name))
-        .length,
+      built.rows.filter((row) => shopTitleAdjustments(row.name).hidKeywordList && !/[-–—]/.test(row.name)).length,
     );
+    assert.equal(
+      report.display_names_title_cased,
+      built.rows.filter((row) => shopTitleAdjustments(row.name).titleCased).length,
+    );
+    const arena = built.rows.find((row) => row.name === "ARM ARENA");
+    assert.equal(arena?.name, "ARM ARENA");
+    assert.equal(cleanShopName(arena?.name ?? "").displayName, "ARM Arena");
     const shock = built.rows.find((row) => row.name.includes("Culture Shock Houston"));
     assert.equal(shock?.name.includes("Funko"), true);
     assert.equal(cleanShopName(shock?.name ?? "").displayName, "Culture Shock Houston Premium Outlets");

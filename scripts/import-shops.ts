@@ -12,7 +12,7 @@ import path from "node:path";
 import { buildCatalog, catalogReport, existingFromRows, nearMisses } from "../lib/build-catalog";
 import { COUNTRY_URL_SCHEME } from "../lib/country-route";
 import { NEAR_MISS_RULE, reviewNearMisses } from "../lib/near-miss-review";
-import { DISPLAY_NAME_RULE, cleanShopName } from "../lib/display-name";
+import { DISPLAY_NAME_RULE, shopTitleAdjustments } from "../lib/display-name";
 import { PLACE_FOLD_RULE } from "../lib/place-fold";
 import { SLUG_RULE } from "../lib/shop-record";
 import { toCatalogStore } from "../lib/catalog";
@@ -50,11 +50,11 @@ async function main() {
     slug_rule: SLUG_RULE,
     place_fold_rule: PLACE_FOLD_RULE,
     display_name_rule: DISPLAY_NAME_RULE,
-    display_names_cleaned: built.rows.filter((row) => cleanShopName(row.name).displayName !== row.name.trim()).length,
+    display_names_cleaned: built.rows.filter((row) => shopTitleAdjustments(row.name).hidKeywordList).length,
     display_names_cleaned_beyond_dash: built.rows.filter((row) => {
-      const cleaned = cleanShopName(row.name).displayName !== row.name.trim();
-      return cleaned && !/[-–—]/.test(row.name);
+      return shopTitleAdjustments(row.name).hidKeywordList && !/[-–—]/.test(row.name);
     }).length,
+    display_names_title_cased: built.rows.filter((row) => shopTitleAdjustments(row.name).titleCased).length,
     duplicate_slugs: slugs.length - new Set(slugs).size,
     near_miss_rule: NEAR_MISS_RULE,
     near_misses_within_40m: nearMisses(drafts),
