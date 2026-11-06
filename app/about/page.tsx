@@ -33,9 +33,9 @@ export default function AboutPage() {
         </p>
         <h2>Add or correct a shop</h2>
         <p>
-          Shop owners can send a listing from the submit page. That form stores a US state. Shops in other countries
-          can write through the contact page with the country and city. To fix a listing, name the shop, the city, and
-          what is wrong.
+          Shop owners anywhere can add a store from the submit page. Include the country. Phone, website, and hours
+          show on the public page only when a listing has them. Contact is for a correction or a question, not for a
+          new shop.
         </p>
       </div>
     </ArticlePage>

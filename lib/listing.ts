@@ -209,7 +209,6 @@ export async function buildListing(input: {
 
   const noun = nounFor(platformLabel);
   const intro = leadSentence(total, noun, place);
-  const detail = "Hours and contact details appear when a listing has them.";
 
   let indexable = !filtered && page === 1;
   if (input.citySlug && platform) indexable = indexable && placeTotal >= MIN_PLATFORM_CITY_STORES;
@@ -246,7 +245,7 @@ export async function buildListing(input: {
     filtered,
     h1,
     title: toTitle(page > 1 ? `${h1}, Page ${page}` : h1),
-    description: toMetaDescription(`${intro} ${detail}`),
+    description: toMetaDescription(intro),
     intro,
     crumbs,
     state,

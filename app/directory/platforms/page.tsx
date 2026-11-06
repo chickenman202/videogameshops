@@ -72,7 +72,7 @@ export default async function PlatformsPage() {
                 All stores
               </Link>
               <Link href="/submit" className="btn btn-ghost">
-                Submit a store
+                Add a store
               </Link>
             </div>
           </div>

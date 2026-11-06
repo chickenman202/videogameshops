@@ -66,7 +66,7 @@ export default async function StatesPage() {
                 All stores
               </Link>
               <Link href="/submit" className="btn btn-ghost">
-                Submit a store
+                Add a store
               </Link>
             </div>
           </div>

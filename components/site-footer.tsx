@@ -16,7 +16,7 @@ const groups = [
     links: [
       { href: "/about", label: "About" },
       { href: "/contact", label: "Contact" },
-      { href: "/submit", label: "Submit a store" },
+      { href: "/submit", label: "Add a store" },
     ],
   },
   {
@@ -38,8 +38,7 @@ export function SiteFooter() {
             <span className="font-display text-2xl font-bold uppercase">videogameshops</span>
           </Link>
           <p className="mt-4 max-w-sm font-serif text-base leading-relaxed text-paper/80">
-            Video Game Shops lists physical stores by country, region, and city. Hours and contact details appear when
-            a listing has them.
+            Video Game Shops lists physical stores by country, region, and city.
           </p>
         </div>
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">

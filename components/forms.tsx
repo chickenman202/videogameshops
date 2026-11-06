@@ -3,7 +3,6 @@
 import { useActionState } from "react";
 import { submitContact, submitStore, type FormState } from "@/app/actions";
 import { PLATFORMS } from "@/lib/platforms";
-import { US_STATES } from "@/lib/states";
 
 const initial: FormState = { status: "idle", message: "" };
 
@@ -53,22 +52,50 @@ function Field({
   );
 }
 
-export function ContactForm() {
-  const [state, action, pending] = useActionState(submitContact, initial);
+function LineField({
+  label,
+  name,
+  type = "text",
+  required = false,
+  autoComplete,
+  rows,
+}: {
+  label: string;
+  name: string;
+  type?: string;
+  required?: boolean;
+  autoComplete?: string;
+  rows?: number;
+}) {
+  const control =
+    "mt-2 w-full border-0 border-b-2 border-ink bg-transparent px-0 py-2 font-serif text-lg text-ink placeholder:text-muted focus:border-blue-ink";
   return (
-    <form action={action} aria-busy={pending || undefined} className="mt-8 space-y-4 border-t border-ink pt-6">
-      <Field label="Name" name="name" required autoComplete="name" />
-      <Field label="Email" name="email" type="email" required autoComplete="email" />
-      <label className="block">
-        <span className="text-sm font-bold text-ink">
-          Message
+    <label className="block">
+      <span className="kicker text-ink">
+        {label}
+        {required ? (
           <span className="text-blue-ink" aria-hidden="true">
             {" "}
             *
           </span>
-        </span>
-        <textarea name="message" required rows={5} className="field mt-1.5" />
-      </label>
+        ) : null}
+      </span>
+      {rows ? (
+        <textarea name={name} required={required} rows={rows} className={`${control} min-h-32 resize-y`} />
+      ) : (
+        <input name={name} type={type} required={required} autoComplete={autoComplete} className={control} />
+      )}
+    </label>
+  );
+}
+
+export function ContactForm() {
+  const [state, action, pending] = useActionState(submitContact, initial);
+  return (
+    <form action={action} aria-busy={pending || undefined} className="mt-8 space-y-8 border-t border-ink pt-8">
+      <LineField label="Name" name="name" required autoComplete="name" />
+      <LineField label="Email" name="email" type="email" required autoComplete="email" />
+      <LineField label="Message" name="message" required rows={5} />
       <Note state={state} />
       <button type="submit" disabled={pending} className="btn btn-primary w-full sm:w-auto">
         {pending ? "Sending" : "Send"}
@@ -96,26 +123,9 @@ export function SubmitStoreForm() {
           <Field label="Street address" name="address" required autoComplete="street-address" />
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="City" name="city" required autoComplete="address-level2" />
-            <label className="block">
-              <span className="text-sm font-bold text-ink">
-                State
-                <span className="text-blue-ink" aria-hidden="true">
-                  {" "}
-                  *
-                </span>
-              </span>
-              <select name="state" required autoComplete="address-level1" className="field mt-1.5" defaultValue="">
-                <option value="" disabled>
-                  Choose a state
-                </option>
-                {US_STATES.map((state) => (
-                  <option key={state.slug} value={state.name}>
-                    {state.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <Field label="Country" name="country" required autoComplete="country-name" />
           </div>
+          <Field label="State or region" name="region" autoComplete="address-level1" />
           <Field label="Phone" name="phone" type="tel" autoComplete="tel" />
           <Field label="Website" name="website" autoComplete="url" />
         </div>
@@ -152,7 +162,7 @@ export function SubmitStoreForm() {
       </section>
       <Note state={state} />
       <button type="submit" disabled={pending} className="btn btn-primary w-full sm:w-auto">
-        {pending ? "Sending" : "Send the listing"}
+        {pending ? "Sending" : "Add a store"}
       </button>
     </form>
   );

@@ -53,7 +53,9 @@ export async function submitStore(_previous: FormState, formData: FormData): Pro
   const storeName = text(formData, "storeName", 160);
   const address = text(formData, "address", 200);
   const city = text(formData, "city", 80);
-  const state = getStateFromInput(text(formData, "state", 80));
+  const country = text(formData, "country", 80);
+  const region = text(formData, "region", 80);
+  const usState = getStateFromInput(region);
   const email = text(formData, "email", 180);
   const phone = text(formData, "phone", 40);
   const website = text(formData, "website", 200);
@@ -62,10 +64,10 @@ export async function submitStore(_previous: FormState, formData: FormData): Pro
     (label) => formData.get(`platform-${label}`) === "on",
   );
 
-  if (storeName.length < 2 || address.length < 4 || city.length < 2 || !state) {
+  if (storeName.length < 2 || address.length < 4 || city.length < 2 || country.length < 2) {
     return {
       status: "error",
-      message: "Store name, street address, city, and state are required.",
+      message: "Store name, street address, city, and country are required.",
     };
   }
   if (email && !emailOk(email)) {
@@ -79,7 +81,7 @@ export async function submitStore(_previous: FormState, formData: FormData): Pro
     store_name: storeName,
     address,
     city,
-    state: state.name,
+    state: usState?.name || region || country,
     phone: phone || null,
     website: website || null,
     platforms,
@@ -87,6 +89,6 @@ export async function submitStore(_previous: FormState, formData: FormData): Pro
     sells_used: formData.get("sellsUsed") === "on",
     accepts_trade_ins: formData.get("tradeIns") === "on",
     repairs_consoles: formData.get("repairs") === "on",
-    message: note || null,
+    message: [note, `Country: ${country}`].filter(Boolean).join("\n\n") || null,
   });
 }

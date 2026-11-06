@@ -2,7 +2,7 @@ import type { Crumb } from "@/lib/listing";
 
 export function Breadcrumbs({ crumbs }: { crumbs: Crumb[] }) {
   return (
-    <nav aria-label="Breadcrumb" className="font-mono text-xs uppercase tracking-wide text-muted">
+    <nav aria-label="Breadcrumb" className="font-mono text-xs tracking-wide text-muted">
       <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
         {crumbs.map((crumb, index) => {
           const last = index === crumbs.length - 1;

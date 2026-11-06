@@ -8,11 +8,11 @@ const description =
   "Shop owners can send a physical video game store for Video Game Shops. A person reads the note before it is listed.";
 
 export const metadata: Metadata = {
-  title: { absolute: `Add a shop | ${BRAND}` },
+  title: { absolute: `Add a store | ${BRAND}` },
   description,
   alternates: { canonical: absoluteUrl("/submit") },
   openGraph: {
-    title: `Add a shop | ${BRAND}`,
+    title: `Add a store | ${BRAND}`,
     description,
     url: absoluteUrl("/submit"),
     siteName: BRAND,
@@ -23,8 +23,8 @@ export const metadata: Metadata = {
 export default function SubmitPage() {
   return (
     <ArticlePage
-      title="Add a shop"
-      lede="This form is for a shop with a door and a street address. Name the shop, the street, the city, and a US state. Shops outside the United States should use the contact page and include the country. A person reads each note before a page is published."
+      title="Add a store"
+      lede="Tell us about a shop with a street address. Include the country, wherever the shop is. We’ll read the note before the page goes up. For a correction to a shop that is already listed, use Contact."
     >
       <SubmitStoreForm />
     </ArticlePage>

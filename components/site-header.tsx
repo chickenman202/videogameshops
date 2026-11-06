@@ -7,6 +7,7 @@ import { Mark } from "@/components/mark";
 const links = [
   { href: "/directory", label: "Stores" },
   { href: "/#countries", label: "Countries" },
+  { href: "/directory/states", label: "States" },
   { href: "/directory/platforms", label: "Platforms" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
@@ -35,7 +36,7 @@ export function SiteHeader() {
           <Mark className="size-8 shrink-0" />
           <span className="truncate font-display text-2xl font-bold uppercase tracking-tight">videogameshops</span>
         </Link>
-        <nav aria-label="Main" className="hidden items-center gap-5 lg:flex">
+        <nav aria-label="Main" className="hidden items-center gap-4 lg:flex">
           {links.map((link) => (
             <Link key={link.href} href={link.href} className="kicker text-silver hover:text-blue-mist">
               {link.label}

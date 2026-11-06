@@ -1,4 +1,4 @@
-import { distinctPlace } from "./shop-view";
+import { displayPlace, distinctPlace, shopLocation, type ShopView } from "./shop-view";
 import { isKeyboardMash, isPublishableStore, isUsableAbout } from "./publish";
 import { slugify, storeSlug } from "./slug";
 import { toMetaDescription, storeTitle } from "./copy";
@@ -121,6 +121,22 @@ describe("titles and descriptions", () => {
     assert.deepEqual(distinctPlace(["Tirana", "Tiranë"]), ["Tirana"]);
     assert.deepEqual(distinctPlace(["Tirana", "Tirane"]), ["Tirana"]);
     assert.deepEqual(distinctPlace(["Aix-en-Provence", "Provence-Alpes-Cote d'Azur"]).length, 2);
+    assert.equal(displayPlace("la Massana"), "La Massana");
+    assert.equal(displayPlace("Aix-en-Provence"), "Aix-en-Provence");
+    assert.equal(displayPlace("Provence-Alpes-Cote d'Azur"), "Provence-Alpes-Cote d'Azur");
+    const folded = shopLocation({
+      city: "la Massana",
+      state: "La Massana",
+      stateAbbr: "",
+    } as ShopView);
+    assert.equal(folded.line, "La Massana");
+    const longRegion = shopLocation({
+      city: "Aix-en-Provence",
+      state: "Provence-Alpes-Cote d'Azur",
+      stateAbbr: "",
+    } as ShopView);
+    assert.equal(longRegion.line, "Aix-en-Provence");
+    assert.equal(longRegion.full, "Aix-en-Provence, Provence-Alpes-Cote d'Azur");
   });
 
   it("keeps a description honest and within search length", () => {

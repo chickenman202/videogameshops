@@ -14,6 +14,7 @@ import type { Crumb } from "@/lib/listing";
 import { cityPath, statePath, storePath } from "@/lib/paths";
 import {
   directionsUrl,
+  displayPlace,
   formatPhone,
   hasAddress,
   hoursNote,
@@ -126,22 +127,22 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
   const listedHours = hoursNote(store);
   const place = shopLocation(store);
   const zip = (store.zip ?? "").trim();
-  const localLine = [place.line, zip].filter(Boolean).join(" ");
+  const localLine = [place.full, zip].filter(Boolean).join(" ");
   const eyebrow = [place.line, country && country !== "US" ? countryName : ""].filter(Boolean).join(", ");
   const pageCrumbs: Crumb[] = [
     { name: "Home", href: "/" },
     { name: "Stores", href: "/directory" },
   ];
   if (store.stateSlug) {
-    pageCrumbs.push({ name: store.state, href: statePath(store.stateSlug) });
+    pageCrumbs.push({ name: displayPlace(store.state), href: statePath(store.stateSlug) });
     if (store.city && !preview && store.citySlug) {
-      pageCrumbs.push({ name: store.city, href: cityPath(store.stateSlug, store.citySlug) });
+      pageCrumbs.push({ name: displayPlace(store.city), href: cityPath(store.stateSlug, store.citySlug) });
     } else if (store.city) {
-      pageCrumbs.push({ name: store.city });
+      pageCrumbs.push({ name: displayPlace(store.city) });
     }
   } else {
     if (countryName) pageCrumbs.push({ name: countryName });
-    if (store.city) pageCrumbs.push({ name: store.city });
+    if (store.city) pageCrumbs.push({ name: displayPlace(store.city) });
   }
   pageCrumbs.push({ name: store.name });
   const about = store.about?.trim() ?? "";
@@ -164,8 +165,8 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
           />
         ) : null}
         <header className="mt-6 max-w-4xl border-t-2 border-ink pt-4">
-          <p className="kicker text-blue-ink">{eyebrow || "Shop"}</p>
-          <h1 className="mt-3 text-5xl uppercase break-words text-ink sm:text-7xl">{store.name}</h1>
+          <p className="font-mono text-xs tracking-wide text-blue-ink">{eyebrow || "Shop"}</p>
+          <h1 className="mt-3 text-5xl break-words text-ink sm:text-6xl">{store.name}</h1>
         </header>
         <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
           <div className="min-w-0">

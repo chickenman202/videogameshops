@@ -71,13 +71,39 @@ export function distinctPlace(parts: string[]): string[] {
   return kept;
 }
 
-/** City and region on one line, country on its own when we actually have it. */
-export function shopLocation(store: ShopView): { line: string; country: string } {
-  const region = text(store.stateAbbr) || text(store.state);
-  return {
-    line: distinctPlace([text(store.city), region]).join(", "),
-    country: shopCountryName(store),
-  };
+const SMALL_PLACE_WORDS = new Set(["and", "d", "da", "de", "del", "des", "di", "du", "en", "la", "le", "of", "y"]);
+
+/** Title case that keeps accents already in the name. Small words stay lower after the first word. */
+export function displayPlace(value: string): string {
+  let seenWord = false;
+  return value
+    .split(/(\s+|-|')/)
+    .map((part) => {
+      if (!part || /^(\s+|-|')$/.test(part)) return part;
+      const lower = part.toLocaleLowerCase("en");
+      const capped = lower.charAt(0).toLocaleUpperCase("en") + lower.slice(1);
+      if (!seenWord) {
+        seenWord = true;
+        return capped;
+      }
+      seenWord = true;
+      return SMALL_PLACE_WORDS.has(lower) ? lower : capped;
+    })
+    .join("");
+}
+
+/** City and region. `line` drops a long region so it does not wrap beside the city. `full` keeps both. */
+export function shopLocation(store: ShopView): { line: string; full: string; country: string } {
+  const abbr = text(store.stateAbbr);
+  const region = abbr || text(store.state);
+  const parts = distinctPlace([text(store.city), region]);
+  const pretty = parts.map((part, index) =>
+    index > 0 && abbr && /^[A-Za-z]{2}$/.test(part) ? part.toUpperCase() : displayPlace(part),
+  );
+  const full = pretty.join(", ");
+  const regionLabel = pretty[1] ?? "";
+  const line = regionLabel.length > 18 ? (pretty[0] ?? "") : full;
+  return { line, full, country: shopCountryName(store) };
 }
 
 /** Street, city, and country. A blank address is left out instead of guessed. */

@@ -96,11 +96,7 @@ export async function DirectoryScreen({ listing }: { listing: ListingOk }) {
             <ul className="mt-4">
               {visibleStores.map((store, index) => (
                 <li key={store.id}>
-                  <StoreCard
-                    store={store}
-                    priority={index === 0 && listing.page === 1}
-                    scale={index === 0 ? "feature" : store.photo ? "photo" : "row"}
-                  />
+                  <StoreCard store={store} priority={index === 0 && listing.page === 1} />
                 </li>
               ))}
             </ul>
@@ -136,7 +132,7 @@ function EmptyResults({ listing }: { listing: ListingOk }) {
           All stores
         </Link>
         <Link href="/submit" className="btn btn-ghost">
-          Submit a store
+          Add a store
         </Link>
       </div>
     </div>

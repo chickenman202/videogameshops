@@ -10,7 +10,7 @@ import { shopCountryName, shopLocation, type ShopView } from "@/lib/shop-view";
 import { US_STATES } from "@/lib/states";
 
 const description =
-  "Find physical video game stores by country, region, and city. Hours and contact details appear when a listing has them.";
+  "Find physical video game stores by country, region, and city.";
 
 export const revalidate = 86400;
 
@@ -80,7 +80,7 @@ export default async function HomePage() {
                     {featured.name}
                   </span>
                   {shopLocation(featured).line || shopLocation(featured).country ? (
-                    <span className="mt-1 block font-mono text-xs uppercase tracking-wide text-ink-soft">
+                    <span className="mt-1 block font-mono text-xs tracking-wide text-ink-soft">
                       {[shopLocation(featured).line, shopLocation(featured).country].filter(Boolean).join(" · ")}
                     </span>
                   ) : null}
@@ -140,7 +140,11 @@ export default async function HomePage() {
                     href={storePath(store.slug)}
                     className="group grid gap-1 py-4 sm:grid-cols-[11rem_minmax(0,1fr)_10rem] sm:items-baseline sm:gap-6 hover:bg-white"
                   >
-                    {place.line ? <span className="kicker text-blue-ink">{place.line}</span> : <span />}
+                    {place.line ? (
+                      <span className="font-mono text-xs tracking-wide text-blue-ink">{place.line}</span>
+                    ) : (
+                      <span />
+                    )}
                     <span className="min-w-0 font-serif text-xl leading-snug font-semibold break-words text-ink group-hover:text-blue-ink-ink">
                       {store.name}
                     </span>
@@ -207,7 +211,7 @@ export default async function HomePage() {
                 All stores
               </Link>
               <Link href="/submit" className="btn btn-ghost">
-                Submit a store
+                Add a store
               </Link>
             </div>
           </div>
@@ -216,19 +220,16 @@ export default async function HomePage() {
 
       <section className="border-t border-ink bg-white">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-12 sm:items-end">
-          <div className="sm:col-span-5">
-            <h2 className="font-serif text-4xl font-normal text-ink italic">Your counter</h2>
-            <p className="mt-3 max-w-sm text-ink-soft">
-              If the shop is yours, send the name and the street. A person reads the note before the listing goes up.
+          <div className="sm:col-span-7">
+            <p className="kicker text-blue-ink">Shop owners</p>
+            <h2 className="mt-3 font-serif text-4xl font-normal text-ink italic sm:text-5xl">This shop is yours</h2>
+            <p className="mt-3 max-w-xl text-lg text-ink-soft">
+              Add it. Send the name, the street, and the city, wherever you are. We’ll read it before it goes up.
             </p>
           </div>
-          <div className="sm:col-span-7 sm:border-l sm:border-silver sm:pl-8">
-            <p className="kicker text-blue-ink">Shop owners</p>
-            <Link
-              href="/submit"
-              className="mt-3 block font-display text-5xl leading-none font-bold text-ink uppercase hover:text-blue-ink sm:text-6xl"
-            >
-              Add a listing
+          <div className="sm:col-span-5 sm:text-right">
+            <Link href="/submit" className="btn btn-primary">
+              Add a store
             </Link>
           </div>
         </div>
