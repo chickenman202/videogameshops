@@ -223,11 +223,19 @@ describe("shop titles", () => {
   });
 
   it("shows an all-caps name in title case and keeps short acronyms", () => {
-    assert.equal(cleanShopName("ARM ARENA").displayName, "ARM Arena");
+    assert.equal(cleanShopName("ARM ARENA").displayName, "Arm Arena");
+    assert.equal(cleanShopName("MASTER OF GAMES").displayName, "Master of Games");
+    assert.equal(cleanShopName("GAME ON").displayName, "Game On");
+    assert.equal(cleanShopName("PUBG").displayName, "PUBG");
+    assert.equal(cleanShopName("PRO PUBG").displayName, "Pro PUBG");
+    assert.equal(cleanShopName("YPDS").displayName, "YPDS");
     assert.equal(cleanShopName("GAME POINT").displayName, "Game Point");
     assert.equal(cleanShopName("C&AS VIDEO GABRYEL").displayName, "C&AS Video Gabryel");
     assert.equal(cleanShopName("SHOCK SPRING GAMES INC.").displayName, "Shock Spring Games INC.");
-    assert.equal(cleanShopName("SIM RACING HQ").displayName, "SIM Racing HQ");
+    assert.equal(cleanShopName("SIM RACING HQ").displayName, "Sim Racing HQ");
+    assert.equal(cleanShopName("NEXT GEN").displayName, "Next Gen");
+    assert.equal(cleanShopName("LA GAMES").displayName, "La Games");
+    assert.equal(cleanShopName("GAME SHOP LA").displayName, "Game Shop LA");
     assert.equal(cleanShopName("PC - GAMER").displayName, "PC - Gamer");
     assert.equal(cleanShopName("PSP-GAME").displayName, "PSP-Game");
     assert.equal(cleanShopName("IRONBLAST'S GAME ZONE").displayName, "Ironblast's Game Zone");
@@ -503,7 +511,7 @@ describe("shop file", () => {
     );
     const arena = built.rows.find((row) => row.name === "ARM ARENA");
     assert.equal(arena?.name, "ARM ARENA");
-    assert.equal(cleanShopName(arena?.name ?? "").displayName, "ARM Arena");
+    assert.equal(cleanShopName(arena?.name ?? "").displayName, "Arm Arena");
     const shock = built.rows.find((row) => row.name.includes("Culture Shock Houston"));
     assert.equal(shock?.name.includes("Funko"), true);
     assert.equal(cleanShopName(shock?.name ?? "").displayName, "Culture Shock Houston Premium Outlets");
