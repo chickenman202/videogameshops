@@ -3,7 +3,6 @@
 import { useActionState } from "react";
 import { submitContact, submitStore, type FormState } from "@/app/actions";
 import { PLATFORMS } from "@/lib/platforms";
-import { US_STATES } from "@/lib/states";
 
 const initial: FormState = { status: "idle", message: "" };
 const field =
@@ -72,19 +71,14 @@ export function SubmitStoreForm() {
           <input name="city" required className={`${field} mt-1`} />
         </label>
         <label className="block text-sm font-medium">
-          State
-          <select name="state" required className={`${field} mt-1`} defaultValue="">
-            <option value="" disabled>
-              Choose a state
-            </option>
-            {US_STATES.map((state) => (
-              <option key={state.slug} value={state.name}>
-                {state.name}
-              </option>
-            ))}
-          </select>
+          Country
+          <input name="country" required className={`${field} mt-1`} />
         </label>
       </div>
+      <label className="block text-sm font-medium">
+        Region or state
+        <input name="region" className={`${field} mt-1`} />
+      </label>
       <label className="block text-sm font-medium">
         Phone
         <input name="phone" className={`${field} mt-1`} />

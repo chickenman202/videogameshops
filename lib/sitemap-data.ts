@@ -37,7 +37,7 @@ function entry(path: string, lastModified: string): SitemapEntry {
 /**
  * Hubs, country, region, and city pages, plus shop pages that have a street, phone, or website.
  * A shop with none of those stays public but is left out of the sitemap.
- * Cities and platform-in-city pages are left out until they have enough shops.
+ * Region, city, and platform-in-city pages are left out until they have enough shops.
  * Page 2 and filter URLs are left out.
  */
 export function buildSitemap(stores: CatalogStore[], contentUpdated = CONTENT_UPDATED): SitemapEntry[] {
@@ -98,7 +98,7 @@ export function buildSitemap(stores: CatalogStore[], contentUpdated = CONTENT_UP
   }
 
   for (const [key, group] of regions) {
-    if (group.count < 1) continue;
+    if (group.count < MIN_CITY_STORES) continue;
     const store = sampleByRegion.get(key);
     if (!store) continue;
     pages.push(entry(regionPathFor(store), group.updated));

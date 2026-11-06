@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, it } from "node:test";
@@ -16,9 +17,16 @@ describe("import catalog count", () => {
     const root = process.cwd();
     const report = JSON.parse(readFileSync(path.join(root, "data/import-report.json"), "utf8")) as {
       listings: number;
+      stores_json_sha256?: string;
+      country_url_scheme?: { canonical?: string };
     };
-    const rows = JSON.parse(readFileSync(path.join(root, "data/stores.json"), "utf8")) as StoreRow[];
+    const file = readFileSync(path.join(root, "data/stores.json"));
+    const rows = JSON.parse(file.toString("utf8")) as StoreRow[];
     assert.equal(rows.length, report.listings, "stores.json length drifted from the import report");
+    if (report.stores_json_sha256) {
+      assert.equal(createHash("sha256").update(file).digest("hex"), report.stores_json_sha256);
+    }
+    assert.equal(report.country_url_scheme?.canonical, "/directory/countries/{iso2}");
 
     const parsed = [];
     for (const row of rows) {

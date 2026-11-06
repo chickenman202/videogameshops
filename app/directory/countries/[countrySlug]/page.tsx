@@ -85,8 +85,12 @@ export default async function CountryPage(props: CountryProps) {
             .
           </p>
         ) : null}
-        {page.regions.length === 0 ? (
+        {page.total === 0 ? (
           <p className="mt-8 text-[#3c4550]">No public stores are listed in {page.countryName}.</p>
+        ) : page.regions.length === 0 ? (
+          <p className="mt-8 text-[#3c4550]">
+            Shop pages are available. A region list starts when that region has at least three shops.
+          </p>
         ) : null}
         <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {page.regions.map((region) => (

@@ -9,6 +9,7 @@ import { platformPath } from "@/lib/paths";
 import { PLATFORMS } from "@/lib/platforms";
 import { toMetaDescription, toTitle } from "@/lib/copy";
 import { pageMetadata } from "@/lib/seo";
+import { MIN_CITY_STORES } from "@/lib/site";
 import { US_STATES } from "@/lib/states";
 
 const description = toMetaDescription(
@@ -62,7 +63,7 @@ export default async function HomePage() {
         count: catalog.stores.filter(
           (store) => store.countryCode === "US" && store.stateSlug === state.slug,
         ).length,
-      })).filter((state) => state.count > 0)
+      })).filter((state) => state.count >= MIN_CITY_STORES)
     : [];
   const countries = catalog.ok ? countryLinks(catalog.stores) : [];
 

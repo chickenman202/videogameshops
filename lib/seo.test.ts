@@ -320,6 +320,12 @@ describe("sitemap", () => {
       }),
     );
     const dallas = mustStore({ id: "dallas-1", name: "Solo", city: "Dallas", state: "Texas" });
+    const wyoming = ["North", "South"].map((name, index) =>
+      mustStore({ id: `wy-${index}`, name: `Wyo ${name}`, city: "Cheyenne", state: "Wyoming" }),
+    );
+    const maine = ["One", "Two", "Three"].map((name, index) =>
+      mustStore({ id: `me-${index}`, name: `Maine ${name}`, city: "Portland", state: "Maine" }),
+    );
     const paris = ["Un", "Deux", "Trois"].map((name, index) =>
       mustStore({
         id: `paris-${index}`,
@@ -330,7 +336,7 @@ describe("sitemap", () => {
         zip_code: "75001",
       }),
     );
-    const entries = buildSitemap([...austin, dallas, ...paris]);
+    const entries = buildSitemap([...austin, dallas, ...paris, ...wyoming, ...maine]);
     const urls = entries.map((entry) => entry.url);
     assert.equal(urls.some((url) => url.endsWith("/directory/texas/austin")), true);
     assert.equal(urls.some((url) => url.endsWith("/directory/texas/dallas")), false);
@@ -339,6 +345,8 @@ describe("sitemap", () => {
     assert.equal(urls.some((url) => url.endsWith("/store/one-austin-tx")), true);
     assert.equal(urls.some((url) => url.includes("/page/")), false);
     assert.equal(urls.filter((url) => url.endsWith("/directory/texas")).length, 1);
+    assert.equal(urls.some((url) => url.endsWith("/directory/wyoming")), false);
+    assert.equal(urls.some((url) => url.endsWith("/directory/maine")), true);
     for (const entry of entries) {
       assert.equal("priority" in entry, false);
       assert.equal("changeFrequency" in entry, false);

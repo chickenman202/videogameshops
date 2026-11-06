@@ -371,8 +371,7 @@ async function buildListingUncached(input: ListingInput): Promise<ListingResult>
   if (input.citySlug && platform) indexable = indexable && placeTotal >= MIN_PLATFORM_CITY_STORES;
   else if (input.citySlug) indexable = indexable && placeTotal >= MIN_CITY_STORES;
   else if (platform && !regionSlug) indexable = indexable && placeTotal >= 1;
-  else if (regionSlug) indexable = indexable && placeTotal >= 1;
-  // Page 2 and later stay self-canonical, but only page 1 is the indexed URL.
+  else if (regionSlug) indexable = indexable && placeTotal >= MIN_CITY_STORES;
   if (page > 1) indexable = false;
 
   const crumbs: Crumb[] = [{ name: "Home", href: "/" }];

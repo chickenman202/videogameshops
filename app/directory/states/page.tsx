@@ -7,6 +7,7 @@ import { breadcrumbJsonLd, JsonLd, placeListJsonLd } from "@/lib/jsonld";
 import { toMetaDescription, toTitle } from "@/lib/copy";
 import { countryPath, statePath } from "@/lib/paths";
 import { pageMetadata } from "@/lib/seo";
+import { MIN_CITY_STORES } from "@/lib/site";
 import { US_STATES } from "@/lib/states";
 
 export const revalidate = 86400;
@@ -37,7 +38,7 @@ export default async function StatesPage() {
     ...state,
     count: catalog.stores.filter((store) => store.countryCode === "US" && store.stateSlug === state.slug)
       .length,
-  })).filter((state) => state.count > 0);
+  })).filter((state) => state.count >= MIN_CITY_STORES);
 
   const total = catalog.stores.filter((store) => store.countryCode === "US").length;
   const crumbs = [

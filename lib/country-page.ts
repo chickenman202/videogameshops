@@ -1,6 +1,7 @@
 import { loadCatalog, type CatalogStore } from "@/lib/catalog";
 import { countryBySlug } from "@/lib/countries";
 import { countryPath, countryRegionPath, regionPathFor } from "@/lib/paths";
+import { MIN_CITY_STORES } from "@/lib/site";
 
 export type CountryRegionLink = {
   name: string;
@@ -38,6 +39,7 @@ function regionsFor(stores: CatalogStore[]): CountryRegionLink[] {
       count: group.count,
       href: group.sample.countryCode === "US" ? regionPathFor(group.sample) : countryRegionPath(group.sample.countrySlug, slug),
     }))
+    .filter((region) => region.count >= MIN_CITY_STORES)
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "en"));
 }
 

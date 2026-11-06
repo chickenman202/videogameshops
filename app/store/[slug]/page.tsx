@@ -193,9 +193,9 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
               </ul>
             ) : null}
           </div>
-          <aside className="h-fit rounded-3xl border border-[#d5dbe3] bg-white p-5">
-            <h2 className="text-lg font-semibold">Hours</h2>
-            {store.hours ? (
+          {store.hours ? (
+            <aside className="h-fit rounded-3xl border border-[#d5dbe3] bg-white p-5">
+              <h2 className="text-lg font-semibold">Hours</h2>
               <table className="mt-4 w-full text-sm">
                 <caption className="sr-only">Weekly hours for {store.name}</caption>
                 <tbody>
@@ -209,10 +209,8 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
                   ))}
                 </tbody>
               </table>
-            ) : (
-              <p className="mt-3 text-sm text-muted">Hours are not listed.</p>
-            )}
-          </aside>
+            </aside>
+          ) : null}
         </div>
         <nav aria-label="Nearby" className="mt-12">
           <h2 className="text-2xl font-semibold">More video game stores</h2>

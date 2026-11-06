@@ -1,4 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  applyDiscoveryHeaders,
+  markdownInternalPath,
+  markdownPath,
+  prefersMarkdown,
+  splitMarkdownSuffix,
+} from "@/lib/discovery";
 import { directoryBasePath, isDirectoryListPath } from "@/lib/filters";
 import { canonicalDirectoryRedirect } from "@/lib/redirects";
 import { CANONICAL_HOST } from "@/lib/site";
@@ -11,10 +18,37 @@ function hasExtraFilters(url: URL): boolean {
   return false;
 }
 
+function isMachinePath(pathname: string): boolean {
+  return (
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml" ||
+    pathname === "/llms.txt" ||
+    pathname.startsWith("/.well-known") ||
+    pathname === "/api" ||
+    pathname.startsWith("/api/") ||
+    pathname === "/mcp" ||
+    pathname.startsWith("/mcp/") ||
+    pathname === "/md" ||
+    pathname.startsWith("/md/")
+  );
+}
+
+function isPrivate(pathname: string): boolean {
+  return (
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/") ||
+    pathname === "/account" ||
+    pathname.startsWith("/account/") ||
+    pathname === "/dashboard" ||
+    pathname.startsWith("/dashboard/") ||
+    pathname === "/api" ||
+    pathname.startsWith("/api/")
+  );
+}
+
 /**
  * Runs before the page. One redirect fixes the host, capital letters, and the slash.
- * Filter addresses stay put and send a noindex header. Search engines do not
- * honor a robots tag that exists only in JavaScript.
+ * Country aliases 308 to the ISO path. Accept: text/markdown and /index.md serve markdown.
  */
 export function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
@@ -32,6 +66,9 @@ export function proxy(request: NextRequest) {
     url.pathname = url.pathname.replace(/\/+$/, "") || "/";
   }
 
+  const requested = splitMarkdownSuffix(url.pathname);
+  url.pathname = requested.htmlPath;
+
   if (isDirectoryListPath(url.pathname)) {
     const pageRaw = url.searchParams.get("page");
     if (pageRaw && !hasExtraFilters(url)) {
@@ -45,45 +82,41 @@ export function proxy(request: NextRequest) {
   const alias = canonicalDirectoryRedirect(url.pathname);
   if (alias) url.pathname = alias;
 
+  const canonicalPath = requested.isMarkdownUrl ? markdownPath(url.pathname) : url.pathname;
   const dirty =
     url.protocol !== request.nextUrl.protocol ||
     url.hostname !== request.nextUrl.hostname ||
     url.port !== request.nextUrl.port ||
-    url.pathname !== request.nextUrl.pathname ||
+    canonicalPath !== request.nextUrl.pathname ||
     url.search !== request.nextUrl.search;
 
   if (dirty) {
     const location =
       hostname === `www.${CANONICAL_HOST}`
-        ? `https://${CANONICAL_HOST}${url.pathname}${url.search}`
-        : `${url.pathname}${url.search}`;
+        ? `https://${CANONICAL_HOST}${canonicalPath}${url.search}`
+        : `${canonicalPath}${url.search}`;
     return NextResponse.redirect(new URL(location, request.url), 308);
   }
 
+  const wantsMarkdown =
+    (requested.isMarkdownUrl || prefersMarkdown(request.headers.get("accept"))) &&
+    !isMachinePath(url.pathname);
+  if (wantsMarkdown) {
+    const rewritten = url.clone();
+    rewritten.pathname = markdownInternalPath(url.pathname);
+    return NextResponse.rewrite(rewritten);
+  }
+
+  const response = NextResponse.next();
   if (isDirectoryListPath(url.pathname) && hasExtraFilters(url)) {
-    const response = NextResponse.next();
     response.headers.set("X-Robots-Tag", "noindex, follow");
-    return response;
-  }
-
-  const path = url.pathname;
-  const isPrivate =
-    path === "/admin" ||
-    path.startsWith("/admin/") ||
-    path === "/account" ||
-    path.startsWith("/account/") ||
-    path === "/dashboard" ||
-    path.startsWith("/dashboard/") ||
-    path === "/api" ||
-    path.startsWith("/api/");
-
-  if (isPrivate) {
-    const response = NextResponse.next();
+  } else if (isPrivate(url.pathname)) {
     response.headers.set("X-Robots-Tag", "noindex, follow");
-    return response;
   }
-
-  return NextResponse.next();
+  if (!isPrivate(url.pathname) && !isMachinePath(url.pathname)) {
+    applyDiscoveryHeaders(response.headers, url.pathname);
+  }
+  return response;
 }
 
 export const config = {
