@@ -161,6 +161,22 @@ function regionIsAmbiguous(stores: CatalogStore[], region: string): boolean {
   return false;
 }
 
+/** Page 2 and filtered URLs stay noindex and point at the clean page. */
+export function listingCanonicalPath(
+  basePath: string,
+  selfPath: string,
+  page: number,
+  filtered: boolean,
+): string {
+  return filtered || page > 1 ? basePath : selfPath;
+}
+
+/** Page 2 and later get their own description. Page 1 stays the place sentence. */
+export function listingMetaDescription(page: number, intro: string, detail: string): string {
+  const lead = `${intro} ${detail}`.replace(/\s+/g, " ").trim();
+  return toMetaDescription(page > 1 ? `Page ${page}. ${lead}` : lead);
+}
+
 export function storeAbout(store: CatalogStore): string {
   if (isUsableAbout(store.about)) return store.about?.trim() ?? "";
   const place: string[] = [];
@@ -314,7 +330,7 @@ async function buildListingUncached(input: ListingInput): Promise<ListingResult>
   }
 
   const selfPath = pagePath(basePath, page);
-  const canonicalPath = filtered ? basePath : selfPath;
+  const canonicalPath = listingCanonicalPath(basePath, selfPath, page, filtered);
   const sentencePlace = cityName && regionName ? `${cityName}, ${regionName}` : (regionName ?? null);
   const cityAmbiguous = cityName ? cityIsAmbiguous(catalog.stores, cityName) : false;
   const regionAmbiguous = regionName ? regionIsAmbiguous(catalog.stores, regionName) : false;
@@ -394,7 +410,7 @@ async function buildListingUncached(input: ListingInput): Promise<ListingResult>
     filtered,
     h1,
     title: toTitle(page > 1 ? `${h1}, Page ${page}` : h1),
-    description: toMetaDescription(`${intro} ${detail}`),
+    description: listingMetaDescription(page, intro, detail),
     intro,
     crumbs,
     state,

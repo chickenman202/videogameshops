@@ -2,11 +2,11 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { assignUniqueSlugs, toCatalogStore, type CatalogStore } from "./catalog";
 import { countryBySlug, normalizeCountry } from "./countries";
-import { cityStoresTitle, storeTitle } from "./copy";
+import { cityStoresTitle, countryStoresTitle, storeTitle } from "./copy";
 import type { Database } from "./database.types";
 import { isDirectoryListPath } from "./filters";
 import { absoluteUrl, storeJsonLd } from "./jsonld";
-import { listingCacheKey, storeAbout } from "./listing";
+import { listingCacheKey, listingCanonicalPath, listingMetaDescription, storeAbout } from "./listing";
 import { unitedStatesDirectoryPath } from "./paths";
 import { slugify, storeSlug } from "./slug";
 import { canonicalDirectoryRedirect } from "./redirects";
@@ -255,6 +255,33 @@ describe("titles and structured data", () => {
     assert.equal("streetAddress" in address, false);
     assert.equal(address.addressCountry, "IR");
     assert.equal((data.geo as { latitude: number }).latitude, 35.7);
+  });
+});
+
+describe("listing descriptions", () => {
+  it("gives each later page its own description without adding hours or stock", () => {
+    const intro = "12 video game stores in Austin, Texas.";
+    const detail = "Shop pages list only the details saved for each store in Austin.";
+    const first = listingMetaDescription(1, intro, detail);
+    const second = listingMetaDescription(2, intro, detail);
+    assert.notEqual(first, second);
+    assert.match(second, /^Page 2\./);
+    assert.equal(first.includes("Page 2"), false);
+    assert.equal(second.includes("hours"), false);
+    assert.equal(second.includes("phone"), false);
+    assert.equal(countryStoresTitle("Iran"), "Iran Video Game Stores");
+    assert.equal(
+      listingCanonicalPath("/directory/texas", "/directory/texas/page/2", 2, false),
+      "/directory/texas",
+    );
+    assert.equal(
+      listingCanonicalPath("/directory/texas", "/directory/texas", 1, true),
+      "/directory/texas",
+    );
+    assert.equal(
+      listingCanonicalPath("/directory/texas", "/directory/texas", 1, false),
+      "/directory/texas",
+    );
   });
 });
 

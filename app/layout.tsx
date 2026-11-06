@@ -19,8 +19,7 @@ export const metadata: Metadata = {
     default: `Video Game Stores Near You | ${BRAND}`,
     template: `%s | ${BRAND}`,
   },
-  description:
-    "Find physical video game stores by country, region, and city. Compare hours, trade-ins, used games, and which platforms each shop carries.",
+  description: "Find physical video game stores by country, region, and city.",
   robots: { index: true, follow: true },
 };
 

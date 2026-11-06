@@ -25,30 +25,30 @@ export const metadata: Metadata = pageMetadata({
 
 const facts = [
   {
-    title: "Hours you can read",
-    body: "Weekly hours stay on the page. If a line cannot be read, it stays as text and is left out of the search-engine hours block.",
+    title: "Only saved details",
+    body: "A shop page shows the name and country, plus a street, city, phone, website, or map point when that field was stored.",
   },
   {
-    title: "What the shop does",
-    body: "New games, used games, trade-ins, and console repair are yes-or-no facts, not a guess from the store name.",
+    title: "Nothing filled in",
+    body: "Hours, platforms, trade-ins, and used games stay off the page when the row does not say. The site does not guess.",
   },
   {
-    title: "Platforms that match",
-    body: "PlayStation, Xbox, Nintendo, PC, handheld, retro, and VR only appear when that store actually carries them.",
+    title: "Platforms when listed",
+    body: "PlayStation, Xbox, Nintendo, PC, handheld, retro, and VR appear only when that store's row names them.",
   },
 ];
 
 const questions = [
   {
-    q: "Where do the hours and platforms come from?",
-    a: "They come from public business listings and from store owners who submit or correct a page. The site does not invent hours.",
+    q: "What does a store page show?",
+    a: "Only the fields saved for that shop. A missing street, phone, website, or hours line is left blank. Nothing is invented to fill the gap.",
   },
   {
     q: "Why does a small city not have its own roundup?",
     a: "A city roundup is for places with at least three stores. A town with one shop still has that store’s own page.",
   },
   {
-    q: "How do I fix a wrong address or hour?",
+    q: "How do I fix a wrong listing?",
     a: "Use the contact page. Include the store name, the city, and the correction. Public pages refresh within a day after the listing is updated.",
   },
 ];
@@ -86,7 +86,7 @@ export default async function HomePage() {
               Video game stores near you
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-white/75">
-              Find a physical shop, see when it is open, and check whether it sells used games, takes trade-ins, or stocks retro.
+              Find a physical shop by country, region, and city. Each page shows only the details saved for that store.
             </p>
           </div>
         </div>
@@ -192,7 +192,7 @@ export default async function HomePage() {
           <div className="relative max-w-2xl">
             <h2 className="text-3xl font-semibold tracking-tight">Own a video game store?</h2>
             <p className="mt-3 text-white/75">
-              Send the address, hours, and platforms. Listings are reviewed before they go on the public site.
+              Send the shop name and the place details you have. Listings are reviewed before they go on the public site.
             </p>
             <a href="/submit" className="mt-6 inline-flex rounded-full bg-[#155eef] px-5 py-2.5 text-sm font-medium text-white">
               Submit a store
