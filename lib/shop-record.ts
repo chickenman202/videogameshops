@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { Database } from "./database.types";
-import { slugify, stableSlug, storeSlug } from "./slug";
+import { groupPlaceNames, placeSlug } from "./place-fold";
+import { slugify, storeSlug } from "./slug";
 import { canonicalRegion, usStateFor } from "./regions";
 import { aboutFromShopInfo } from "./shop-details";
 import { parseOsmOpeningHours } from "./osm-hours";
@@ -342,6 +343,48 @@ function memberIdentities(shop: ShopDraft): string[] {
   return [...new Set([primary, ...shop.alternateIdentities].filter((item): item is string => Boolean(item)))];
 }
 
+/**
+ * City slugs for one import. Names are grouped inside a country and region.
+ * The city text on the shop is not changed.
+ */
+function foldedCitySlugs(shops: ShopDraft[]): string[] {
+  const regionNames = new Map<string, string[]>();
+  for (const shop of shops) {
+    const region = shop.region?.trim() ?? "";
+    if (!region) continue;
+    const country = shop.country ?? "";
+    const list = regionNames.get(country) ?? [];
+    list.push(region);
+    regionNames.set(country, list);
+  }
+  const regionSlug = new Map<string, Map<string, string>>();
+  for (const [country, names] of regionNames) regionSlug.set(country, groupPlaceNames(names));
+
+  const buckets = new Map<string, string[]>();
+  const bucketKeys: string[] = [];
+  for (const shop of shops) {
+    const city = shop.city?.trim() ?? "";
+    const country = shop.country ?? "";
+    const region = shop.region?.trim() ?? "";
+    const regionKey = region ? (regionSlug.get(country)?.get(region) ?? placeSlug(region)) : "";
+    const bucket = `${country}\n${regionKey}`;
+    bucketKeys.push(city ? bucket : "");
+    if (!city) continue;
+    const list = buckets.get(bucket) ?? [];
+    list.push(city);
+    buckets.set(bucket, list);
+  }
+  const citySlug = new Map<string, Map<string, string>>();
+  for (const [bucket, names] of buckets) citySlug.set(bucket, groupPlaceNames(names));
+
+  return shops.map((shop, index) => {
+    const city = shop.city?.trim() ?? "";
+    const bucket = bucketKeys[index] ?? "";
+    if (!city || !bucket) return "";
+    return citySlug.get(bucket)?.get(city) ?? placeSlug(city);
+  });
+}
+
 export function shopsToRows(shops: ShopDraft[], existing: ExistingStore[]): StoreRow[] {
   const byIdentity = new Map<string, ExistingStore>();
   for (const row of existing) {
@@ -384,6 +427,7 @@ export function shopsToRows(shops: ShopDraft[], existing: ExistingStore[]): Stor
     used.add(candidate);
   });
 
+  const citySlugs = foldedCitySlugs(prepared.map((item) => item.shop));
   return prepared.map((item, index) => {
     const alternates = item.identities.filter((identity) => identity !== identityOf(item.shop.source, item.shop.sourceId));
     const stamp = item.shop.dataUpdatedAt ?? item.shop.fetchedAt ?? new Date(0).toISOString();
@@ -393,11 +437,7 @@ export function shopsToRows(shops: ShopDraft[], existing: ExistingStore[]): Stor
       name: item.shop.name,
       address: item.shop.address,
       city: item.shop.city,
-      city_slug: item.shop.city
-        ? item.shop.country === "US"
-          ? slugify(item.shop.city)
-          : stableSlug(item.shop.city)
-        : "",
+      city_slug: citySlugs[index] ?? "",
       state: item.shop.region || null,
       zip_code: item.shop.postalCode,
       country: item.shop.country,

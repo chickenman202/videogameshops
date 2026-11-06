@@ -1,6 +1,7 @@
 import type { CatalogStore } from "@/lib/catalog";
 import { loadCatalog } from "@/lib/catalog";
-import { regionLinks, regionSlugFor } from "@/lib/country-browse";
+import { regionLinks, regionSlugByName } from "@/lib/country-browse";
+import { groupPlaceNames, preferredPlaceName } from "@/lib/place-fold";
 import { countryBySlug } from "@/lib/countries";
 import { joinList, toMetaDescription, toTitle } from "@/lib/copy";
 import {
@@ -81,17 +82,21 @@ function applyUserFilters(stores: CatalogStore[], filters: Filters): CatalogStor
 }
 
 function cityGroups(stores: CatalogStore[], state: UsState): CityLink[] {
-  const groups = new Map<string, { name: string; count: number }>();
+  const grouped = groupPlaceNames(stores.map((store) => store.city));
+  const groups = new Map<string, string[]>();
   for (const store of stores) {
-    const current = groups.get(store.citySlug);
-    if (!current) groups.set(store.citySlug, { name: store.city, count: 1 });
-    else current.count += 1;
+    const name = store.city.trim();
+    const slug = grouped.get(name) ?? "";
+    if (!name || !slug) continue;
+    const names = groups.get(slug) ?? [];
+    names.push(name);
+    groups.set(slug, names);
   }
   return [...groups.entries()]
-    .map(([slug, group]) => ({
-      name: group.name,
+    .map(([slug, names]) => ({
+      name: preferredPlaceName(names),
       slug,
-      count: group.count,
+      count: names.length,
       href: cityPath(state.slug, slug),
     }))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "en"));
@@ -194,17 +199,19 @@ export async function buildListing(input: {
 
   let cityName: string | null = null;
   if (input.citySlug) {
-    const inCity = pool.filter((store) => store.citySlug === input.citySlug);
+    const grouped = groupPlaceNames(pool.map((store) => store.city));
+    const inCity = pool.filter((store) => grouped.get(store.city.trim()) === input.citySlug);
     if (inCity.length === 0) return { status: "not-found" };
-    cityName = inCity[0]?.city ?? null;
+    cityName = preferredPlaceName(inCity.map((store) => store.city)) || null;
     pool = inCity;
   }
 
   let regionName: string | null = null;
   if (country && input.regionSlug) {
-    const inRegion = pool.filter((store) => regionSlugFor(store) === input.regionSlug);
+    const grouped = regionSlugByName(pool, country.code);
+    const inRegion = pool.filter((store) => grouped.get(store.state.trim()) === input.regionSlug);
     if (inRegion.length < MIN_CITY_STORES) return { status: "not-found" };
-    regionName = inRegion[0]?.state ?? input.regionSlug;
+    regionName = preferredPlaceName(inRegion.map((store) => store.state)) || input.regionSlug;
     pool = inRegion;
   }
 

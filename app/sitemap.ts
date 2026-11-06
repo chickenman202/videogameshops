@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { loadCatalog } from "@/lib/catalog";
-import { countryEntries, regionLinks, regionSlugFor } from "@/lib/country-browse";
+import { countryEntries, regionLinks, regionSlugByName } from "@/lib/country-browse";
 import { cityPath, countriesPath, countryPath, platformCityPath, platformPath, statePath, storePath } from "@/lib/paths";
 import { PLATFORMS } from "@/lib/platforms";
 import { CONTENT_UPDATED, MIN_CITY_STORES, MIN_PLATFORM_CITY_STORES, SITE_URL } from "@/lib/site";
@@ -103,8 +103,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .filter((country) => country.code !== "US")
     .flatMap((country) =>
       regionLinks(catalog.stores, country).map((region) => {
+        const grouped = regionSlugByName(catalog.stores, country.code);
         const stores = catalog.stores.filter(
-          (store) => store.country === country.code && regionSlugFor(store) === region.slug,
+          (store) => store.country === country.code && grouped.get(store.state.trim()) === region.slug,
         );
         return entry(region.href, newest(stores.map((store) => store.updatedAt)));
       }),

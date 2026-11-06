@@ -1,6 +1,6 @@
 import { normalizeCountry } from "@/lib/countries";
 import { countryPath, countryRegionPath, statePath } from "@/lib/paths";
-import { stableSlug } from "@/lib/slug";
+import { groupPlaceNames, placeSlug, preferredPlaceName } from "@/lib/place-fold";
 import { MIN_CITY_STORES } from "@/lib/site";
 import { getStateBySlug } from "@/lib/states";
 
@@ -61,7 +61,21 @@ export function regionSlugFor(store: PlaceStore): string {
   if (store.regionSlug) return store.regionSlug;
   if (store.country === "US") return store.stateSlug;
   if (!store.state.trim()) return "";
-  return stableSlug(store.state);
+  return placeSlug(store.state);
+}
+
+/** Slug for every region name in one country, after the case and accent fold. */
+export function regionSlugByName(stores: PlaceStore[], countryCode: string): Map<string, string> {
+  const names = stores
+    .filter((store) => (store.countryCode || store.country) === countryCode)
+    .map((store) => store.state);
+  const grouped = groupPlaceNames(names);
+  if (countryCode !== "US") return grouped;
+  for (const store of stores) {
+    if ((store.countryCode || store.country) !== "US" || !store.state.trim()) continue;
+    if (store.stateSlug) grouped.set(store.state.trim(), store.stateSlug);
+  }
+  return grouped;
 }
 
 /**
@@ -69,21 +83,23 @@ export function regionSlugFor(store: PlaceStore): string {
  * Smaller regions stay on the country page. US regions link to /directory/{state}.
  */
 export function regionLinks(stores: PlaceStore[], country: { code: string; slug: string }): RegionLink[] {
-  const groups = new Map<string, { name: string; count: number }>();
+  const grouped = regionSlugByName(stores, country.code);
+  const groups = new Map<string, string[]>();
   for (const store of stores) {
     if ((store.countryCode || store.country) !== country.code) continue;
-    const slug = regionSlugFor(store);
-    if (!slug || !store.state.trim()) continue;
-    const current = groups.get(slug);
-    if (!current) groups.set(slug, { name: store.state, count: 1 });
-    else current.count += 1;
+    const name = store.state.trim();
+    const slug = grouped.get(name) ?? "";
+    if (!slug || !name) continue;
+    const names = groups.get(slug) ?? [];
+    names.push(name);
+    groups.set(slug, names);
   }
   return [...groups.entries()]
-    .filter(([, group]) => group.count >= MIN_CITY_STORES)
-    .map(([slug, group]) => ({
-      name: group.name,
+    .filter(([, names]) => names.length >= MIN_CITY_STORES)
+    .map(([slug, names]) => ({
+      name: preferredPlaceName(names),
       slug,
-      count: group.count,
+      count: names.length,
       href:
         country.code === "US" && getStateBySlug(slug)
           ? statePath(slug)
@@ -106,15 +122,17 @@ export function countryBrowse(
     name: store.countryName.trim() || normalized.name || store.country,
     href: countryPath(slug),
   };
-  const regionSlug = regionSlugFor(store);
+  const countryCode = store.countryCode || store.country;
+  const grouped = regionSlugByName(stores, countryCode);
+  const regionSlug = grouped.get(store.state.trim()) || regionSlugFor(store);
   if (!regionSlug || !store.state.trim()) return { country: countryLink, region: null };
-  const count = stores.filter(
-    (item) => (item.countryCode || item.country) === (store.countryCode || store.country) && regionSlugFor(item) === regionSlug,
-  ).length;
-  if (count < MIN_CITY_STORES) return { country: countryLink, region: null };
+  const names = stores
+    .filter((item) => (item.countryCode || item.country) === countryCode && grouped.get(item.state.trim()) === regionSlug)
+    .map((item) => item.state);
+  if (names.length < MIN_CITY_STORES) return { country: countryLink, region: null };
   const href =
-    store.country === "US" && store.stateSlug
-      ? statePath(store.stateSlug)
+    store.country === "US" && (store.stateSlug || getStateBySlug(regionSlug))
+      ? statePath(store.stateSlug || regionSlug)
       : countryRegionPath(slug, regionSlug);
-  return { country: countryLink, region: { name: store.state, href } };
+  return { country: countryLink, region: { name: preferredPlaceName(names), href } };
 }

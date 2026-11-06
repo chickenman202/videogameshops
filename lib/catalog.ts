@@ -7,7 +7,8 @@ import { readableShopInfo } from "@/lib/shop-details";
 import { getPlatformByLabel, type PlatformLabel } from "@/lib/platforms";
 import { sourceLabel } from "@/lib/place";
 import { normalizeCountry } from "@/lib/countries";
-import { slugify, stableSlug, storeSlug } from "@/lib/slug";
+import { placeSlug } from "@/lib/place-fold";
+import { slugify, storeSlug } from "@/lib/slug";
 import { usStateFor } from "@/lib/regions";
 import { createReadClient } from "@/lib/supabase";
 
@@ -115,7 +116,7 @@ export function toCatalogStore(row: StoreRow): CatalogStore | null {
   const city = row.city?.trim() ?? "";
   const region = row.state?.trim() ?? "";
   const us = country === "US" ? usStateFor(country, region) : null;
-  const regionSlug = us?.slug || (region ? stableSlug(region) : "");
+  const regionSlug = us?.slug || (region ? placeSlug(region) : "");
   const slug =
     row.slug?.trim() ||
     storeSlug(name, city, us?.abbreviation || country || "shop") ||
@@ -139,7 +140,7 @@ export function toCatalogStore(row: StoreRow): CatalogStore | null {
     name,
     address: row.address?.trim() ?? "",
     city,
-    citySlug: row.city_slug?.trim() || (city ? stableSlug(city) : ""),
+    citySlug: row.city_slug?.trim() || (city ? placeSlug(city) : ""),
     state: us?.name || region,
     stateSlug: us?.slug ?? "",
     regionSlug,

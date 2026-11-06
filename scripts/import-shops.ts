@@ -12,6 +12,7 @@ import path from "node:path";
 import { buildCatalog, catalogReport, existingFromRows, nearMisses } from "../lib/build-catalog";
 import { COUNTRY_URL_SCHEME } from "../lib/country-route";
 import { NEAR_MISS_RULE, reviewNearMisses } from "../lib/near-miss-review";
+import { PLACE_FOLD_RULE } from "../lib/place-fold";
 import { SLUG_RULE } from "../lib/shop-record";
 import { toCatalogStore } from "../lib/catalog";
 import { parseCsv } from "../lib/csv";
@@ -46,6 +47,7 @@ async function main() {
     ...catalogReport(built.csvRows, built.mergedGroups, built.dropped, built.rows),
     country_url_scheme: COUNTRY_URL_SCHEME,
     slug_rule: SLUG_RULE,
+    place_fold_rule: PLACE_FOLD_RULE,
     duplicate_slugs: slugs.length - new Set(slugs).size,
     near_miss_rule: NEAR_MISS_RULE,
     near_misses_within_40m: nearMisses(drafts),

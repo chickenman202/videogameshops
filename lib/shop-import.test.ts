@@ -11,6 +11,7 @@ import { countryBySlug, normalizeCountry } from "./countries";
 import { NEAR_MISS_RULE, reviewNearMisses } from "./near-miss-review";
 import { parseOsmOpeningHours } from "./osm-hours";
 import { countryPath, statePath, unitedStatesDirectoryPath } from "./paths";
+import { PLACE_FOLD_RULE, groupPlaceNames, placeSlug, preferredPlaceName } from "./place-fold";
 import { canonicalRegion } from "./regions";
 import { isSameShop, namesSimilar } from "./shop-dedupe";
 import { shopsToRows, SLUG_RULE, type ShopDraft, type StoreRow, type WikidataFill } from "./shop-record";
@@ -66,6 +67,97 @@ describe("country urls", () => {
     assert.equal(second.length, 2);
     assert.deepEqual(second.map((row) => row.slug).sort(), first.map((row) => row.slug).sort());
     assert.equal(SLUG_RULE.includes("does not create a second row"), true);
+  });
+});
+
+describe("place fold", () => {
+  it("treats case and accents as the same city and region", () => {
+    assert.equal(placeSlug("São Paulo"), placeSlug("Sao Paulo"));
+    assert.equal(placeSlug("são paulo"), "sao-paulo");
+    assert.equal(placeSlug("Wrocław"), placeSlug("Wroclaw"));
+    assert.equal(placeSlug("Wrocław"), "wroclaw");
+    assert.equal(placeSlug("Española"), "espanola");
+    assert.equal(placeSlug("Île-de-France"), stableSlug("Île-de-France"));
+    assert.equal(placeSlug("東京都"), stableSlug("東京都"));
+    assert.equal(placeSlug("  "), "");
+    assert.equal(placeSlug(""), "");
+
+    const tirana = groupPlaceNames(["Tirana", "Tirana", "Tiranë"]);
+    assert.equal(tirana.get("Tirana"), "tirana");
+    assert.equal(tirana.get("Tiranë"), "tirana");
+    assert.equal(preferredPlaceName(["Tiranë", "Tirana", "Tirana"]), "Tirana");
+
+    const brazil = groupPlaceNames(["Sao Paulo", "São Paulo", "Sao Paulo"]);
+    assert.equal(brazil.get("Sao Paulo"), brazil.get("São Paulo"));
+    assert.equal(brazil.get("São Paulo"), "sao-paulo");
+
+    assert.equal(groupPlaceNames(["karachi", "Karachi"]).get("karachi"), "karachi");
+    assert.equal(groupPlaceNames(["Eugene"]).get("Eugene"), "eugene");
+    assert.equal(groupPlaceNames(["Rome"]).get("Rome"), "rome");
+    const rome = groupPlaceNames(["Roma", "Rome"]);
+    assert.equal(rome.get("Roma"), rome.get("Rome"));
+    assert.notEqual(groupPlaceNames(["Bateau Bay", "Batemans Bay"]).get("Bateau Bay"), groupPlaceNames(["Bateau Bay", "Batemans Bay"]).get("Batemans Bay"));
+    assert.equal(PLACE_FOLD_RULE.includes("Tirana and Tiranë"), true);
+  });
+
+  it("gives Tirana and Tiranë one city slug and keeps both spellings", () => {
+    const rows = shopsToRows(
+      [
+        draft("node/tirana", {
+          name: "Tirana Games",
+          city: "Tirana",
+          region: "Tirane",
+          country: "AL",
+          countryName: "Albania",
+        }),
+        draft("node/tirane", {
+          name: "Tirane Games",
+          city: "Tiranë",
+          region: "Tirane",
+          country: "AL",
+          countryName: "Albania",
+        }),
+        draft("node/eugene", {
+          name: "Eugene Games",
+          city: "Eugene",
+          region: "Oregon",
+          country: "US",
+          countryName: "United States",
+        }),
+      ],
+      [],
+    );
+    assert.equal(rows[0]?.city, "Tirana");
+    assert.equal(rows[1]?.city, "Tiranë");
+    assert.equal(rows[0]?.city_slug, "tirana");
+    assert.equal(rows[1]?.city_slug, "tirana");
+    assert.equal(rows[2]?.city_slug, "eugene");
+    assert.equal(rows.length, 3);
+  });
+
+  it("does not add a region chip for fewer than three shops", () => {
+    const place = {
+      country: "BR",
+      countryCode: "BR",
+      countryName: "Brazil",
+      countrySlug: "br",
+      stateSlug: "",
+    };
+    const links = regionLinks(
+      [
+        { ...place, state: "Sao Paulo" },
+        { ...place, state: "São Paulo" },
+        { ...place, state: "Sao Paulo" },
+        { ...place, state: "Acre" },
+        { ...place, state: "Acre" },
+      ],
+      { code: "BR", slug: "br" },
+    );
+    assert.equal(links.length, 1);
+    assert.equal(links[0]?.slug, "sao-paulo");
+    assert.equal(links[0]?.name, "Sao Paulo");
+    assert.equal(links[0]?.count, 3);
+    assert.equal(links[0]?.href, "/directory/countries/br/sao-paulo");
   });
 });
 
@@ -240,6 +332,7 @@ describe("shop file", () => {
       duplicate_slugs: number;
       near_miss_rule: string;
       slug_rule: string;
+      place_fold_rule: string;
       stores_json_sha256: string;
       supabase: string;
       country_url_scheme: { canonical: string };
@@ -296,6 +389,21 @@ describe("shop file", () => {
     assert.equal(report.duplicate_slugs, 0);
     assert.equal(report.near_miss_rule, NEAR_MISS_RULE);
     assert.equal(report.slug_rule, SLUG_RULE);
+    assert.equal(report.place_fold_rule, PLACE_FOLD_RULE);
+    const albania = built.rows.filter(
+      (row) => row.country === "AL" && (row.city === "Tirana" || row.city === "Tiranë"),
+    );
+    assert.equal(albania.length > 1, true);
+    assert.equal(new Set(albania.map((row) => row.city_slug)).size, 1);
+    assert.equal(albania[0]?.city_slug, "tirana");
+    assert.equal(albania.some((row) => row.city === "Tiranë"), true);
+    const wroclaw = built.rows.filter((row) => row.country === "PL" && placeSlug(row.city ?? "") === "wroclaw");
+    assert.equal(new Set(wroclaw.map((row) => row.city_slug)).size, 1);
+    assert.equal(wroclaw.some((row) => row.city === "Wrocław"), true);
+    const brazilRegions = regionLinks(stores, countryEntries(stores).find((country) => country.code === "BR")!);
+    const saoPaulo = brazilRegions.filter((region) => region.slug === "sao-paulo");
+    assert.equal(saoPaulo.length, 1);
+    assert.equal(saoPaulo[0]?.name, "Sao Paulo");
     assert.equal(report.country_url_scheme.canonical, "/directory/countries/{iso2}");
     assert.equal(report.supabase, "skipped_no_service_role");
     const fileBytes = readFileSync(path.join(root, "data", "stores.json"));
