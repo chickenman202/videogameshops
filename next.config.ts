@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  // One slash style: /directory is the real address. /directory/ redirects once.
+  trailingSlash: false,
+  skipTrailingSlashRedirect: true,
   turbopack: {
     rules: {
       "*.css": {
