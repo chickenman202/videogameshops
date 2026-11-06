@@ -2,12 +2,12 @@ import type { PlatformLabel } from "@/lib/platforms";
 
 /**
  * A shop title drops a keyword list only when it is appended after a dash,
- * colon, or bar. The stored name stays the original string. Words in that
- * list become a platform tag only when they name a platform this site already
- * has. Nothing else is filled in.
+ * colon, bar, or slash, or as a comma-separated category list. The stored name
+ * stays the original string. A platform tag is filled only when that list
+ * names exactly one platform this site already has. Nothing else is filled in.
  */
 export const DISPLAY_NAME_RULE =
-  "The stored name is the original text. A title hides a keyword list only when that list is appended after a dash, colon, or bar and every word in it is a category such as video games, anime, or retro. The list is kept when it is a place, a translation, or part of the name, as in Hi-Score or West Monroe. Retro, PlayStation, Xbox, Nintendo, PC, Handheld, and VR in that list are saved in the existing platforms field. No phone, website, hour, or address is created.";
+  "The stored name is the original text. A title hides a keyword list when that list is appended after a dash, colon, bar, or slash, or as a comma-separated category list, and every word in it is a category such as video games, anime, or retro. The list is kept when it is a place, a translation, or part of the name, as in Hi-Score or West Monroe. The platforms field is filled only when that list names exactly one of Retro, PlayStation, Xbox, Nintendo, PC, Handheld, or VR. No phone, website, hour, or address is created.";
 
 const CATEGORIES = [
   "pop culture",
@@ -65,15 +65,34 @@ export function cleanShopName(raw: string): CleanedShopName {
 }
 
 function appendedList(name: string): { title: string; suffix: string } | null {
-  const separator = /(?:\s[-–—|:]|[-–—|:])\s+/g;
-  let last: { title: string; suffix: string } | null = null;
-  for (const match of name.matchAll(separator)) {
+  const separator = /(?:\s[-–—|:/]|[-–—|:/])\s+/g;
+  const matches = [...name.matchAll(separator)].reverse();
+  for (const match of matches) {
     const index = match.index ?? 0;
     const title = name.slice(0, index).trim();
     const suffix = name.slice(index + match[0].length).trim();
-    if (title.length >= 3 && suffix) last = { title, suffix };
+    if (title.length >= 3 && categoryPhrases(suffix) && !consumeCategories(title)) {
+      return { title, suffix };
+    }
   }
-  return last;
+  return trailingCommaList(name);
+}
+
+/** A comma list at the end, such as "Matt's Games, Collectibles & More". */
+function trailingCommaList(name: string): { title: string; suffix: string } | null {
+  const parts = name.split(",");
+  if (parts.length < 2) return null;
+  let start = parts.length;
+  while (start > 1) {
+    const piece = parts[start - 1]?.trim() ?? "";
+    if (!piece || (!consumeCategories(piece) && !categoryPhrases(piece))) break;
+    start -= 1;
+  }
+  if (start === parts.length) return null;
+  const title = parts.slice(0, start).join(",").trim();
+  const suffix = parts.slice(start).join(",").trim();
+  if (title.length < 3 || consumeCategories(title) || !categoryPhrases(suffix)) return null;
+  return { title, suffix };
 }
 
 function categoryPhrases(suffix: string): string[] | null {
@@ -119,5 +138,5 @@ function platformsIn(phrases: string[]): PlatformLabel[] {
       if (words.has(platform.word) && !labels.includes(platform.label)) labels.push(platform.label);
     }
   }
-  return labels;
+  return labels.length === 1 ? labels : [];
 }

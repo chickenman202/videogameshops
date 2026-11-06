@@ -11,10 +11,11 @@ import { stableSlug } from "./slug";
  * The page title uses the spelling that already appears most often. Each shop
  * keeps the city and region text it came with. Shops that are only nearby are
  * not merged. 臺 and 台 are the same character, so 台北市 and 臺北市 share a page.
- * English and local names such as Lisbon and Lisboa stay separate.
+ * In Taiwan only, the English names Taipei, Taichung, and Tainan join those pages.
+ * Lisbon and Lisboa stay separate.
  */
 export const PLACE_FOLD_RULE =
-  "City and region pages treat capital letters and accents as the same place. Accents are removed. Letters such as ł, ø, đ, and ß become the plain letter. Apostrophes are dropped. Tiranë folds to tirane, and a final a and a final e are the same ending when both spellings are in the same country and region, so Tirana and Tiranë share one page. A spelling that appears on its own is kept: Eugene stays eugene. The characters 臺 and 台 are the same, so 台北市 and 臺北市 share one page. English and another language stay separate, such as Taipei and 台北市, or Lisbon and Lisboa. The page title uses the spelling that already appears most often. The shop keeps the name it came with. Nearby shops with different names stay separate.";
+  "City and region pages treat capital letters and accents as the same place. Accents are removed. Letters such as ł, ø, đ, and ß become the plain letter. Apostrophes are dropped. Tiranë folds to tirane, and a final a and a final e are the same ending when both spellings are in the same country and region, so Tirana and Tiranë share one page. A spelling that appears on its own is kept: Eugene stays eugene. The characters 臺 and 台 are the same, so 台北市 and 臺北市 share one page. In Taiwan, Taipei and Taipei City use that same page, Taichung and Taichung City use the 台中市 page, and Tainan and Tainan City use the 臺南市 page. The page title stays the Chinese spelling already chosen by the majority. Lisbon and Lisboa, Warsaw and Warszawa, and Genoa and Genova stay separate. The shop keeps the city text it came with. Nearby shops with different names stay separate.";
 
 const LETTER_FOLDS: Record<string, string> = {
   ł: "l",
@@ -47,6 +48,40 @@ export function placeSlug(value: string): string {
   let folded = "";
   for (const char of value) folded += LETTER_FOLDS[char] ?? char;
   return stableSlug(folded);
+}
+
+/**
+ * English names that are the same Taiwan city as the Chinese spelling already on the page.
+ * Nothing else is translated.
+ */
+export const TAIWAN_CITY_ALIASES = [
+  { english: ["Taipei", "Taipei City"], local: ["台北市", "臺北市"] },
+  { english: ["Taichung", "Taichung City"], local: ["台中市", "臺中市"] },
+  { english: ["Tainan", "Tainan City"], local: ["台南市", "臺南市"] },
+] as const;
+
+/** The Chinese spelling already chosen for one Taiwan city, when both forms are present. */
+export function taiwanCityTitle(names: string[]): string | null {
+  const present = new Set(names.map((name) => name.trim()).filter(Boolean));
+  for (const group of TAIWAN_CITY_ALIASES) {
+    const known = new Set<string>([...group.english, ...group.local]);
+    if (![...present].some((name) => known.has(name))) continue;
+    const local = group.local.filter((name) => present.has(name));
+    if (local.length === 0) return null;
+    const counts = new Map<string, number>();
+    for (const name of names) {
+      const trimmed = name.trim();
+      if (local.includes(trimmed as (typeof group.local)[number])) {
+        counts.set(trimmed, (counts.get(trimmed) ?? 0) + 1);
+      }
+    }
+    return (
+      [...counts.entries()].sort(
+        (left, right) => right[1] - left[1] || left[0].localeCompare(right[0], "en"),
+      )[0]?.[0] ?? null
+    );
+  }
+  return null;
 }
 
 /** Grouping key. 臺北市 and 台北市 match. The stored slug still comes from the winning spelling. */

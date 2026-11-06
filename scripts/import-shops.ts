@@ -51,6 +51,10 @@ async function main() {
     place_fold_rule: PLACE_FOLD_RULE,
     display_name_rule: DISPLAY_NAME_RULE,
     display_names_cleaned: built.rows.filter((row) => cleanShopName(row.name).displayName !== row.name.trim()).length,
+    display_names_cleaned_beyond_dash: built.rows.filter((row) => {
+      const cleaned = cleanShopName(row.name).displayName !== row.name.trim();
+      return cleaned && !/[-–—]/.test(row.name);
+    }).length,
     duplicate_slugs: slugs.length - new Set(slugs).size,
     near_miss_rule: NEAR_MISS_RULE,
     near_misses_within_40m: nearMisses(drafts),

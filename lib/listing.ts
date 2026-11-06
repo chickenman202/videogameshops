@@ -1,7 +1,7 @@
 import type { CatalogStore } from "@/lib/catalog";
 import { loadCatalog } from "@/lib/catalog";
 import { regionLinks, regionSlugByName } from "@/lib/country-browse";
-import { groupPlaceNames, preferredPlaceName } from "@/lib/place-fold";
+import { groupPlaceNames, preferredPlaceName, taiwanCityTitle } from "@/lib/place-fold";
 import { countryBySlug } from "@/lib/countries";
 import { joinList, toMetaDescription, toTitle } from "@/lib/copy";
 import {
@@ -95,7 +95,7 @@ function cityGroups(stores: CatalogStore[], state: UsState): CityLink[] {
   }
   return [...groups.entries()]
     .map(([slug, names]) => ({
-      name: preferredPlaceName(names),
+      name: taiwanCityTitle(names) ?? preferredPlaceName(names),
       slug,
       count: names.length,
       href: cityPath(state.slug, slug),
@@ -203,7 +203,8 @@ export async function buildListing(input: {
     const grouped = groupPlaceNames(pool.map((store) => store.city));
     const inCity = pool.filter((store) => grouped.get(store.city.trim()) === input.citySlug);
     if (inCity.length === 0) return { status: "not-found" };
-    cityName = preferredPlaceName(inCity.map((store) => store.city)) || null;
+    const cityNames = inCity.map((store) => store.city);
+    cityName = taiwanCityTitle(cityNames) ?? (preferredPlaceName(cityNames) || null);
     pool = inCity;
   }
 

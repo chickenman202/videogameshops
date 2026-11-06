@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { Database } from "./database.types";
 import { cleanShopName } from "./display-name";
-import { groupPlaceNames, placeSlug, readablePlace, writtenPlaceKey } from "./place-fold";
+import { TAIWAN_CITY_ALIASES, groupPlaceNames, placeSlug, readablePlace, writtenPlaceKey } from "./place-fold";
 import { slugify, storeSlug } from "./slug";
 import { canonicalRegion, usStateFor } from "./regions";
 import { aboutFromShopInfo } from "./shop-details";
@@ -399,6 +399,31 @@ function foldedCitySlugs(shops: ShopDraft[]): string[] {
     if (new Set(indexes.map((index) => slugs[index])).size < 2) continue;
     const counts = new Map<string, number>();
     for (const index of indexes) {
+      const city = shops[index]?.city?.trim() ?? "";
+      counts.set(city, (counts.get(city) ?? 0) + 1);
+    }
+    const best = [...counts.entries()].sort(
+      (left, right) => right[1] - left[1] || left[0].localeCompare(right[0], "en"),
+    )[0]?.[0];
+    if (!best) continue;
+    const slug = placeSlug(best);
+    for (const index of indexes) slugs[index] = slug;
+  }
+  // English Taipei, Taichung, and Tainan join the Chinese page already chosen.
+  // The shop's own city text is not rewritten.
+  for (const group of TAIWAN_CITY_ALIASES) {
+    const local = new Set<string>(group.local);
+    const english = new Set<string>(group.english);
+    const indexes = shops.flatMap((shop, index) => {
+      const city = shop.city?.trim() ?? "";
+      if (shop.country !== "TW" || !city || !slugs[index]) return [];
+      if (!local.has(city) && !english.has(city)) return [];
+      return [index];
+    });
+    const localIndexes = indexes.filter((index) => local.has(shops[index]?.city?.trim() ?? ""));
+    if (localIndexes.length === 0 || indexes.length === localIndexes.length) continue;
+    const counts = new Map<string, number>();
+    for (const index of localIndexes) {
       const city = shops[index]?.city?.trim() ?? "";
       counts.set(city, (counts.get(city) ?? 0) + 1);
     }

@@ -12,7 +12,7 @@ import { countryBySlug, normalizeCountry } from "./countries";
 import { NEAR_MISS_RULE, reviewNearMisses } from "./near-miss-review";
 import { parseOsmOpeningHours } from "./osm-hours";
 import { countryPath, statePath, unitedStatesDirectoryPath } from "./paths";
-import { PLACE_FOLD_RULE, groupPlaceNames, placeSlug, preferredPlaceName, readablePlace } from "./place-fold";
+import { PLACE_FOLD_RULE, groupPlaceNames, placeSlug, preferredPlaceName, readablePlace, taiwanCityTitle } from "./place-fold";
 import { canonicalRegion } from "./regions";
 import { isSameShop, namesSimilar } from "./shop-dedupe";
 import { shopsToRows, SLUG_RULE, type ShopDraft, type StoreRow, type WikidataFill } from "./shop-record";
@@ -107,6 +107,11 @@ describe("place fold", () => {
     assert.equal(taipei.get("台北市"), placeSlug("台北市"));
     assert.equal(groupPlaceNames(["臺南市"]).get("臺南市"), placeSlug("臺南市"));
     assert.notEqual(placeSlug("Taipei"), placeSlug("台北市"));
+    assert.equal(taiwanCityTitle(["Taipei", "台北市", "台北市", "臺北市"]), "台北市");
+    assert.equal(taiwanCityTitle(["Taichung", "臺中市", "臺中市", "台中市"]), "臺中市");
+    assert.equal(taiwanCityTitle(["Tainan", "臺南市"]), "臺南市");
+    assert.equal(taiwanCityTitle(["Lisbon", "Lisboa"]), null);
+    assert.equal(taiwanCityTitle(["新北市"]), null);
     assert.notEqual(groupPlaceNames(["Lisbon", "Lisboa"]).get("Lisbon"), groupPlaceNames(["Lisbon", "Lisboa"]).get("Lisboa"));
     assert.notEqual(groupPlaceNames(["Warsaw", "Warszawa"]).get("Warsaw"), groupPlaceNames(["Warsaw", "Warszawa"]).get("Warszawa"));
     assert.notEqual(groupPlaceNames(["Genoa", "Genova"]).get("Genoa"), groupPlaceNames(["Genoa", "Genova"]).get("Genova"));
@@ -206,6 +211,10 @@ describe("shop titles", () => {
     assert.deepEqual(cleaned.platforms, []);
     assert.equal(cleanShopName("Hi-Score Video Games").displayName, "Hi-Score Video Games");
     assert.equal(cleanShopName("Disc Traders - Battle Creek").displayName, "Disc Traders - Battle Creek");
+    assert.equal(cleanShopName("Matt's Games, Collectibles & More").displayName, "Matt's Games");
+    assert.equal(cleanShopName("CheatCide Video Games, Cards & More").displayName, "CheatCide Video Games");
+    assert.equal(cleanShopName("BASCO, INC.").displayName, "BASCO, INC.");
+    assert.deepEqual(cleanShopName("Xbox 360/Ps3/Nintendo/Curso de Games").platforms, []);
     assert.equal(cleanShopName("Game Mechanix - West Monroe").displayName, "Game Mechanix - West Monroe");
     const retro = cleanShopName("Summit Gaming & Collectibles - Retro Games, Records & Toys");
     assert.equal(retro.displayName, "Summit Gaming & Collectibles");
@@ -391,6 +400,7 @@ describe("shop file", () => {
       place_fold_rule: string;
       display_name_rule: string;
       display_names_cleaned: number;
+      display_names_cleaned_beyond_dash: number;
       stores_json_sha256: string;
       supabase: string;
       country_url_scheme: { canonical: string };
@@ -453,6 +463,11 @@ describe("shop file", () => {
       report.display_names_cleaned,
       built.rows.filter((row) => cleanShopName(row.name).displayName !== row.name.trim()).length,
     );
+    assert.equal(
+      report.display_names_cleaned_beyond_dash,
+      built.rows.filter((row) => cleanShopName(row.name).displayName !== row.name.trim() && !/[-–—]/.test(row.name))
+        .length,
+    );
     const shock = built.rows.find((row) => row.name.includes("Culture Shock Houston"));
     assert.equal(shock?.name.includes("Funko"), true);
     assert.equal(cleanShopName(shock?.name ?? "").displayName, "Culture Shock Houston Premium Outlets");
@@ -461,8 +476,19 @@ describe("shop file", () => {
     assert.equal(massana?.city, "La Massana");
     const taipeiTraditional = built.rows.filter((row) => row.country === "TW" && (row.city === "台北市" || row.city === "臺北市"));
     assert.equal(new Set(taipeiTraditional.map((row) => row.city_slug)).size, 1);
-    const taipeiEnglish = built.rows.find((row) => row.country === "TW" && row.city === "Taipei");
-    assert.notEqual(taipeiEnglish?.city_slug, taipeiTraditional[0]?.city_slug);
+    const taipeiEnglish = built.rows.filter((row) => row.country === "TW" && (row.city === "Taipei" || row.city === "Taipei City"));
+    assert.equal(taipeiEnglish.length > 0, true);
+    assert.equal(taipeiEnglish.every((row) => row.city_slug === taipeiTraditional[0]?.city_slug), true);
+    assert.equal(taipeiEnglish.every((row) => row.city === "Taipei" || row.city === "Taipei City"), true);
+    const taichung = built.rows.filter((row) => row.country === "TW" && ["Taichung", "Taichung City", "台中市", "臺中市"].includes(row.city ?? ""));
+    assert.equal(new Set(taichung.map((row) => row.city_slug)).size, 1);
+    assert.equal(taichung.some((row) => row.city === "Taichung"), true);
+    assert.equal(taichung.some((row) => row.city === "臺中市"), true);
+    const tainan = built.rows.filter((row) => row.country === "TW" && ["Tainan", "Tainan City", "台南市", "臺南市"].includes(row.city ?? ""));
+    assert.equal(new Set(tainan.map((row) => row.city_slug)).size, 1);
+    assert.equal(tainan.some((row) => row.city === "Tainan"), true);
+    const newTaipei = built.rows.find((row) => row.city === "新北市");
+    assert.notEqual(newTaipei?.city_slug, taipeiTraditional[0]?.city_slug);
     const albania = built.rows.filter(
       (row) => row.country === "AL" && (row.city === "Tirana" || row.city === "Tiranë"),
     );
