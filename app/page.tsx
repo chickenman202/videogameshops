@@ -57,7 +57,7 @@ export default async function HomePage() {
             </h1>
           </div>
           {featured?.photo ? (
-            <figure className="relative z-20 -mt-10 border-8 border-white bg-silver lg:col-span-5 lg:-ml-28 lg:mt-8">
+            <figure className="relative z-20 border-8 border-white bg-silver lg:col-span-5 lg:-ml-28 lg:mt-8">
               <img
                 src={featured.photo}
                 alt=""
