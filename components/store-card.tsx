@@ -22,7 +22,7 @@ export function StoreCard({
 
   if (store.photo) {
     return (
-      <a href={href} className="group grid grid-cols-1 items-center gap-4 border-t border-line py-4 sm:grid-cols-[7.5rem_minmax(0,1fr)]">
+      <a href={href} className="group grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-3 border-t border-line py-4 sm:grid-cols-[7.5rem_minmax(0,1fr)] sm:gap-4">
         <img
           src={store.photo}
           alt=""
@@ -30,7 +30,7 @@ export function StoreCard({
           height={240}
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : "auto"}
-          className="aspect-[4/3] w-full object-cover sm:aspect-square"
+          className="aspect-square w-full object-cover"
         />
         {text}
       </a>
