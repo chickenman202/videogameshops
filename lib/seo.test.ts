@@ -409,4 +409,36 @@ describe("place folding from the import file", () => {
     assert.ok(cities.length >= 2);
     assert.ok(cities.every((store) => store?.citySlug === "sao-paulo"));
   });
+
+  it("folds Taipei, Taichung, and Tainan onto the stored Taiwan city slug", () => {
+    const taiwan = rows.filter((item) => item.country_code === "TW");
+    const citySlug = (cities: string[]) =>
+      new Set(
+        taiwan
+          .filter((item) => cities.includes(item.city ?? ""))
+          .map((item) => toCatalogStore(item)?.citySlug),
+      );
+    assert.deepEqual([...citySlug(["Taipei", "Taipei City", "台北市", "臺北市"])], ["r1r21wf2"]);
+    assert.deepEqual([...citySlug(["Taichung", "Taichung City", "台中市", "臺中市"])], ["r1nv7bqe"]);
+    assert.deepEqual([...citySlug(["Tainan", "Tainan City", "台南市", "臺南市"])], ["r1g8rb38"]);
+    const english = toCatalogStore(taiwan.find((item) => item.city === "Taipei") as StoreRow);
+    const chinese = toCatalogStore(taiwan.find((item) => item.city === "台北市") as StoreRow);
+    assert.equal(english?.city, "Taipei");
+    assert.equal(chinese?.city, "台北市");
+    assert.equal(english?.slug, taiwan.find((item) => item.city === "Taipei")?.slug);
+  });
+
+  it("keeps the stored shop slug for every public URL", () => {
+    const parsed = [];
+    for (const row of rows) {
+      if (row.is_active === false) continue;
+      const store = toCatalogStore(row);
+      assert.ok(store, row.slug);
+      assert.equal(store.slug, row.slug);
+      parsed.push(store);
+    }
+    const published = assignUniqueSlugs(parsed);
+    const byId = new Map(published.map((store) => [store.id, store.slug]));
+    for (const store of parsed) assert.equal(byId.get(store.id), store.slug);
+  });
 });
