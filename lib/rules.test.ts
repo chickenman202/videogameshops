@@ -1,3 +1,4 @@
+import { distinctPlace } from "./shop-view";
 import { isKeyboardMash, isPublishableStore, isUsableAbout } from "./publish";
 import { slugify, storeSlug } from "./slug";
 import { toMetaDescription, storeTitle } from "./copy";
@@ -113,6 +114,13 @@ describe("titles and descriptions", () => {
     const multi = storeTitle("Muv Games", "Austin", "TX", ["Retro", "PlayStation"]);
     assert.match(multi, /Video Game Store/);
     assert.equal(multi.includes("Retro"), false);
+  });
+
+  it("folds city and region names that differ by case or accents", () => {
+    assert.deepEqual(distinctPlace(["la Massana", "La Massana"]), ["la Massana"]);
+    assert.deepEqual(distinctPlace(["Tirana", "Tiranë"]), ["Tirana"]);
+    assert.deepEqual(distinctPlace(["Tirana", "Tirane"]), ["Tirana"]);
+    assert.deepEqual(distinctPlace(["Aix-en-Provence", "Provence-Alpes-Cote d'Azur"]).length, 2);
   });
 
   it("keeps a description honest and within search length", () => {

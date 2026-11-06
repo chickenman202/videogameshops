@@ -39,13 +39,33 @@ export function shopCountryName(store: ShopView): string {
   return code && code !== "US" ? code : "";
 }
 
-/** Drop a later name when it is the same place as an earlier one ("la Massana, La Massana"). */
-function distinctPlace(parts: string[]): string[] {
+function placeKey(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+/** Same place after case, accents, and a final vowel (Tirana / Tiranë / Tirane). */
+function samePlace(a: string, b: string): boolean {
+  const left = placeKey(a);
+  const right = placeKey(b);
+  if (!left || !right) return false;
+  if (left === right) return true;
+  const stem = (key: string) => key.replace(/[aeiou]+$/, "");
+  const leftStem = stem(left);
+  const rightStem = stem(right);
+  return leftStem.length >= 4 && leftStem === rightStem;
+}
+
+/** Drop a later name when it is the same place as an earlier one. */
+export function distinctPlace(parts: string[]): string[] {
   const kept: string[] = [];
   for (const part of parts) {
     const value = part.trim();
     if (!value) continue;
-    if (kept.some((item) => item.toLowerCase() === value.toLowerCase())) continue;
+    if (kept.some((item) => samePlace(item, value))) continue;
     kept.push(value);
   }
   return kept;

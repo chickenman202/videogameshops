@@ -264,37 +264,36 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
                 </a>
               ) : null}
             </section>
-            <section className="border-t border-ink pt-4" aria-labelledby="hours-heading">
-              <h2 id="hours-heading" className="text-3xl uppercase text-ink">
-                Hours
-              </h2>
-              {store.hours ? (
-                <table className="mt-4 w-full text-sm">
-                  <caption className="sr-only">Weekly hours for {store.name}</caption>
-                  <tbody>
-                    {WEEKDAYS.map(([key, label]) => {
-                      const value = store.hours?.[key] ?? "—";
-                      const quiet = value === "—" || /closed/i.test(value);
-                      return (
-                        <tr key={key} className="border-t border-line">
-                          <th scope="row" className="py-2.5 pr-3 text-left font-semibold text-ink">
-                            {label}
-                          </th>
-                          <td className={quiet ? "py-2.5 text-right text-muted" : "py-2.5 text-right text-ink"}>
-                            {value === "—" ? <span className="sr-only">No hours stored</span> : null}
-                            {value === "—" ? <span aria-hidden="true">—</span> : value}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              ) : listedHours ? (
-                <p className="mt-3 font-mono text-sm leading-relaxed text-ink">{listedHours}</p>
-              ) : (
-                <p className="mt-3 text-sm text-muted">Hours are not on this listing.</p>
-              )}
-            </section>
+            {store.hours || listedHours ? (
+              <section className="border-t border-ink pt-4" aria-labelledby="hours-heading">
+                <h2 id="hours-heading" className="text-3xl uppercase text-ink">
+                  Hours
+                </h2>
+                {store.hours ? (
+                  <table className="mt-4 w-full text-sm">
+                    <caption className="sr-only">Weekly hours for {store.name}</caption>
+                    <tbody>
+                      {WEEKDAYS.map(([key, label]) => {
+                        const value = store.hours?.[key] ?? "";
+                        const quiet = !value || /closed/i.test(value);
+                        return (
+                          <tr key={key} className="border-t border-line">
+                            <th scope="row" className="py-2.5 pr-3 text-left font-semibold text-ink">
+                              {label}
+                            </th>
+                            <td className={quiet ? "py-2.5 text-right text-muted" : "py-2.5 text-right text-ink"}>
+                              {value || "—"}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p className="mt-3 font-mono text-sm leading-relaxed text-ink">{listedHours}</p>
+                )}
+              </section>
+            ) : null}
           </aside>
         </div>
         {nearby.length > 0 ? (

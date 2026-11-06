@@ -214,19 +214,23 @@ export default async function HomePage() {
         )}
       </section>
 
-      <section className="border-t border-silver bg-white">
-        <div className="mx-auto grid max-w-6xl gap-4 px-4 py-10 sm:grid-cols-[8rem_minmax(0,1fr)_auto] sm:items-center">
-          <p className="font-mono text-sm text-blue-ink">LIST</p>
-          <div>
-            <h2 className="text-4xl uppercase text-ink">List your shop</h2>
-            <p className="mt-2 max-w-xl text-ink-soft">
-              You run a physical video game shop. Send the name, the street, and the city. A person reads the note
-              before the listing goes up.
+      <section className="border-t border-ink bg-white">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-12 sm:items-end">
+          <div className="sm:col-span-5">
+            <h2 className="font-serif text-4xl font-normal text-ink italic">Your counter</h2>
+            <p className="mt-3 max-w-sm text-ink-soft">
+              If the shop is yours, send the name and the street. A person reads the note before the listing goes up.
             </p>
           </div>
-          <Link href="/submit" className="btn btn-primary w-full sm:w-auto">
-            Add your shop
-          </Link>
+          <div className="sm:col-span-7 sm:border-l sm:border-silver sm:pl-8">
+            <p className="kicker text-blue-ink">Shop owners</p>
+            <Link
+              href="/submit"
+              className="mt-3 block font-display text-5xl leading-none font-bold text-ink uppercase hover:text-blue-ink sm:text-6xl"
+            >
+              Add a listing
+            </Link>
+          </div>
         </div>
       </section>
     </PageShell>

@@ -69,13 +69,13 @@ export async function DirectoryScreen({ listing }: { listing: ListingOk }) {
           {total > 0 ? <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink-soft">{intro}</p> : null}
         </header>
 
-        <div className="mt-8 max-w-2xl">
+        <div className="-mx-4 mt-8 border-y border-ink/10 bg-silver px-4 py-4 text-ink">
           <SearchForm
             id="directory-search"
             action={listing.basePath}
             filters={listing.filters}
             label="Search shops"
-            hint="Country, region, city, or shop name."
+            hint="A place or a shop name."
           />
         </div>
 
