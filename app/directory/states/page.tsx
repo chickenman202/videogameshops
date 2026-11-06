@@ -5,7 +5,7 @@ import { countStoresByCountry } from "@/lib/countries";
 import { LoadError } from "@/components/load-error";
 import { absoluteUrl } from "@/lib/jsonld";
 import { toMetaDescription, toTitle } from "@/lib/copy";
-import { statePath } from "@/lib/paths";
+import { countriesPath, statePath } from "@/lib/paths";
 import { BRAND } from "@/lib/site";
 import { US_STATES } from "@/lib/states";
 
@@ -43,9 +43,9 @@ export default async function StatesPage() {
             <>
               {" "}
               {outsideCount.toLocaleString("en-US")} {outsideCount === 1 ? "shop" : "shops"} outside the United
-              States {outsideCount === 1 ? "is" : "are"} in the{" "}
-              <a href="/directory" className="text-[#155eef]">
-                full store list
+              States {outsideCount === 1 ? "is" : "are"} listed{" "}
+              <a href={countriesPath()} className="text-[#155eef]">
+                by country
               </a>
               .
             </>

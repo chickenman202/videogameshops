@@ -4,6 +4,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { LoadError } from "@/components/load-error";
 import { PageShell } from "@/components/page-shell";
 import { loadCatalog, type CatalogStore } from "@/lib/catalog";
+import { countryBrowse } from "@/lib/countries";
 import { storeTitle, toMetaDescription } from "@/lib/copy";
 import { WEEKDAYS } from "@/lib/hours";
 import { absoluteUrl, breadcrumbJsonLd, JsonLd, storeCrumbs, storeJsonLd } from "@/lib/jsonld";
@@ -19,7 +20,12 @@ export function generateStaticParams() {
 }
 
 async function loadStore(slug: string): Promise<
-  | { status: "ok"; store: CatalogStore; nearby: CatalogStore[] }
+  | {
+      status: "ok";
+      store: CatalogStore;
+      nearby: CatalogStore[];
+      browse: ReturnType<typeof countryBrowse>;
+    }
   | { status: "missing" }
   | { status: "error" }
 > {
@@ -37,7 +43,7 @@ async function loadStore(slug: string): Promise<
         item.state === store.state,
     )
     .slice(0, 4);
-  return { status: "ok", store, nearby };
+  return { status: "ok", store, nearby, browse: countryBrowse(store, catalog.stores) };
 }
 
 export async function generateMetadata(props: PageProps<"/store/[slug]">): Promise<Metadata> {
@@ -84,8 +90,8 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
   if (result.status === "missing") notFound();
   if (result.status === "error") return <LoadError />;
 
-  const { store, nearby } = result;
-  const crumbs = storeCrumbs(store);
+  const { store, nearby, browse } = result;
+  const crumbs = storeCrumbs(store, store.stateSlug ? undefined : browse);
   const place = formatStorePlace(store);
   const directions = store.lat != null && store.lng != null
     ? `https://maps.google.com/?q=${store.lat},${store.lng}`
@@ -115,7 +121,10 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
       pageCrumbs.push({ name: store.city, href: cityPath(store.stateSlug, store.citySlug) });
     }
   } else {
-    if (store.countryName) pageCrumbs.push({ name: store.countryName });
+    if (browse.country) pageCrumbs.push({ name: browse.country.name, href: browse.country.href });
+    else if (store.countryName) pageCrumbs.push({ name: store.countryName });
+    if (browse.region) pageCrumbs.push({ name: browse.region.name, href: browse.region.href });
+    else if (store.state) pageCrumbs.push({ name: store.state });
     if (store.city) pageCrumbs.push({ name: store.city });
   }
   pageCrumbs.push({ name: store.name });

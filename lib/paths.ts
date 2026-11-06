@@ -7,6 +7,18 @@ export function statePath(stateSlug: string): string {
   return `/directory/${stateSlug}`;
 }
 
+export function countriesPath(): string {
+  return "/directory/countries";
+}
+
+export function countryPath(countrySlug: string): string {
+  return `/directory/countries/${countrySlug}`;
+}
+
+export function countryRegionPath(countrySlug: string, regionSlug: string): string {
+  return `/directory/countries/${countrySlug}/${regionSlug}`;
+}
+
 export function cityPath(stateSlug: string, citySlug: string): string {
   return `/directory/${stateSlug}/${citySlug}`;
 }

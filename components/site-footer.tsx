@@ -4,6 +4,7 @@ const groups = [
     links: [
       { href: "/directory", label: "All stores" },
       { href: "/directory/states", label: "States" },
+      { href: "/directory/countries", label: "Countries" },
       { href: "/directory/platforms", label: "Platforms" },
     ],
   },

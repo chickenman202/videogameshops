@@ -2,7 +2,7 @@
 
 A directory of physical video game shops. The shop list can come from Supabase, or from `data/stores.json` when the database is not connected. That fallback is what `npm run build` uses in CI.
 
-Shops are not only in the United States. Each row has a country code. US states still have their own directory pages. Shops in other countries show up in the full store list and on their own store page.
+Shops are not only in the United States. Each row has a country code. US states still have their own directory pages, such as `/directory/texas`. Every country also has a page under `/directory/countries`, for example `/directory/countries/france`, `/directory/countries/canada`, and `/directory/countries/japan`. A region inside a country gets its own page when that region has at least three shops, such as `/directory/countries/france/ile-de-france`. The United States page links to the existing state pages. Country and region names are the ones already stored on each shop.
 
 ## Show the site
 
@@ -26,7 +26,7 @@ npm run import:shops
 That command:
 
 1. Reads every row in the CSV.
-2. Folds a shop that appears in both OpenStreetMap and Game-Route into one listing when the name, address, or website shows it is the same place.
+2. Folds a shop that appears in both OpenStreetMap and Game-Route into one listing when the name, initials, address, or website shows it is the same place. Pairs that are only nearby stay as two listings. Those decisions are listed in `data/import-report.json`.
 3. Keeps the existing web address (`slug`) when that shop was already imported.
 4. Writes `data/stores.json` and a short `data/import-report.json`.
 5. If `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set in the environment or in `.env.local`, it also saves the rows to Supabase.

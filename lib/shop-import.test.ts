@@ -3,10 +3,13 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, it } from "node:test";
 import { buildCatalog } from "./build-catalog";
+import { toCatalogStore } from "./catalog";
+import { countryBySlug, countryEntries, placeSlug, regionLinks } from "./countries";
+import { reviewNearMisses } from "./near-miss-review";
 import { parseOsmOpeningHours } from "./osm-hours";
+import { countryPath } from "./paths";
 import { canonicalRegion } from "./regions";
 import { isSameShop, namesSimilar } from "./shop-dedupe";
-import { toCatalogStore } from "./catalog";
 import type { WikidataFill } from "./shop-record";
 
 const root = path.join(import.meta.dirname, "..");
@@ -77,6 +80,50 @@ describe("twins", () => {
       false,
     );
   });
+
+  it("folds CGR Games into Classic Games Revisited at the same address", () => {
+    assert.equal(
+      isSameShop(
+        shop({
+          name: "CGR Games",
+          source: "osm",
+          address: "46 East State Street, J",
+          lat: 40.3103643,
+          lon: -75.1291881,
+        }),
+        shop({
+          name: "Classic Games Revisited",
+          source: "gameroute",
+          address: "46 E State St",
+          lat: 40.3104058,
+          lon: -75.1292336,
+        }),
+      ),
+      true,
+    );
+  });
+
+  it("keeps a different name at the same suite as its own listing", () => {
+    assert.equal(
+      isSameShop(
+        shop({
+          name: "Game Mechanix - West Monroe",
+          source: "gameroute",
+          address: "3212 Cypress St #2",
+          lat: 32.504,
+          lon: -92.119,
+        }),
+        shop({
+          name: "Retro Fix",
+          source: "osm",
+          address: "3212 Cypress Street, #2",
+          lat: 32.50401,
+          lon: -92.11901,
+        }),
+      ),
+      false,
+    );
+  });
 });
 
 describe("shop file", () => {
@@ -115,6 +162,46 @@ describe("shop file", () => {
     const osaka = built.rows.find((row) => row.wikidata_url?.includes("Q125055846"));
     assert.match(osaka?.address ?? "", /梅田/);
     assert.equal(osaka?.city, "Umeda");
+
+    const cgr = built.rows.find((row) =>
+      (row.alternate_source_ids ?? []).includes("osm:way/387026089") ||
+      (row.source === "osm" && row.source_id === "way/387026089"),
+    );
+    const classic = built.rows.find((row) => row.source === "gameroute" && row.source_id === "gameroute/1699");
+    assert.equal(cgr?.id, classic?.id);
+    const funtrade = built.rows.find((row) => row.source === "gameroute" && row.source_id === "gameroute/1459");
+    const billingsStop = built.rows.find((row) => row.source === "osm" && row.source_id === "way/1363234827");
+    assert.notEqual(funtrade?.id, billingsStop?.id);
+
+    const decisions = reviewNearMisses(built.rows);
+    assert.equal(decisions.length, 9);
+    assert.equal(decisions.filter((item) => item.decision === "merged").length, 1);
+    assert.equal(decisions.find((item) => item.label.includes("Doylestown"))?.decision, "merged");
+    assert.equal(decisions.find((item) => item.label.includes("Billings"))?.decision, "kept_separate");
+    const report = JSON.parse(readFileSync(path.join(root, "data", "import-report.json"), "utf8")) as {
+      near_miss_decisions: { label: string; decision: string }[];
+    };
+    assert.deepEqual(
+      report.near_miss_decisions.map((item) => [item.label, item.decision]),
+      decisions.map((item) => [item.label, item.decision]),
+    );
+
+    const stores = catalog.filter((store): store is NonNullable<typeof store> => Boolean(store));
+    const france = countryBySlug(stores, "france");
+    const canada = countryBySlug(stores, "canada");
+    const japan = countryBySlug(stores, "japan");
+    assert.equal(france?.code, "FR");
+    assert.equal(canada?.code, "CA");
+    assert.equal(japan?.code, "JP");
+    assert.equal(countryPath("france"), "/directory/countries/france");
+    assert.equal(countryBySlug(stores, "georgia")?.code, "GE");
+    const frenchRegions = regionLinks(stores, france!);
+    assert.equal(frenchRegions.length > 0, true);
+    assert.equal(frenchRegions.every((region) => region.count >= 3), true);
+    assert.equal(frenchRegions.every((region) => region.href.startsWith("/directory/countries/france/")), true);
+    const unitedStates = countryEntries(stores).find((country) => country.code === "US");
+    assert.equal(regionLinks(stores, unitedStates!).find((region) => region.slug === "texas")?.href, "/directory/texas");
+    assert.equal(placeSlug("Île-de-France"), "ile-de-france");
   });
 });
 

@@ -9,6 +9,7 @@ import { createClient } from "@supabase/supabase-js";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { buildCatalog, catalogReport, existingFromRows, nearMisses } from "../lib/build-catalog";
+import { reviewNearMisses } from "../lib/near-miss-review";
 import { parseCsv } from "../lib/csv";
 import type { Database } from "../lib/database.types";
 import { draftFromCsv, type ExistingStore, type StoreRow, type WikidataFill } from "../lib/shop-record";
@@ -37,6 +38,7 @@ async function main() {
   const report = {
     ...catalogReport(built.csvRows, built.mergedGroups, built.dropped, built.rows),
     near_misses_within_40m: nearMisses(drafts),
+    near_miss_decisions: reviewNearMisses(built.rows),
     supabase: database.configured ? "upserted" : "skipped_no_service_role",
   };
 

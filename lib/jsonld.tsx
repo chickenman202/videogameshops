@@ -143,7 +143,10 @@ export function storeJsonLd(store: CatalogStore) {
   return { "@context": "https://schema.org", ...business };
 }
 
-export function storeCrumbs(store: CatalogStore) {
+export function storeCrumbs(
+  store: CatalogStore,
+  extra?: { country?: { name: string; href: string } | null; region?: { name: string; href: string } | null },
+) {
   const crumbs = [
     { name: "Home", path: "/" },
     { name: "Stores", path: "/directory" },
@@ -153,6 +156,9 @@ export function storeCrumbs(store: CatalogStore) {
     if (store.city && store.citySlug) {
       crumbs.push({ name: store.city, path: cityPath(store.stateSlug, store.citySlug) });
     }
+  } else {
+    if (extra?.country) crumbs.push({ name: extra.country.name, path: extra.country.href });
+    if (extra?.region) crumbs.push({ name: extra.region.name, path: extra.region.href });
   }
   crumbs.push({ name: store.name, path: storePath(store.slug) });
   return crumbs;

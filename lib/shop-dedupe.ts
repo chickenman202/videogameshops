@@ -152,7 +152,34 @@ export function isSameShop(left: DedupeShop, right: DedupeShop): boolean {
   if (sameNumber && meters <= 15 && sharedToken(left.name, right.name) && !phonesConflict(left.phone, right.phone)) {
     return true;
   }
+  // "CGR Games" is the initials of "Classic Games Revisited" at the same street number.
+  if (sameNumber && meters <= 30 && acronymMatch(left.name, right.name) && !phonesConflict(left.phone, right.phone)) {
+    return true;
+  }
   return false;
+}
+
+function nameWords(value: string): string[] {
+  return value
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter((token) => token.length > 0);
+}
+
+/** One name contains a short word that is the initials of the other name. */
+function acronymMatch(left: string, right: string): boolean {
+  const leftWords = nameWords(left);
+  const rightWords = nameWords(right);
+  const leftInitials = leftWords.map((word) => word[0] ?? "").join("");
+  const rightInitials = rightWords.map((word) => word[0] ?? "").join("");
+  return wordIsInitials(leftWords, rightInitials) || wordIsInitials(rightWords, leftInitials);
+}
+
+function wordIsInitials(words: string[], initials: string): boolean {
+  if (initials.length < 3 || initials.length > 6) return false;
+  return words.some((word) => word === initials);
 }
 
 function sharedToken(left: string, right: string): boolean {
