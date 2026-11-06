@@ -3,7 +3,6 @@ import { CityIndex } from "@/components/city-index";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { PageShell } from "@/components/page-shell";
 import { Pagination } from "@/components/pagination";
-import { PreviewNote } from "@/components/preview-note";
 import { SearchForm } from "@/components/search-form";
 import { StoreCard } from "@/components/store-card";
 import { loadCatalog } from "@/lib/catalog";
@@ -45,8 +44,9 @@ export async function DirectoryScreen({ listing }: { listing: ListingOk }) {
   const platformNav = preview ? platformChoices(listing, pool) : livePlatforms(listing);
   const start = total === 0 ? 0 : (listing.page - 1) * PAGE_SIZE + 1;
   const end = start === 0 ? 0 : start + visibleStores.length - 1;
+  const placeName = listing.cityName && listing.state ? `${listing.cityName}, ${listing.state.name}` : listing.state?.name;
   const intro = preview
-    ? `${total.toLocaleString("en-US")} ${total === 1 ? "shop" : "shops"} in this preview${listing.state ? ` for ${listing.state.name}` : ""}. The live catalog replaces this list when it is connected.`
+    ? `${total.toLocaleString("en-US")} ${total === 1 ? "video game store" : "video game stores"}${placeName ? ` in ${placeName}` : ""}.`
     : listing.intro;
 
   return (
@@ -66,8 +66,7 @@ export async function DirectoryScreen({ listing }: { listing: ListingOk }) {
         <header className="mt-6 max-w-4xl">
           <p className="kicker text-blue-ink">Directory</p>
           <h1 className="mt-3 text-5xl uppercase text-ink sm:text-7xl">{listing.h1}</h1>
-          {preview || total > 0 ? <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink-soft">{intro}</p> : null}
-          {preview ? <PreviewNote /> : null}
+          {total > 0 ? <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink-soft">{intro}</p> : null}
         </header>
 
         <div className="mt-8 max-w-2xl">
@@ -75,8 +74,8 @@ export async function DirectoryScreen({ listing }: { listing: ListingOk }) {
             id="directory-search"
             action={listing.basePath}
             filters={listing.filters}
-            label="Search this list"
-            hint="City, country, or shop name. Checked filters stay on."
+            label="Search shops"
+            hint="Country, region, city, or shop name."
           />
         </div>
 
@@ -119,13 +118,13 @@ function EmptyResults({ listing }: { listing: ListingOk }) {
   const filtered = hasFilters(listing.filters) || Boolean(listing.filters.q);
   return (
     <div className="mt-4 border-t border-ink py-10">
-      <h3 className="text-4xl uppercase text-ink">{filtered ? "No stores match" : "No stores listed here yet"}</h3>
+      <h3 className="text-4xl uppercase text-ink">{filtered ? "No shops match" : "No shops listed here"}</h3>
       <p className="mt-3 max-w-md text-ink-soft">
         {listing.filters.q
-          ? `Nothing matched “${listing.filters.q}”. Try another city or shop name.`
+          ? `Nothing matched “${listing.filters.q}”. Try a city, a country, or a shop name.`
           : filtered
-            ? "Clear a filter, or search for a city or shop name."
-            : "Shops show up here after they are added."}
+            ? "Nothing matched these filters. Clear one, or search by place."
+            : "No shops are listed here."}
       </p>
       <div className="mt-5 flex flex-col gap-3 sm:flex-row">
         {filtered ? (
@@ -150,7 +149,7 @@ function FilterBar({ listing, platformNav }: { listing: ListingOk; platformNav: 
   return (
     <div className="mt-8 border-y border-ink py-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="kicker text-ink">Filter this list</p>
+        <p className="kicker text-ink">Show shops with</p>
         {hasFilters(listing.filters) ? (
           <a href={listing.basePath} className="link text-sm">
             Clear

@@ -152,7 +152,7 @@ export function SubmitStoreForm() {
       </section>
       <Note state={state} />
       <button type="submit" disabled={pending} className="btn btn-primary w-full sm:w-auto">
-        {pending ? "Sending" : "Submit store"}
+        {pending ? "Sending" : "Send the listing"}
       </button>
     </form>
   );

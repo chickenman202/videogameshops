@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageShell } from "@/components/page-shell";
-import { PreviewNote } from "@/components/preview-note";
 import { loadCatalog } from "@/lib/catalog";
 import { FIXTURE_SHOPS } from "@/lib/fixture-shops";
 import { homeJsonLd, JsonLd } from "@/lib/jsonld";
@@ -11,7 +10,7 @@ import { shopCountryName, shopLocation, type ShopView } from "@/lib/shop-view";
 import { US_STATES } from "@/lib/states";
 
 const description =
-  "A worldwide guide to physical shops. Address, hours, and what they carry, when a listing actually has them.";
+  "Find physical video game stores by country, region, and city. Hours and contact details appear when a listing has them.";
 
 export const revalidate = 86400;
 
@@ -48,7 +47,7 @@ export default async function HomePage() {
         <div className="mx-auto grid max-w-6xl lg:grid-cols-12">
           <div className="relative z-10 flex flex-col justify-between px-4 py-10 lg:col-span-5 lg:py-14 lg:pr-10">
             <div>
-              <p className="kicker text-blue-mist">Worldwide index</p>
+              <p className="kicker text-blue-mist">Worldwide</p>
               <h1 className="mt-8">
                 <span className="block font-serif text-[1.65rem] leading-none font-normal text-silver italic sm:text-3xl">
                   video game
@@ -58,18 +57,12 @@ export default async function HomePage() {
                 </span>
               </h1>
               <span className="mt-5 block h-1 w-16 bg-blue" aria-hidden="true" />
-              <p className="mt-6 max-w-sm font-serif text-lg leading-relaxed text-silver">
-                A worldwide guide to physical shops. Address, hours, and what they carry, when a listing actually has
-                them.
-              </p>
+              <p className="mt-6 max-w-sm font-serif text-lg leading-relaxed text-silver">{description}</p>
               {shops.length > 0 ? (
                 <p className="mt-4 kicker text-blue-mist">
-                  {preview
-                    ? `${shops.length.toLocaleString("en-US")} shops in this preview`
-                    : `${shops.length.toLocaleString("en-US")} shops`}
+                  {shops.length.toLocaleString("en-US")} {shops.length === 1 ? "shop" : "shops"}
                 </p>
               ) : null}
-              {preview ? <PreviewNote onDark /> : null}
             </div>
           </div>
           {featured?.photo ? (
@@ -102,16 +95,16 @@ export default async function HomePage() {
           <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-end">
             <div className="sm:w-44 sm:pb-2">
               <label htmlFor="home-lookup" className="kicker text-ink">
-                Look up a shop
+                Search the directory
               </label>
               <p id="home-lookup-hint" className="mt-1 text-sm text-ink-soft">
-                City, country, or shop name.
+                A place or a shop name.
               </p>
             </div>
             <input
               id="home-lookup"
               name="q"
-              placeholder="City, country, or shop name"
+              placeholder="Country, region, city, or shop name"
               autoComplete="off"
               aria-describedby="home-lookup-hint"
               className="min-h-11 w-full min-w-0 flex-1 border-0 border-b-2 border-ink bg-transparent px-0 font-serif text-lg text-ink placeholder:text-muted focus:border-blue-ink"
@@ -127,7 +120,7 @@ export default async function HomePage() {
         <section className="mx-auto max-w-6xl px-4 py-10" aria-labelledby="place-index-heading">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <h2 id="place-index-heading" className="font-serif text-3xl font-normal text-ink italic">
-              Places in this index
+              Shops
             </h2>
             <Link href="/directory" className="link">
               All stores
@@ -208,7 +201,7 @@ export default async function HomePage() {
           </div>
         ) : (
           <div className="mt-6 border-t border-ink py-8">
-            <p className="text-ink-soft">No city or country lists are ready yet.</p>
+            <p className="text-ink-soft">No cities or countries have shops listed.</p>
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
               <Link href="/directory" className="btn btn-primary">
                 All stores
@@ -223,15 +216,16 @@ export default async function HomePage() {
 
       <section className="border-t border-silver bg-white">
         <div className="mx-auto grid max-w-6xl gap-4 px-4 py-10 sm:grid-cols-[8rem_minmax(0,1fr)_auto] sm:items-center">
-          <p className="font-mono text-sm text-blue-ink">ADD</p>
+          <p className="font-mono text-sm text-blue-ink">LIST</p>
           <div>
-            <h2 className="text-4xl uppercase text-ink">Own a shop?</h2>
+            <h2 className="text-4xl uppercase text-ink">List your shop</h2>
             <p className="mt-2 max-w-xl text-ink-soft">
-              Send the address, hours, and platforms. A person checks the note before it goes on the public site.
+              You run a physical video game shop. Send the name, the street, and the city. A person reads the note
+              before the listing goes up.
             </p>
           </div>
           <Link href="/submit" className="btn btn-primary w-full sm:w-auto">
-            Submit a store
+            Add your shop
           </Link>
         </div>
       </section>

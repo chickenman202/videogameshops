@@ -4,23 +4,28 @@ import { ContactForm } from "@/components/forms";
 import { absoluteUrl } from "@/lib/jsonld";
 import { BRAND } from "@/lib/site";
 
+const description =
+  "Write Video Game Shops about a listing. Send the shop name, the city, and the correction. There is no public office.";
+
 export const metadata: Metadata = {
   title: { absolute: `Contact | ${BRAND}` },
-  description: "Contact videogameshops to correct a store address, hours, phone number, or platform list.",
+  description,
   alternates: { canonical: absoluteUrl("/contact") },
+  openGraph: { title: `Contact | ${BRAND}`, description, url: absoluteUrl("/contact"), siteName: BRAND, type: "website" },
 };
 
 export default function ContactPage() {
   return (
     <ArticlePage
       title="Contact"
-      lede="Send a correction for a store that is already listed, or a question about the directory. Include the store name and city so the right page can be updated."
+      lede="Write about a listing. The directory has no public office and no phone line. The form is how corrections reach a person."
     >
       <div className="mt-6 border-t border-ink pt-4 text-base text-ink-soft">
-        <p className="font-bold text-ink">Helpful to include</p>
+        <p className="font-bold text-ink">Include</p>
         <ul className="mt-2 list-disc space-y-1 pl-5">
-          <li>The store name and city</li>
-          <li>The address, phone, hours, or platform that needs a fix</li>
+          <li>The shop name</li>
+          <li>The city and country</li>
+          <li>The address, hours, phone, or platform that needs a change</li>
         </ul>
       </div>
       <ContactForm />

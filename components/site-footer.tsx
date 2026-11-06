@@ -38,8 +38,8 @@ export function SiteFooter() {
             <span className="font-display text-2xl font-bold uppercase">videogameshops</span>
           </Link>
           <p className="mt-4 max-w-sm font-serif text-base leading-relaxed text-paper/80">
-            A guide to physical video game shops near you. Hours, addresses, and platforms come from public listings
-            and from store owners.
+            Video Game Shops lists physical stores by country, region, and city. Hours and contact details appear when
+            a listing has them.
           </p>
         </div>
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">

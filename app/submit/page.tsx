@@ -4,17 +4,27 @@ import { SubmitStoreForm } from "@/components/forms";
 import { absoluteUrl } from "@/lib/jsonld";
 import { BRAND } from "@/lib/site";
 
+const description =
+  "Shop owners can send a physical video game store for Video Game Shops. A person reads the note before it is listed.";
+
 export const metadata: Metadata = {
-  title: { absolute: `Submit a Store | ${BRAND}` },
-  description: "Submit a physical video game shop. Listings are reviewed before they are published.",
+  title: { absolute: `Add a shop | ${BRAND}` },
+  description,
   alternates: { canonical: absoluteUrl("/submit") },
+  openGraph: {
+    title: `Add a shop | ${BRAND}`,
+    description,
+    url: absoluteUrl("/submit"),
+    siteName: BRAND,
+    type: "website",
+  },
 };
 
 export default function SubmitPage() {
   return (
     <ArticlePage
-      title="Submit a store"
-      lede="This form is for a real shop with a street address. The state menu covers US states for now. A closed business, a clothing brand, or a big-box store with no game counter should not be submitted. Submissions are reviewed before a public page is created."
+      title="Add a shop"
+      lede="This form is for a shop with a door and a street address. Name the shop, the street, the city, and a US state. Shops outside the United States should use the contact page and include the country. A person reads each note before a page is published."
     >
       <SubmitStoreForm />
     </ArticlePage>

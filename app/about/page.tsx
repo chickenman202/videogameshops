@@ -4,48 +4,38 @@ import { absoluteUrl } from "@/lib/jsonld";
 import { BRAND } from "@/lib/site";
 
 const description =
-  "videogameshops lists physical video game shops near you, including hours, platforms, trade-ins, and how to correct a listing.";
+  "Video Game Shops is a directory of physical video game stores. Search by country, region, and city.";
 
 export const metadata: Metadata = {
   title: { absolute: `About | ${BRAND}` },
   description,
   alternates: { canonical: absoluteUrl("/about") },
+  openGraph: { title: `About | ${BRAND}`, description, url: absoluteUrl("/about"), siteName: BRAND, type: "website" },
 };
 
 export default function AboutPage() {
   return (
     <ArticlePage
-      title="About videogameshops"
-      lede="videogameshops is an independent directory of physical video game shops near you. It is not a game publisher, a chain, or a marketplace. A store page answers where the shop is, when it is open, and what you can buy or trade there."
+      title="About"
+      lede="Video Game Shops is a directory of physical video game stores. Find a shop by country, region, or city. The site is not a publisher, a chain, or a marketplace."
     >
       <div className="article-body">
-        <h2>What a listing includes</h2>
+        <h2>What a listing shows</h2>
         <p>
-          Each public store shows the street address, city, and region or country when we have them, plus phone, website,
-          and weekly hours. It also shows the platforms the shop carries: PlayStation, Xbox, Nintendo, PC, handheld, retro, and
-          VR. New games, used games, trade-ins, and console repair are separate yes-or-no facts. Retro is one of the
-          platform tags, used the same way on every page.
+          A page shows the street, the place, and the country when those are stored. Phone, website, hours, and social
+          links appear only when the listing has them. Platforms, new games, used games, trade-ins, and repair appear
+          only when those facts are stored.
         </p>
         <h2>Where the facts come from</h2>
         <p>
-          Hours and platforms come from public business listings and from store owners who submit or correct a page. If
-          a stored description is too short to be a sentence, reads like a review, or only points at an official
-          website, the page replaces it with two factual sentences built from the address and the shop’s facts. Hours
-          that cannot be read stay on the page as text and are left out of the search-engine hours block. The site
-          does not invent a clock time.
+          Listings come from public business records and from shop owners. If a shop has no description, the page does
+          not write one. Hours that cannot be read stay as written. The site does not guess a closing time.
         </p>
-        <h2>How a store gets listed</h2>
+        <h2>Add or correct a shop</h2>
         <p>
-          Use the submit page with the store name, street address, city, and state. A person reviews the note before
-          the store becomes a public page. Placeholder names and empty addresses are not published. The first public
-          batch is a set of real shops in a few large states, then more states after those city pages look complete.
-        </p>
-        <h2>How to fix a wrong listing</h2>
-        <p>
-          Use the contact page. Include the store name, the city, and what is wrong: the address, a phone number, a
-          closed day, or a platform the shop does not carry. After the row is updated, the public page refreshes
-          within a day. City roundup pages exist for every city that has a store, and they are filed for search only
-          when that city has at least three stores. A one-store town still keeps its store page.
+          Shop owners can send a listing from the submit page. That form stores a US state. Shops in other countries
+          can write through the contact page with the country and city. To fix a listing, name the shop, the city, and
+          what is wrong.
         </p>
       </div>
     </ArticlePage>

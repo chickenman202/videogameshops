@@ -1,20 +1,12 @@
 import { BRAND } from "./site";
 
-/** Keep search descriptions in the length Google usually shows in full. */
+/** Trim a description. Do not add sentences the listing did not supply. */
 export function toMetaDescription(lead: string): string {
-  let text = lead.replace(/\s+/g, " ").trim();
-  const extras = [
-    "Addresses, phone numbers, and weekly hours are on each store page.",
-    "See what each shop sells before you go.",
-  ];
-  for (const extra of extras) {
-    if (text.length >= 140) break;
-    text = `${text} ${extra}`.trim();
-  }
+  const text = lead.replace(/\s+/g, " ").trim();
   if (text.length <= 160) return text;
   const sliced = text.slice(0, 159);
   const space = sliced.lastIndexOf(" ");
-  const cut = space >= 140 ? sliced.slice(0, space) : sliced;
+  const cut = space >= 80 ? sliced.slice(0, space) : sliced;
   return cut.replace(/[.,;:\s]+$/, "");
 }
 

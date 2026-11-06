@@ -115,10 +115,12 @@ describe("titles and descriptions", () => {
     assert.equal(multi.includes("Retro"), false);
   });
 
-  it("builds a description in the usual search length", () => {
-    const text = toMetaDescription(
-      "12 video game stores in Austin, Texas. Compare hours, trade-ins, and retro stock.",
-    );
-    assert.ok(text.length >= 140 && text.length <= 160, text);
+  it("keeps a description honest and within search length", () => {
+    const lead = "12 video game stores in Austin, Texas.";
+    assert.equal(toMetaDescription(lead), lead);
+    const long = `${"Physical video game shops in a long city name. ".repeat(8)}End.`;
+    const text = toMetaDescription(long);
+    assert.ok(text.length <= 160, text);
+    assert.equal(text.includes("before you go"), false);
   });
 });

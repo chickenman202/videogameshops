@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { PageShell } from "@/components/page-shell";
-import { PreviewNote } from "@/components/preview-note";
 import { loadCatalog } from "@/lib/catalog";
 import { LoadError } from "@/components/load-error";
 import { FIXTURE_SHOPS } from "@/lib/fixture-shops";
@@ -16,7 +15,7 @@ export const revalidate = 86400;
 export const metadata: Metadata = {
   title: { absolute: toTitle("Video Game Stores by State") },
   description: toMetaDescription(
-    "Browse video game stores by state. Each state links to its cities and shows how many shops are listed.",
+    "United States shops, filed by state. Open a state to see its cities and the shops listed there.",
   ),
   alternates: { canonical: absoluteUrl("/directory/states") },
 };
@@ -39,8 +38,9 @@ export default async function StatesPage() {
           crumbs={[{ name: "Home", href: "/" }, { name: "Stores", href: "/directory" }, { name: "States" }]}
         />
         <h1 className="mt-4 text-5xl uppercase text-ink sm:text-7xl">Video Game Stores by State</h1>
-        <p className="mt-3 max-w-3xl text-lg text-ink-soft">Browse shops by state.</p>
-        {preview ? <PreviewNote /> : null}
+        <p className="mt-3 max-w-3xl text-lg text-ink-soft">
+          United States shops, filed by state. The number is how many shops are listed there.
+        </p>
         {states.length > 0 ? (
           <ul className="mt-8 border-t border-ink">
             {states.map((state) => (
@@ -60,7 +60,7 @@ export default async function StatesPage() {
           </ul>
         ) : (
           <div className="mt-8 border-t border-ink py-8">
-            <p className="text-ink-soft">No state lists are ready yet.</p>
+            <p className="text-ink-soft">No states have shops listed.</p>
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
               <Link href="/directory" className="btn btn-primary">
                 All stores

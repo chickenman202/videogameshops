@@ -18,14 +18,14 @@ const notes: Record<string, string> = {
   nintendo: "Shops that carry Nintendo games",
   pc: "Shops that carry PC games",
   handheld: "Shops that carry handheld games",
-  retro: "Retro is a platform tag, not a separate switch.",
+  retro: "Shops tagged for older games and consoles.",
   vr: "Shops that carry VR games",
 };
 
 export const metadata: Metadata = {
   title: { absolute: toTitle("Video Game Stores by Platform") },
   description: toMetaDescription(
-    "Browse video game stores by platform: PlayStation, Xbox, Nintendo, PC, handheld, retro, and VR.",
+    "Physical video game shops by what they carry: PlayStation, Xbox, Nintendo, PC, handheld, retro, and VR.",
   ),
   alternates: { canonical: absoluteUrl("/directory/platforms") },
 };
@@ -48,7 +48,7 @@ export default async function PlatformsPage() {
         />
         <h1 className="mt-4 text-5xl uppercase text-ink sm:text-7xl">Video Game Stores by Platform</h1>
         <p className="mt-3 max-w-3xl text-lg text-ink-soft">
-          A platform page lists only stores that carry that platform. Retro is a platform tag, not a separate switch.
+          Each list is the shops that carry that platform. A shop appears only when the listing names it.
         </p>
         {platforms.length > 0 ? (
           <ul className="mt-8 border-t border-ink">
@@ -66,7 +66,7 @@ export default async function PlatformsPage() {
           </ul>
         ) : (
           <div className="mt-8 border-t border-ink py-8">
-            <p className="text-ink-soft">No platform lists have shops yet.</p>
+            <p className="text-ink-soft">No platform has shops listed.</p>
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
               <Link href="/directory" className="btn btn-primary">
                 All stores

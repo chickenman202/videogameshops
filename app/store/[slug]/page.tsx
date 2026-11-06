@@ -5,7 +5,6 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { LoadError } from "@/components/load-error";
 import { PageShell } from "@/components/page-shell";
 import { StoreCard } from "@/components/store-card";
-import { PreviewNote } from "@/components/preview-note";
 import { loadCatalog } from "@/lib/catalog";
 import { storeTitle, toMetaDescription } from "@/lib/copy";
 import { FIXTURE_SHOPS } from "@/lib/fixture-shops";
@@ -67,7 +66,7 @@ export async function generateMetadata(props: PageProps<"/store/[slug]">): Promi
   }
   if (result.status === "error") {
     return {
-      title: { absolute: "Directory unavailable" },
+      title: { absolute: "The directory did not load" },
       robots: { index: false, follow: true },
     };
   }
@@ -75,9 +74,8 @@ export async function generateMetadata(props: PageProps<"/store/[slug]">): Promi
   const placeLabel = store.city || shopCountryName(store) || "Shop";
   const regionLabel = store.stateAbbr || shopCountry(store);
   const title = storeTitle(store.name, placeLabel, regionLabel, store.platforms);
-  const description = toMetaDescription(
-    store.about?.trim() || `${store.name}. Address, hours, and contact details when a listing has them.`,
-  );
+  const placeBit = [store.city, shopCountryName(store) || store.state].filter(Boolean).join(", ");
+  const description = toMetaDescription(store.about?.trim() || (placeBit ? `${store.name}, ${placeBit}.` : store.name));
   return {
     title: { absolute: title },
     description,
@@ -154,7 +152,6 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
       <JsonLd data={breadcrumbJsonLd(crumbs)} />
       <article className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
         <Breadcrumbs crumbs={pageCrumbs} />
-        {preview ? <PreviewNote /> : null}
         {store.photo ? (
           <img
             src={store.photo}
@@ -206,7 +203,11 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
                 <div className="border-b border-line py-3">
                   <dt className="kicker text-muted">Address</dt>
                   <dd className="mt-1 text-base leading-relaxed text-ink">
-                    {hasAddress(store) ? store.address : <span className="text-ink-soft">Not listed yet</span>}
+                    {hasAddress(store) ? (
+                      store.address
+                    ) : (
+                      <span className="text-ink-soft">No street address on this listing.</span>
+                    )}
                     {localLine ? (
                       <>
                         <br />
@@ -221,31 +222,27 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
                     <dd className="mt-1 text-base text-ink">{countryName || country}</dd>
                   </div>
                 ) : null}
-                <div className="border-b border-line py-3">
-                  <dt className="kicker text-muted">Phone</dt>
-                  <dd className="mt-1">
-                    {phoneHref && phoneLabel ? (
+                {phoneHref && phoneLabel ? (
+                  <div className="border-b border-line py-3">
+                    <dt className="kicker text-muted">Phone</dt>
+                    <dd className="mt-1">
                       <a href={phoneHref} className="link text-lg">
                         {phoneLabel}
                       </a>
-                    ) : (
-                      <span className="text-ink-soft">Not listed yet</span>
-                    )}
-                  </dd>
-                </div>
-                <div className="border-b border-line py-3">
-                  <dt className="kicker text-muted">Website</dt>
-                  <dd className="mt-1">
-                    {store.website && websiteLabel ? (
+                    </dd>
+                  </div>
+                ) : null}
+                {store.website && websiteLabel ? (
+                  <div className="border-b border-line py-3">
+                    <dt className="kicker text-muted">Website</dt>
+                    <dd className="mt-1">
                       <a href={store.website} className="link break-all" target="_blank" rel="noopener noreferrer">
                         {websiteLabel}
                         <span className="sr-only"> (opens in a new tab)</span>
                       </a>
-                    ) : (
-                      <span className="text-ink-soft">Not listed yet</span>
-                    )}
-                  </dd>
-                </div>
+                    </dd>
+                  </div>
+                ) : null}
                 {socials.length > 0 ? (
                   <div className="border-b border-line py-3">
                     <dt className="kicker text-muted">Social</dt>
@@ -276,15 +273,16 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
                   <caption className="sr-only">Weekly hours for {store.name}</caption>
                   <tbody>
                     {WEEKDAYS.map(([key, label]) => {
-                      const value = store.hours?.[key] ?? "Not listed";
-                      const quiet = value === "Not listed" || /closed/i.test(value);
+                      const value = store.hours?.[key] ?? "—";
+                      const quiet = value === "—" || /closed/i.test(value);
                       return (
                         <tr key={key} className="border-t border-line">
                           <th scope="row" className="py-2.5 pr-3 text-left font-semibold text-ink">
                             {label}
                           </th>
                           <td className={quiet ? "py-2.5 text-right text-muted" : "py-2.5 text-right text-ink"}>
-                            {value}
+                            {value === "—" ? <span className="sr-only">No hours stored</span> : null}
+                            {value === "—" ? <span aria-hidden="true">—</span> : value}
                           </td>
                         </tr>
                       );
@@ -294,7 +292,7 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
               ) : listedHours ? (
                 <p className="mt-3 font-mono text-sm leading-relaxed text-ink">{listedHours}</p>
               ) : (
-                <p className="mt-3 text-sm text-muted">Hours are not listed yet.</p>
+                <p className="mt-3 text-sm text-muted">Hours are not on this listing.</p>
               )}
             </section>
           </aside>

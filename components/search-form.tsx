@@ -3,9 +3,9 @@ import type { Filters } from "@/lib/filters";
 export function SearchForm({
   action = "/directory",
   filters,
-  placeholder = "City, country, or shop name",
-  label = "Search stores",
-  hint = "Try a city, a country, or a shop name.",
+  placeholder = "Country, region, city, or shop name",
+  label = "Search shops",
+  hint = "Country, region, city, or shop name.",
   id = "store-search",
   onDark = false,
 }: {

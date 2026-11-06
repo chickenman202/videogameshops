@@ -22,7 +22,7 @@ async function saveMessage(row: InboxInsert): Promise<FormState> {
   if (!supabase) {
     return {
       status: "error",
-      message: "Nothing was saved. The store database is not connected yet.",
+      message: "The note could not be saved. Try again in a little while.",
     };
   }
   const { error } = await supabase.from("inbox_messages").insert(row);
@@ -32,7 +32,10 @@ async function saveMessage(row: InboxInsert): Promise<FormState> {
   }
   return {
     status: "ok",
-    message: "Saved. We review it before anything goes on the public site.",
+    message:
+      row.kind === "store_submission"
+        ? "Received. A person reads the note before the shop is listed."
+        : "Received. We will use it to check the listing.",
   };
 }
 
@@ -41,7 +44,7 @@ export async function submitContact(_previous: FormState, formData: FormData): P
   const email = text(formData, "email", 180);
   const message = text(formData, "message", 2000);
   if (name.length < 2 || !emailOk(email) || message.length < 10) {
-    return { status: "error", message: "Add your name, a real email, and a short message." };
+    return { status: "error", message: "Add your name, a complete email, and a short message." };
   }
   return saveMessage({ kind: "contact", name, email, message });
 }

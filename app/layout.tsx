@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     template: `%s | ${BRAND}`,
   },
   description:
-    "A worldwide guide to physical shops. Address, hours, and what they carry, when a listing actually has them.",
+    "Find physical video game stores by country, region, and city. Hours and contact details appear when a listing has them.",
   robots: { index: true, follow: true },
   icons: {
     icon: [
