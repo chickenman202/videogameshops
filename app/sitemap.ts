@@ -1,16 +1,22 @@
 import type { MetadataRoute } from "next";
 import { loadCatalog } from "@/lib/catalog";
-import { buildSitemap } from "@/lib/sitemap-data";
+import { buildSitemap, fallbackSitemap } from "@/lib/sitemap-data";
 
 // The store list inside loadCatalog refreshes about once a day.
-// A failed read is not saved as an empty sitemap.
+// A failed read returns the hub list so /sitemap.xml does not 500.
 
 export const revalidate = 86400;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const catalog = await loadCatalog();
-  if (!catalog.ok) {
-    throw new Error(catalog.error);
+  try {
+    const catalog = await loadCatalog();
+    if (!catalog.ok) {
+      console.error(catalog.error);
+      return fallbackSitemap();
+    }
+    return buildSitemap(catalog.stores);
+  } catch (error) {
+    console.error(error);
+    return fallbackSitemap();
   }
-  return buildSitemap(catalog.stores);
 }

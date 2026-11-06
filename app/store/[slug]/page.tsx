@@ -12,6 +12,7 @@ import { formatAddressLine, relatedInCity, storePlaceLinks } from "@/lib/links";
 import { storeAbout } from "@/lib/listing";
 import { platformCityPathFor, platformPath, storePath } from "@/lib/paths";
 import { getPlatformByLabel } from "@/lib/platforms";
+import { isIndexableShop } from "@/lib/publish";
 import { pageMetadata } from "@/lib/seo";
 import { MIN_PLATFORM_CITY_STORES } from "@/lib/site";
 
@@ -81,6 +82,8 @@ export async function generateMetadata(props: PageProps<"/store/[slug]">): Promi
     description,
     canonicalPath: storePath(store.slug),
     image: store.photo,
+    index: isIndexableShop(store),
+    follow: true,
   });
 }
 

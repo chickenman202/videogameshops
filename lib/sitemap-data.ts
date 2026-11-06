@@ -9,6 +9,7 @@ import {
   regionPathFor,
 } from "@/lib/paths";
 import { PLATFORMS } from "@/lib/platforms";
+import { isIndexableShop } from "@/lib/publish";
 import { CONTENT_UPDATED, MIN_CITY_STORES, MIN_PLATFORM_CITY_STORES } from "@/lib/site";
 
 /** One sitemap URL. Priority and change frequency are omitted on purpose. */
@@ -34,7 +35,8 @@ function entry(path: string, lastModified: string): SitemapEntry {
 }
 
 /**
- * Hubs, country, region, and city pages, plus one URL per shop.
+ * Hubs, country, region, and city pages, plus shop pages that have a street, phone, or website.
+ * A shop with none of those stays public but is left out of the sitemap.
  * Cities and platform-in-city pages are left out until they have enough shops.
  * Page 2 and filter URLs are left out.
  */
@@ -124,8 +126,16 @@ export function buildSitemap(stores: CatalogStore[], contentUpdated = CONTENT_UP
   }
 
   for (const store of stores) {
+    if (!isIndexableShop(store)) continue;
     pages.push(entry(`/store/${store.slug}`, store.updatedAt));
   }
 
   return pages.sort((a, b) => a.url.localeCompare(b.url) || a.lastModified.localeCompare(b.lastModified));
+}
+
+/** Hubs we can still list when the shop file cannot be read. No shop URLs. */
+export function fallbackSitemap(contentUpdated = CONTENT_UPDATED): SitemapEntry[] {
+  return ["/", "/directory", "/about", "/directory/countries", "/directory/platforms", "/directory/states"].map(
+    (path) => entry(path, contentUpdated),
+  );
 }

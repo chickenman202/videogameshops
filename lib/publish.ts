@@ -52,6 +52,19 @@ export function isPublishableStore(input: {
  * Thrown-away "about" text: too short to be a sentence, a review quote,
  * or a line that just points at the official website.
  */
+/**
+ * A shop page stays public either way.
+ * It is indexable only when at least one of street, phone, or website is stored.
+ * A page with none of those is thin and should be noindex and left out of the sitemap.
+ */
+export function isIndexableShop(store: {
+  address: string;
+  phone: string | null;
+  website: string | null;
+}): boolean {
+  return Boolean(store.address.trim() || store.phone?.trim() || store.website?.trim());
+}
+
 export function isUsableAbout(value: string | null | undefined): boolean {
   const text = value?.trim() ?? "";
   const words = text.split(/\s+/).filter(Boolean);

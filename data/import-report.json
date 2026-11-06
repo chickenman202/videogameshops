@@ -1,0 +1,234 @@
+{
+  "csv_rows": 6732,
+  "listings": 6704,
+  "merged_twin_groups": 28,
+  "dropped_blank_names": 0,
+  "rows_folded_by_dedupe": 28,
+  "by_source": {
+    "osm": 6028,
+    "dallasretrogamers": 6,
+    "wikidata": 2,
+    "gameroute": 668
+  },
+  "countries": [
+    {
+      "code": "US",
+      "name": "United States",
+      "count": 3123
+    },
+    {
+      "code": "FR",
+      "name": "France",
+      "count": 388
+    },
+    {
+      "code": "CA",
+      "name": "Canada",
+      "count": 289
+    },
+    {
+      "code": "IT",
+      "name": "Italy",
+      "count": 273
+    },
+    {
+      "code": "GB",
+      "name": "United Kingdom",
+      "count": 201
+    },
+    {
+      "code": "ES",
+      "name": "Spain",
+      "count": 173
+    },
+    {
+      "code": "AU",
+      "name": "Australia",
+      "count": 150
+    },
+    {
+      "code": "JP",
+      "name": "Japan",
+      "count": 125
+    },
+    {
+      "code": "BR",
+      "name": "Brazil",
+      "count": 120
+    },
+    {
+      "code": "IR",
+      "name": "Iran",
+      "count": 111
+    },
+    {
+      "code": "DE",
+      "name": "Germany",
+      "count": 102
+    },
+    {
+      "code": "TW",
+      "name": "Taiwan",
+      "count": 93
+    },
+    {
+      "code": "MX",
+      "name": "Mexico",
+      "count": 75
+    },
+    {
+      "code": "CI",
+      "name": "Côte d'Ivoire",
+      "count": 68
+    },
+    {
+      "code": "AR",
+      "name": "Argentina",
+      "count": 64
+    },
+    {
+      "code": "PK",
+      "name": "Pakistan",
+      "count": 53
+    },
+    {
+      "code": "RU",
+      "name": "Russia",
+      "count": 52
+    },
+    {
+      "code": "IQ",
+      "name": "Iraq",
+      "count": 49
+    },
+    {
+      "code": "TZ",
+      "name": "Tanzania",
+      "count": 48
+    },
+    {
+      "code": "PL",
+      "name": "Poland",
+      "count": 47
+    }
+  ],
+  "country_count": 154,
+  "blank": {
+    "address": 3018,
+    "city": 11,
+    "region": 188,
+    "country": 0,
+    "phone": 5117,
+    "website": 3866,
+    "opening_hours": 5001,
+    "image": 6549,
+    "social": 6079
+  },
+  "opening_hours_parsed": 1519,
+  "opening_hours_left_as_text": 184,
+  "platforms_filled": 0,
+  "sells_new": 0,
+  "near_misses_within_40m": [
+    "20m gameroute:FunTrade / osm:GameStop (Billings US)",
+    "4m osm:Backlight Gamez / gameroute:Revival Games (Idaho Falls US)",
+    "11m osm:Dial Up Games / gameroute:Gameroom Lincoln (Lincoln US)",
+    "7m gameroute:Mega Media Xchange Madison / osm:Preplayed East (Madison US)",
+    "5m osm:GameStar / gameroute:GameTime (McMinnville US)",
+    "22m osm:On the Draw / gameroute:Player's Choice Video Games (Pottstown US)",
+    "21m osm:Gamestersbay / gameroute:Level Up Racine Video Game Store & Lounge (Racine US)",
+    "5m gameroute:Game Mechanix - West Monroe / osm:Retro Fix (West Monroe US)"
+  ],
+  "near_miss_decisions": [
+    {
+      "label": "FunTrade and GameStop in Billings",
+      "meters": 20,
+      "ids": [
+        "gameroute:gameroute/1459",
+        "osm:way/1363234827"
+      ],
+      "decision": "kept_separate",
+      "reason": "Different shop names. The nearby GameStop row has no street address, so it stays its own listing."
+    },
+    {
+      "label": "CGR Games and Classic Games Revisited in Doylestown",
+      "meters": 6,
+      "ids": [
+        "osm:way/387026089",
+        "gameroute:gameroute/1699"
+      ],
+      "decision": "merged",
+      "reason": "Same address, 46 East State Street in Doylestown, and CGR matches the initials of Classic Games Revisited. Website and address come from those two rows."
+    },
+    {
+      "label": "Backlight Gamez and Revival Games in Idaho Falls",
+      "meters": 4,
+      "ids": [
+        "osm:node/9546408211",
+        "gameroute:gameroute/1226"
+      ],
+      "decision": "kept_separate",
+      "reason": "Same building at 540 2nd Street, but the names do not match and neither row has a website that ties them together."
+    },
+    {
+      "label": "Dial Up Games and Gameroom Lincoln in Lincoln",
+      "meters": 11,
+      "ids": [
+        "osm:node/11380818069",
+        "gameroute:gameroute/1463"
+      ],
+      "decision": "kept_separate",
+      "reason": "Same street address, but the names differ and the websites differ (dialupgames.com and thisisgameroom.com)."
+    },
+    {
+      "label": "Mega Media Xchange Madison and Preplayed East",
+      "meters": 7,
+      "ids": [
+        "gameroute:gameroute/1950",
+        "osm:node/956781246"
+      ],
+      "decision": "kept_separate",
+      "reason": "Different names. Preplayed East has no street address, and Mega Media Xchange is listed in Madison while Preplayed East is listed in Maple Bluff."
+    },
+    {
+      "label": "GameStar and GameTime in McMinnville",
+      "meters": 5,
+      "ids": [
+        "osm:node/12908842545",
+        "gameroute:gameroute/1691"
+      ],
+      "decision": "kept_separate",
+      "reason": "The names are different, GameStar has no street address, and the rows do not share a website."
+    },
+    {
+      "label": "On the Draw and Player's Choice Video Games in Pottstown",
+      "meters": 22,
+      "ids": [
+        "osm:node/13683336201",
+        "gameroute:gameroute/1714"
+      ],
+      "decision": "kept_separate",
+      "reason": "Neighbors, not the same shop. On the Draw is at 214 East High Street and Player's Choice is at 216."
+    },
+    {
+      "label": "Gamestersbay and Level Up Racine in Racine",
+      "meters": 21,
+      "ids": [
+        "osm:node/10676647698",
+        "gameroute:gameroute/1944"
+      ],
+      "decision": "kept_separate",
+      "reason": "Different names and different websites (gamestersbay.us and levelupracine.com). Gamestersbay's address is only \"6th Street\"."
+    },
+    {
+      "label": "Game Mechanix and Retro Fix in West Monroe",
+      "meters": 5,
+      "ids": [
+        "gameroute:gameroute/1327",
+        "osm:node/9108042931"
+      ],
+      "decision": "kept_separate",
+      "reason": "Same suite at 3212 Cypress Street #2, but the names do not match and the rows do not share a website."
+    }
+  ],
+  "supabase": "skipped_no_service_role"
+}

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { directoryBasePath, isDirectoryListPath } from "@/lib/filters";
+import { canonicalDirectoryRedirect } from "@/lib/redirects";
 import { CANONICAL_HOST } from "@/lib/site";
 
 function hasExtraFilters(url: URL): boolean {
@@ -40,6 +41,9 @@ export function proxy(request: NextRequest) {
       url.pathname = !Number.isInteger(page) || page <= 1 ? base : `${base}/page/${page}`;
     }
   }
+
+  const alias = canonicalDirectoryRedirect(url.pathname);
+  if (alias) url.pathname = alias;
 
   const dirty =
     url.protocol !== request.nextUrl.protocol ||

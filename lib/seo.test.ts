@@ -9,7 +9,9 @@ import { absoluteUrl, storeJsonLd } from "./jsonld";
 import { listingCacheKey, storeAbout } from "./listing";
 import { unitedStatesDirectoryPath } from "./paths";
 import { slugify, storeSlug } from "./slug";
-import { buildSitemap } from "./sitemap-data";
+import { canonicalDirectoryRedirect } from "./redirects";
+import { isIndexableShop } from "./publish";
+import { buildSitemap, fallbackSitemap } from "./sitemap-data";
 import { SITE_URL } from "./site";
 
 type StoreRow = Database["public"]["Tables"]["stores"]["Row"];
@@ -256,6 +258,18 @@ describe("titles and structured data", () => {
   });
 });
 
+describe("country URL redirects", () => {
+  it("sends name and alias country URLs to the ISO code", () => {
+    assert.equal(canonicalDirectoryRedirect("/directory/countries/france"), "/directory/countries/fr");
+    assert.equal(canonicalDirectoryRedirect("/directory/countries/uk"), "/directory/countries/gb");
+    assert.equal(canonicalDirectoryRedirect("/directory/countries/usa"), "/directory/countries/us");
+    assert.equal(canonicalDirectoryRedirect("/directory/countries/us/texas"), "/directory/texas");
+    assert.equal(canonicalDirectoryRedirect("/directory/countries/united-states/texas"), "/directory/texas");
+    assert.equal(canonicalDirectoryRedirect("/directory/countries/fr"), null);
+    assert.equal(canonicalDirectoryRedirect("/directory/texas"), null);
+  });
+});
+
 describe("listing cache key", () => {
   it("keeps filter queries so the same visit can apply them", () => {
     const parsed = JSON.parse(
@@ -302,5 +316,30 @@ describe("sitemap", () => {
       assert.equal("priority" in entry, false);
       assert.equal("changeFrequency" in entry, false);
     }
+
+    const thin = mustStore({
+      id: "thin-1",
+      name: "Map Pin Games",
+      address: null,
+      city: "Lyon",
+      state: "Auvergne-Rhone-Alpes",
+      country: "FR",
+      phone: null,
+      website: null,
+      zip_code: null,
+    });
+    assert.equal(isIndexableShop(thin), false);
+    const withStreet = mustStore({ id: "street-1", name: "Shop With Door", city: "Lyon", state: "Auvergne-Rhone-Alpes", country: "FR" });
+    const lyonUrls = buildSitemap([thin, withStreet, withStreet, withStreet]).map((item) => item.url);
+    assert.equal(lyonUrls.some((url) => url.endsWith(`/store/${thin.slug}`)), false);
+    assert.equal(lyonUrls.some((url) => url.endsWith(`/store/${withStreet.slug}`)), true);
+  });
+
+  it("returns hub URLs when the catalog cannot be read", () => {
+    const urls = fallbackSitemap("2026-11-06").map((entry) => entry.url);
+    for (const path of ["/", "/directory", "/about", "/directory/countries", "/directory/platforms", "/directory/states"]) {
+      assert.equal(urls.includes(`${SITE_URL}${path === "/" ? "" : path}`), true, path);
+    }
+    assert.equal(urls.some((url) => url.includes("/store/")), false);
   });
 });
