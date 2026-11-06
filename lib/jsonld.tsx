@@ -1,7 +1,7 @@
 import type { CatalogStore } from "@/lib/catalog";
-import { parseDayHours, WEEKDAYS } from "@/lib/hours";
 import { cityPath, statePath, storePath } from "@/lib/paths";
 import { BRAND, PAGE_SIZE, SITE_URL } from "@/lib/site";
+import { schemaOpeningHours, shopCountry, socialLinks, type ShopView } from "@/lib/shop-view";
 import type { UsState } from "@/lib/states";
 
 export function absoluteUrl(path: string): string {
@@ -80,60 +80,61 @@ export function collectionJsonLd(input: {
   };
 }
 
-const SCHEMA_DAYS: Record<string, string> = {
-  monday: "https://schema.org/Monday",
-  tuesday: "https://schema.org/Tuesday",
-  wednesday: "https://schema.org/Wednesday",
-  thursday: "https://schema.org/Thursday",
-  friday: "https://schema.org/Friday",
-  saturday: "https://schema.org/Saturday",
-  sunday: "https://schema.org/Sunday",
-};
+function stored(value: string | null | undefined): string {
+  return typeof value === "string" ? value.trim() : "";
+}
 
-export function storeJsonLd(store: CatalogStore) {
-  const openingHoursSpecification = [];
-  if (store.hours) {
-    for (const [key] of WEEKDAYS) {
-      const value = store.hours[key];
-      if (!value) continue;
-      const parsed = parseDayHours(value);
-      if (parsed.status !== "parsed") continue;
-      for (const range of parsed.ranges) {
-        openingHoursSpecification.push({
-          "@type": "OpeningHoursSpecification",
-          dayOfWeek: SCHEMA_DAYS[key],
-          opens: range.opens,
-          closes: range.closes,
-        });
-      }
-    }
-  }
+function httpUrl(value: string | null | undefined): string | null {
+  const url = stored(value);
+  return /^https?:\/\//i.test(url) ? url : null;
+}
+
+/** LocalBusiness from stored fields only. Missing facts are omitted, not filled in. */
+export function storeJsonLd(store: ShopView): Record<string, unknown> {
+  const country = shopCountry(store) || (stored(store.stateAbbr) ? "US" : "");
+  const street = stored(store.address);
+  const locality = stored(store.city);
+  const region = stored(store.stateAbbr) || stored(store.state);
+  const postal = stored(store.zip);
+  const address: Record<string, unknown> = { "@type": "PostalAddress" };
+  if (street) address.streetAddress = street;
+  if (locality) address.addressLocality = locality;
+  if (region) address.addressRegion = region;
+  if (postal) address.postalCode = postal;
+  if (country) address.addressCountry = country;
 
   const business: Record<string, unknown> = {
     "@type": "LocalBusiness",
-    name: store.name,
+    name: stored(store.displayName) || stored(store.name),
     url: absoluteUrl(storePath(store.slug)),
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: store.address,
-      addressLocality: store.city,
-      addressRegion: store.stateAbbr,
-      ...(store.zip ? { postalCode: store.zip } : {}),
-      addressCountry: "US",
-    },
   };
-  if (store.phone) business.telephone = store.phone;
-  if (store.lat != null && store.lng != null) {
+  if (street || locality || region || postal || country) business.address = address;
+
+  const phone = stored(store.phone);
+  if (phone) business.telephone = phone;
+
+  const sameAs: string[] = [];
+  const website = httpUrl(store.website);
+  if (website) sameAs.push(website);
+  for (const link of socialLinks(store)) {
+    if (!sameAs.includes(link.href)) sameAs.push(link.href);
+  }
+  if (sameAs.length > 0) business.sameAs = sameAs;
+
+  if (store.lat != null && store.lng != null && Number.isFinite(store.lat) && Number.isFinite(store.lng)) {
     business.geo = {
       "@type": "GeoCoordinates",
       latitude: store.lat,
       longitude: store.lng,
     };
   }
-  if (openingHoursSpecification.length > 0) {
-    business.openingHoursSpecification = openingHoursSpecification;
-  }
-  if (store.photo) business.image = store.photo;
+
+  const openingHours = schemaOpeningHours(store);
+  if (openingHours.length === 1) business.openingHours = openingHours[0];
+  else if (openingHours.length > 1) business.openingHours = openingHours;
+
+  const photo = stored(store.photo);
+  if (photo) business.image = photo;
   return { "@context": "https://schema.org", ...business };
 }
 

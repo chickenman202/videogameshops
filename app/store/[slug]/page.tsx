@@ -149,7 +149,7 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
 
   return (
     <PageShell>
-      {!country || country === "US" ? <JsonLd data={storeJsonLd(store)} /> : null}
+      <JsonLd data={storeJsonLd(store)} />
       <JsonLd data={breadcrumbJsonLd(crumbs)} />
       <article className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
         <Breadcrumbs crumbs={pageCrumbs} />

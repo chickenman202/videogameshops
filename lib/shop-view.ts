@@ -1,5 +1,6 @@
 import type { CatalogStore } from "@/lib/catalog";
 import type { Filters } from "@/lib/filters";
+import { parseDayHours, WEEKDAYS } from "@/lib/hours";
 import type { PlatformLabel } from "@/lib/platforms";
 import { FIXTURE_SHOPS } from "@/lib/fixture-shops";
 
@@ -10,6 +11,7 @@ import { FIXTURE_SHOPS } from "@/lib/fixture-shops";
 export type ShopView = CatalogStore & {
   country?: string;
   countryName?: string;
+  displayName?: string | null;
   facebook?: string | null;
   instagram?: string | null;
   twitter?: string | null;
@@ -160,6 +162,108 @@ export function hoursNote(store: ShopView): string | null {
   const note = text(store.hoursRaw);
   if (!note) return null;
   return formatOsmHours(note) ?? note;
+}
+
+const SCHEMA_DAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"] as const;
+
+/**
+ * Schema.org openingHours strings. A day or an OSM string that does not parse is left out.
+ * Closed days are not invented.
+ */
+export function schemaOpeningHours(store: ShopView): string[] {
+  const fromDays = openingHoursFromDayMap(store.hours);
+  if (fromDays.length > 0) return fromDays;
+  if (store.hours && Object.values(store.hours).some((value) => text(value))) return [];
+  const raw = text(store.hoursRaw);
+  if (!raw) return [];
+  return openingHoursFromOsm(raw) ?? [];
+}
+
+function openingHoursFromDayMap(hours: ShopView["hours"]): string[] {
+  if (!hours) return [];
+  const lines: string[] = [];
+  WEEKDAYS.forEach(([key], index) => {
+    const parsed = parseDayHours(hours[key]);
+    if (parsed.status !== "parsed") return;
+    const day = SCHEMA_DAYS[index];
+    for (const range of parsed.ranges) lines.push(`${day} ${range.opens}-${range.closes}`);
+  });
+  return lines;
+}
+
+function openingHoursFromOsm(value: string): string[] | null {
+  const raw = value.replace(/\s+/g, " ").trim();
+  if (!raw) return null;
+  if (/^24\/7$/i.test(raw)) return ["Mo-Su 00:00-23:59"];
+
+  const byDay: Array<string | null> = Array.from({ length: 7 }, () => null);
+  for (const rule of raw.split(";")) {
+    const parsed = parseOsmRuleSchema(rule.trim());
+    if (!parsed) return null;
+    for (const day of parsed.days) byDay[day] = parsed.times;
+  }
+  return groupSchemaDays(byDay);
+}
+
+function parseOsmRuleSchema(rule: string): { days: number[]; times: string } | null {
+  if (!rule) return null;
+  const closed = /^([A-Za-z]{2}(?:\s*[-,]\s*[A-Za-z]{2})*)\s+(off|closed)$/i.exec(rule);
+  if (closed) {
+    const days = expandOsmDays(closed[1]);
+    return days ? { days, times: "" } : null;
+  }
+  const open = /^([A-Za-z]{2}(?:\s*[-,]\s*[A-Za-z]{2})*)\s+(.+)$/.exec(rule);
+  if (!open) return null;
+  const days = expandOsmDays(open[1]);
+  const times = schemaTimes(open[2]);
+  if (!days || !times) return null;
+  return { days, times };
+}
+
+function schemaTimes(spec: string): string | null {
+  const ranges = spec
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (ranges.length === 0) return null;
+  const formatted: string[] = [];
+  for (const range of ranges) {
+    const match = /^(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})$/.exec(range);
+    if (!match) return null;
+    const opens = schemaClock(match[1]);
+    const closes = schemaClock(match[2]);
+    if (!opens || !closes) return null;
+    formatted.push(`${opens}-${closes}`);
+  }
+  return formatted.join(",");
+}
+
+function schemaClock(value: string): string | null {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value);
+  if (!match) return null;
+  const minute = Number(match[2]);
+  const hour = Number(match[1]);
+  if (minute > 59 || hour > 24 || (hour === 24 && minute !== 0)) return null;
+  if (hour === 24) return "24:00";
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+function groupSchemaDays(byDay: Array<string | null>): string[] {
+  const parts: string[] = [];
+  let index = 0;
+  while (index < 7) {
+    const label = byDay[index];
+    if (!label) {
+      index += 1;
+      continue;
+    }
+    let end = index;
+    while (end + 1 < 7 && byDay[end + 1] === label) end += 1;
+    const span = index === end ? SCHEMA_DAYS[index] : `${SCHEMA_DAYS[index]}-${SCHEMA_DAYS[end]}`;
+    parts.push(`${span} ${label}`);
+    index = end + 1;
+  }
+  return parts;
 }
 
 const OSM_DAYS = ["mo", "tu", "we", "th", "fr", "sa", "su"] as const;
