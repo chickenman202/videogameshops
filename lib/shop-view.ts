@@ -39,11 +39,23 @@ export function shopCountryName(store: ShopView): string {
   return code && code !== "US" ? code : "";
 }
 
+/** Drop a later name when it is the same place as an earlier one ("la Massana, La Massana"). */
+function distinctPlace(parts: string[]): string[] {
+  const kept: string[] = [];
+  for (const part of parts) {
+    const value = part.trim();
+    if (!value) continue;
+    if (kept.some((item) => item.toLowerCase() === value.toLowerCase())) continue;
+    kept.push(value);
+  }
+  return kept;
+}
+
 /** City and region on one line, country on its own when we actually have it. */
 export function shopLocation(store: ShopView): { line: string; country: string } {
   const region = text(store.stateAbbr) || text(store.state);
   return {
-    line: [text(store.city), region].filter(Boolean).join(", "),
+    line: distinctPlace([text(store.city), region]).join(", "),
     country: shopCountryName(store),
   };
 }
@@ -52,32 +64,35 @@ export function shopLocation(store: ShopView): { line: string; country: string }
 export function formatShopPlace(store: ShopView): string {
   const address = text(store.address);
   const region = text(store.stateAbbr) || text(store.state);
-  const local = [text(store.city), region].filter(Boolean).join(", ");
+  const local = distinctPlace([text(store.city), region]).join(", ");
   const localLine = [local, text(store.zip)].filter(Boolean).join(" ");
   const country = shopCountry(store);
   const countryLabel = country && country !== "US" ? shopCountryName(store) : "";
-  return [address, localLine, countryLabel].filter(Boolean).join(", ");
+  return distinctPlace([address, localLine, countryLabel]).join(", ");
 }
 
 export function hasAddress(store: ShopView): boolean {
   return Boolean(text(store.address));
 }
 
-export function hasCoordinates(store: ShopView): boolean {
-  return (
-    typeof store.lat === "number" &&
-    Number.isFinite(store.lat) &&
-    typeof store.lng === "number" &&
-    Number.isFinite(store.lng)
-  );
-}
-
-/** Directions need a street address or map coordinates. A city name is not enough. */
+/**
+ * Directions need a street. A city name or a map pin from coordinates is not enough,
+ * because many imported rows only have a place centroid.
+ */
 export function directionsUrl(store: ShopView): string | null {
-  if (hasCoordinates(store)) return `https://maps.google.com/?q=${store.lat},${store.lng}`;
   if (!hasAddress(store)) return null;
   const place = formatShopPlace(store);
   return place ? `https://maps.google.com/?q=${encodeURIComponent(place)}` : null;
+}
+
+/** US numbers display as (205) 624-3234. Anything else stays as stored. */
+export function formatPhone(value: string | null | undefined): string | null {
+  const original = text(value);
+  if (!original) return null;
+  const digits = original.replace(/\D/g, "");
+  const us = digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits.length === 10 ? digits : "";
+  if (!us) return original;
+  return `(${us.slice(0, 3)}) ${us.slice(3, 6)}-${us.slice(6)}`;
 }
 
 export function socialLinks(store: ShopView): ShopLink[] {
@@ -97,7 +112,110 @@ export function socialLinks(store: ShopView): ShopLink[] {
 
 export function hoursNote(store: ShopView): string | null {
   const note = text(store.hoursRaw);
-  return note || null;
+  if (!note) return null;
+  return formatOsmHours(note) ?? note;
+}
+
+const OSM_DAYS = ["mo", "tu", "we", "th", "fr", "sa", "su"] as const;
+const OSM_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
+
+/** Turn a common OSM opening_hours string into weekday ranges. Unreadable strings stay raw. */
+export function formatOsmHours(value: string): string | null {
+  const raw = value.replace(/\s+/g, " ").trim();
+  if (!raw) return null;
+  if (/^24\/7$/i.test(raw)) return "Open 24 hours";
+
+  const byDay: Array<string | undefined> = Array.from({ length: 7 }, () => undefined);
+  for (const rule of raw.split(";")) {
+    const parsed = parseOsmRule(rule.trim());
+    if (!parsed) return null;
+    for (const day of parsed.days) byDay[day] = parsed.label;
+  }
+
+  const parts: string[] = [];
+  let index = 0;
+  while (index < 7) {
+    const label = byDay[index];
+    if (!label) {
+      index += 1;
+      continue;
+    }
+    let end = index;
+    while (end + 1 < 7 && byDay[end + 1] === label) end += 1;
+    const span = index === end ? OSM_LABELS[index] : `${OSM_LABELS[index]}–${OSM_LABELS[end]}`;
+    parts.push(label === "closed" ? `${span} closed` : `${span} ${label}`);
+    index = end + 1;
+  }
+  return parts.length > 0 ? parts.join(". ") : null;
+}
+
+function parseOsmRule(rule: string): { days: number[]; label: string } | null {
+  if (!rule) return null;
+  const closed = /^([A-Za-z]{2}(?:\s*[-,]\s*[A-Za-z]{2})*)\s+(off|closed)$/i.exec(rule);
+  if (closed) {
+    const days = expandOsmDays(closed[1]);
+    return days ? { days, label: "closed" } : null;
+  }
+  const open = /^([A-Za-z]{2}(?:\s*[-,]\s*[A-Za-z]{2})*)\s+(.+)$/.exec(rule);
+  if (!open) return null;
+  const days = expandOsmDays(open[1]);
+  const label = formatOsmTimes(open[2]);
+  if (!days || !label) return null;
+  return { days, label };
+}
+
+function expandOsmDays(spec: string): number[] | null {
+  const days: number[] = [];
+  for (const part of spec.split(",")) {
+    const bits = part
+      .trim()
+      .toLowerCase()
+      .split("-")
+      .map((bit) => bit.trim())
+      .filter(Boolean);
+    if (bits.length === 1) {
+      const day = OSM_DAYS.indexOf(bits[0] as (typeof OSM_DAYS)[number]);
+      if (day < 0) return null;
+      days.push(day);
+      continue;
+    }
+    if (bits.length !== 2) return null;
+    const start = OSM_DAYS.indexOf(bits[0] as (typeof OSM_DAYS)[number]);
+    const end = OSM_DAYS.indexOf(bits[1] as (typeof OSM_DAYS)[number]);
+    if (start < 0 || end < 0 || start > end) return null;
+    for (let day = start; day <= end; day += 1) days.push(day);
+  }
+  return days.length > 0 ? days : null;
+}
+
+function formatOsmTimes(spec: string): string | null {
+  const ranges = spec
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (ranges.length === 0) return null;
+  const formatted: string[] = [];
+  for (const range of ranges) {
+    const match = /^(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})$/.exec(range);
+    if (!match) return null;
+    const opens = formatOsmClock(match[1]);
+    const closes = formatOsmClock(match[2]);
+    if (!opens || !closes) return null;
+    formatted.push(`${opens}–${closes}`);
+  }
+  return formatted.join(", ");
+}
+
+function formatOsmClock(value: string): string | null {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value);
+  if (!match) return null;
+  const minute = Number(match[2]);
+  let hour = Number(match[1]);
+  if (minute > 59 || hour > 24 || (hour === 24 && minute !== 0)) return null;
+  if (hour === 24) hour = 0;
+  const period = hour >= 12 ? "PM" : "AM";
+  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${hour12}:${String(minute).padStart(2, "0")} ${period}`;
 }
 
 function socialLabel(url: string): string {

@@ -7,14 +7,12 @@ import { StoreCard } from "@/components/store-card";
 import { loadCatalog } from "@/lib/catalog";
 import { FIXTURE_SHOPS } from "@/lib/fixture-shops";
 import { homeJsonLd, JsonLd } from "@/lib/jsonld";
-import { toMetaDescription } from "@/lib/copy";
 import { BRAND, SITE_URL } from "@/lib/site";
 import { shopCountryName, type ShopView } from "@/lib/shop-view";
 import { US_STATES } from "@/lib/states";
 
-const description = toMetaDescription(
-  "Find physical video game shops near you. Compare hours, trade-ins, used games, retro stock, and which platforms each shop carries.",
-);
+const description =
+  "A worldwide guide to physical shops. Address, hours, and what they carry, when a listing actually has them.";
 
 export const revalidate = 86400;
 

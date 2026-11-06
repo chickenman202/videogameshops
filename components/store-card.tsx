@@ -1,12 +1,5 @@
 import { storePath } from "@/lib/paths";
-import { hoursNote, shopLocation, type ShopView } from "@/lib/shop-view";
-
-function gaps(store: ShopView): string {
-  const hours = store.hours || hoursNote(store) ? "Hours listed" : "Hours not listed yet";
-  const phone = store.phone ? "Phone listed" : "Phone not listed yet";
-  const site = store.website ? "Website listed" : "Website not listed yet";
-  return `${hours} · ${phone} · ${site}`;
-}
+import { shopLocation, type ShopView } from "@/lib/shop-view";
 
 export function StoreCard({
   store,
@@ -19,7 +12,6 @@ export function StoreCard({
 }) {
   const href = storePath(store.slug);
   const place = shopLocation(store);
-  const meta = gaps(store);
 
   if (scale === "feature") {
     return (
@@ -43,14 +35,13 @@ export function StoreCard({
           </div>
         )}
         <span className="block py-4">
-          <span className="kicker text-muted">{place.line || "Location not listed yet"}</span>
+          {place.line ? <span className="kicker text-muted">{place.line}</span> : null}
           {store.photo ? (
             <span className="mt-2 block font-display text-5xl font-bold leading-[0.9] break-words text-ink group-hover:underline sm:text-6xl">
               {store.name}
             </span>
           ) : null}
           {place.country ? <span className="mt-2 block kicker text-ink">{place.country}</span> : null}
-          <span className="mt-3 block font-mono text-xs text-muted">{meta}</span>
         </span>
       </a>
     );
@@ -68,12 +59,11 @@ export function StoreCard({
           className="aspect-[4/3] h-full w-full object-cover"
         />
         <span className="flex min-w-0 flex-col justify-end py-4 sm:px-5">
-          <span className="kicker text-muted">{place.line || "Location not listed yet"}</span>
+          {place.line ? <span className="kicker text-muted">{place.line}</span> : null}
           <span className="mt-2 font-display text-4xl font-bold leading-[0.92] break-words text-ink group-hover:underline">
             {store.name}
           </span>
           {place.country ? <span className="mt-2 kicker text-ink">{place.country}</span> : null}
-          <span className="mt-3 font-mono text-xs text-muted">{meta}</span>
         </span>
       </a>
     );
@@ -81,12 +71,11 @@ export function StoreCard({
 
   return (
     <a href={href} className="group block border-t border-line py-4">
-      <span className="kicker text-muted">{place.line || "Location not listed yet"}</span>
+      {place.line ? <span className="kicker text-muted">{place.line}</span> : null}
       <span className="mt-1 block font-display text-3xl font-bold leading-[0.95] break-words text-ink group-hover:underline">
         {store.name}
       </span>
       {place.country ? <span className="mt-2 block kicker text-ink">{place.country}</span> : null}
-      <span className="mt-2 block font-mono text-xs text-muted">{meta}</span>
     </a>
   );
 }

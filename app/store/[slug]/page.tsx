@@ -11,14 +11,16 @@ import { storeTitle, toMetaDescription } from "@/lib/copy";
 import { FIXTURE_SHOPS } from "@/lib/fixture-shops";
 import { WEEKDAYS } from "@/lib/hours";
 import { absoluteUrl, breadcrumbJsonLd, JsonLd, storeCrumbs, storeJsonLd } from "@/lib/jsonld";
-import { storeAbout, type Crumb } from "@/lib/listing";
+import type { Crumb } from "@/lib/listing";
 import { cityPath, statePath, storePath } from "@/lib/paths";
 import {
   directionsUrl,
+  formatPhone,
   hasAddress,
   hoursNote,
   shopCountry,
   shopCountryName,
+  shopLocation,
   socialLinks,
   type ShopView,
 } from "@/lib/shop-view";
@@ -74,8 +76,7 @@ export async function generateMetadata(props: PageProps<"/store/[slug]">): Promi
   const regionLabel = store.stateAbbr || shopCountry(store);
   const title = storeTitle(store.name, placeLabel, regionLabel, store.platforms);
   const description = toMetaDescription(
-    store.about?.trim() ||
-      (hasAddress(store) ? storeAbout(store) : `${store.name} is a physical video game shop.`),
+    store.about?.trim() || `${store.name}. Address, hours, and contact details when a listing has them.`,
   );
   return {
     title: { absolute: title },
@@ -120,15 +121,15 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
     store.repairs ? "Repairs consoles" : null,
   ].filter((item): item is string => Boolean(item));
   const phoneHref = store.phone ? `tel:${store.phone.replace(/[^\d+]/g, "")}` : null;
+  const phoneLabel = formatPhone(store.phone);
   const websiteLabel = store.website ? store.website.replace(/^https?:\/\//, "").replace(/\/$/, "") : null;
   const directions = directionsUrl(store);
   const socials = socialLinks(store);
   const listedHours = hoursNote(store);
-  const regionBit = [store.stateAbbr || store.state, store.zip].filter((part) => part && part.trim()).join(" ");
-  const localLine = [store.city, regionBit].filter(Boolean).join(", ");
-  const eyebrow = [store.city, store.stateAbbr || store.state, country && country !== "US" ? countryName : ""]
-    .filter(Boolean)
-    .join(", ");
+  const place = shopLocation(store);
+  const zip = (store.zip ?? "").trim();
+  const localLine = [place.line, zip].filter(Boolean).join(" ");
+  const eyebrow = [place.line, country && country !== "US" ? countryName : ""].filter(Boolean).join(", ");
   const pageCrumbs: Crumb[] = [
     { name: "Home", href: "/" },
     { name: "Stores", href: "/directory" },
@@ -145,11 +146,7 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
     if (store.city) pageCrumbs.push({ name: store.city });
   }
   pageCrumbs.push({ name: store.name });
-  const about = store.about?.trim()
-    ? store.about.trim()
-    : hasAddress(store)
-      ? storeAbout(store)
-      : `${store.name} is a physical video game shop${store.city ? ` in ${store.city}` : ""}${countryName ? `, ${countryName}` : ""}.`;
+  const about = store.about?.trim() ?? "";
 
   return (
     <PageShell>
@@ -175,7 +172,7 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
         </header>
         <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
           <div className="min-w-0">
-            <p className="max-w-3xl text-lg leading-relaxed text-ink-soft">{about}</p>
+            {about ? <p className="max-w-3xl text-lg leading-relaxed text-ink-soft">{about}</p> : null}
             {store.platforms.length > 0 || facts.length > 0 ? (
               <div className="mt-8">
                 <h2 className="text-3xl uppercase text-ink">What they carry</h2>
@@ -227,9 +224,9 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
                 <div className="border-b border-line py-3">
                   <dt className="kicker text-muted">Phone</dt>
                   <dd className="mt-1">
-                    {phoneHref && store.phone ? (
+                    {phoneHref && phoneLabel ? (
                       <a href={phoneHref} className="link text-lg">
-                        {store.phone}
+                        {phoneLabel}
                       </a>
                     ) : (
                       <span className="text-ink-soft">Not listed yet</span>

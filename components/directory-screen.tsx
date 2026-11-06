@@ -157,8 +157,7 @@ function FilterBar({ listing, platformNav }: { listing: ListingOk; platformNav: 
           </a>
         ) : null}
       </div>
-      <p className="mt-1 text-sm text-muted">New, used, trade-ins, repair{platformNav.length > 0 ? ", and platforms" : ""}.</p>
-      <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="What they carry">
+      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1" role="group" aria-label="What they carry">
         <FilterLink href={toggleHref(listing, { sellsNew: !listing.filters.sellsNew })} active={listing.filters.sellsNew} label="New" />
         <FilterLink href={toggleHref(listing, { sellsUsed: !listing.filters.sellsUsed })} active={listing.filters.sellsUsed} label="Used" />
         <FilterLink
@@ -177,7 +176,7 @@ function FilterBar({ listing, platformNav }: { listing: ListingOk; platformNav: 
             <a
               key={platform.slug}
               href={platform.href}
-              className="inline-flex min-h-11 items-center gap-2 border border-ink px-3 font-display text-lg font-bold uppercase"
+              className="inline-flex min-h-11 items-center gap-2 text-base text-ink underline-offset-4 hover:underline"
             >
               {platform.label}
               <span className="font-mono text-xs normal-case">{platform.count.toLocaleString("en-US")}</span>
@@ -196,8 +195,8 @@ function FilterLink({ href, label, active }: { href: string; label: string; acti
       href={href}
       className={
         active
-          ? "inline-flex min-h-11 items-center border border-ink bg-ink px-3 font-display text-lg font-bold uppercase text-paper"
-          : "inline-flex min-h-11 items-center border border-ink px-3 font-display text-lg font-bold uppercase text-ink"
+          ? "inline-flex min-h-11 items-center text-base font-semibold text-ink underline decoration-2 underline-offset-4"
+          : "inline-flex min-h-11 items-center text-base text-ink-soft underline-offset-4 hover:text-ink hover:underline"
       }
     >
       {active ? <span className="sr-only">Selected: </span> : null}

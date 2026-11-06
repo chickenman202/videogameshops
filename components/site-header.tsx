@@ -6,7 +6,6 @@ import { Mark } from "@/components/mark";
 
 const links = [
   { href: "/directory", label: "Stores" },
-  { href: "/directory/states", label: "States" },
   { href: "/directory/platforms", label: "Platforms" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },

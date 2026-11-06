@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     template: `%s | ${BRAND}`,
   },
   description:
-    "Find physical video game shops near you. Compare hours, trade-ins, used games, retro stock, and which platforms each shop carries.",
+    "A worldwide guide to physical shops. Address, hours, and what they carry, when a listing actually has them.",
   robots: { index: true, follow: true },
 };
 
