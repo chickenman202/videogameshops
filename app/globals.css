@@ -1,35 +1,248 @@
 @import "tailwindcss";
 
+/*
+  Paper directory palette.
+  Warm paper, dark ink, and one deep green. Built for reading shop
+  addresses on a phone, with contrast checked for body text and buttons.
+*/
 :root {
-  --background: #f4f6f8;
-  --foreground: #090b10;
-  --blue: #155eef;
-  --silver: #d5dbe3;
-  --muted: #5c6773;
+  color-scheme: light;
+  --background: #f4efe6;
+  --foreground: #1c1915;
+  --paper: #f4efe6;
+  --paper-deep: #e6dece;
+  --card: #fffdf8;
+  --ink: #1c1915;
+  --ink-soft: #3f3832;
+  --muted: #5c534a;
+  --line: #ddd4c4;
+  --pine: #1e4d3a;
+  --pine-deep: #16382b;
+  --pine-soft: #e5f0ea;
+  --clay: #8c4a32;
+  --danger: #8d2b2b;
+  --danger-soft: #f8e8e4;
+  --ok: #14663d;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-blue: var(--blue);
-  --color-silver: var(--silver);
+  --color-paper: var(--paper);
+  --color-paper-deep: var(--paper-deep);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
   --color-muted: var(--muted);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-line: var(--line);
+  --color-pine: var(--pine);
+  --color-pine-deep: var(--pine-deep);
+  --color-pine-soft: var(--pine-soft);
+  --color-clay: var(--clay);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-ok: var(--ok);
+  --font-sans: var(--font-source), "Segoe UI", sans-serif;
+  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --shadow-card: 0 1px 2px rgba(28, 25, 21, 0.05), 0 14px 34px rgba(28, 25, 21, 0.07);
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), "Segoe UI", sans-serif;
+@layer base {
+  /* Keeps focused fields and skip-link targets from hiding under the sticky header. */
+  html {
+    scroll-padding-top: 5.25rem;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans), "Segoe UI", sans-serif;
+    line-height: 1.5;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display), Georgia, "Times New Roman", serif;
+    font-optical-sizing: auto;
+    letter-spacing: -0.02em;
+  }
 }
 
-a:focus-visible,
-button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible,
-summary:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 2px;
+::selection {
+  background: #d5e6dc;
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--pine);
+  outline-offset: 3px;
+}
+
+#content:focus {
+  outline: none;
+}
+
+/*
+  Component classes live in a layer so utilities like `hidden` and `sm:pl-10`
+  can still override them. Unlayered CSS would beat those utilities.
+*/
+@layer components {
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: 0.75rem;
+  z-index: 60;
+  transform: translateY(-200%);
+  border-radius: 999px;
+  background: var(--pine);
+  color: #fffdf8;
+  padding: 0.65rem 1rem;
+  font-weight: 700;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.link {
+  color: var(--pine);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.link:hover {
+  color: var(--pine-deep);
+}
+
+.btn {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.55rem 1.15rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-primary {
+  border-color: var(--pine);
+  background: var(--pine);
+  color: #fffdf8;
+}
+
+.btn-primary:hover {
+  background: var(--pine-deep);
+  border-color: var(--pine-deep);
+}
+
+.btn-ghost {
+  border-color: var(--line);
+  background: var(--card);
+  color: var(--ink);
+}
+
+.btn-ghost:hover {
+  border-color: var(--pine);
+  color: var(--pine);
+}
+
+.btn-light {
+  border-color: var(--card);
+  background: var(--card);
+  color: var(--pine);
+}
+
+.btn-light:hover {
+  background: var(--paper);
+}
+
+.field {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  background: var(--card);
+  padding: 0.7rem 0.9rem;
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.4;
+}
+
+input.field,
+select.field {
+  min-height: 2.75rem;
+}
+
+.field::placeholder {
+  color: var(--muted);
+}
+
+input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--pine);
+}
+
+.article-body {
+  color: var(--ink-soft);
+  font-size: 1.125rem;
+  line-height: 1.7;
+}
+
+.article-body h2 {
+  margin-top: 2.25rem;
+  color: var(--ink);
+  font-size: 1.6rem;
+  line-height: 1.25;
+}
+
+.article-body p + p,
+.article-body h2 + p {
+  margin-top: 0.9rem;
+}
+
+.faq summary {
+  display: flex;
+  min-height: 2.75rem;
+  cursor: pointer;
+  list-style: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq summary::after {
+  content: "+";
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: none;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--pine-soft);
+  color: var(--pine);
+  font-weight: 700;
+}
+
+.faq[open] summary::after {
+  content: "–";
+}
 }

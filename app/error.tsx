@@ -1,19 +1,22 @@
 "use client";
 
-import { PageShell } from "@/components/page-shell";
+import { StatusPanel } from "@/components/status-panel";
 
-export default function Error() {
+export default function RouteError({
+  reset,
+}: {
+  error: globalThis.Error & { digest?: string };
+  reset: () => void;
+}) {
   return (
-    <PageShell>
-      <div className="mx-auto max-w-3xl px-4 py-20">
-        <h1 className="text-4xl font-semibold tracking-tight">This page could not be loaded</h1>
-        <p className="mt-4 text-lg text-muted">
-          The store list did not come back. Please try again in a minute.
-        </p>
-        <a href="/directory" className="mt-8 inline-flex rounded-full bg-[#155eef] px-5 py-2.5 text-sm font-medium text-white">
-          Back to stores
-        </a>
-      </div>
-    </PageShell>
+    <StatusPanel
+      title="This page could not be loaded"
+      body="The store list did not come back. Please try again in a minute."
+      actions={[{ href: "/directory", label: "Back to stores", tone: "ghost" }]}
+    >
+      <button type="button" className="btn btn-primary" onClick={() => reset()}>
+        Try again
+      </button>
+    </StatusPanel>
   );
 }

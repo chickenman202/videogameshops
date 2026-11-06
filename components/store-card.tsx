@@ -10,52 +10,56 @@ function facts(store: CatalogStore): string[] {
   return items;
 }
 
+function initial(name: string): string {
+  return name.trim().charAt(0).toUpperCase() || "?";
+}
+
 export function StoreCard({ store, priority = false }: { store: CatalogStore; priority?: boolean }) {
   const href = storePath(store.slug);
   return (
     <a
       href={href}
-      className="flex flex-col gap-4 rounded-3xl border border-[#d5dbe3] bg-white p-4 shadow-[0_8px_24px_rgba(9,11,16,0.04)] transition hover:border-[#155eef] sm:flex-row sm:items-center"
+      className="flex items-start gap-3 rounded-2xl border border-line bg-card p-3 shadow-card hover:border-pine sm:gap-4 sm:p-4"
     >
       {store.photo ? (
         <img
           src={store.photo}
-          alt={store.name}
-          width={160}
-          height={160}
+          alt=""
+          width={80}
+          height={80}
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : "auto"}
-          className="h-24 w-full rounded-2xl object-cover sm:h-20 sm:w-20"
+          className="size-16 shrink-0 rounded-xl object-cover sm:size-20"
         />
       ) : (
         <span
           aria-hidden="true"
-          className="grid h-20 w-full place-items-center rounded-2xl bg-[linear-gradient(160deg,#ffffff,#d5dbe3)] text-2xl font-semibold text-[#155eef] sm:w-20"
+          className="grid size-16 shrink-0 place-items-center rounded-xl bg-pine-soft font-display text-2xl font-semibold text-pine sm:size-20"
         >
-          {store.name.slice(0, 1)}
+          {initial(store.name)}
         </span>
       )}
       <span className="min-w-0 flex-1">
-        <span className="block text-lg font-semibold text-[#090b10]">{store.name}</span>
+        <span className="block text-lg font-semibold break-words text-ink">{store.name}</span>
         <span className="mt-1 block text-sm text-muted">
           {store.address}, {store.city}, {store.stateAbbr}
           {store.zip ? ` ${store.zip}` : ""}
         </span>
-        <span className="mt-3 flex flex-wrap gap-2">
+        <span className="mt-3 flex flex-wrap gap-1.5">
           {store.platforms.map((platform) => (
-            <span key={platform} className="rounded-full bg-[#f4f6f8] px-2.5 py-1 text-xs text-[#3c4550]">
+            <span key={platform} className="rounded-full bg-paper-deep px-2.5 py-1 text-xs font-semibold text-ink-soft">
               {platform}
             </span>
           ))}
           {facts(store).map((fact) => (
-            <span key={fact} className="rounded-full border border-[#d5dbe3] px-2.5 py-1 text-xs text-[#155eef]">
+            <span key={fact} className="rounded-full bg-pine-soft px-2.5 py-1 text-xs font-semibold text-pine">
               {fact}
             </span>
           ))}
         </span>
-      </span>
-      <span className="inline-flex rounded-full bg-[#155eef] px-4 py-2 text-sm font-medium text-white">
-        View store
+        <span className="mt-3 inline-flex items-center text-sm font-bold text-pine" aria-hidden="true">
+          Details →
+        </span>
       </span>
     </a>
   );

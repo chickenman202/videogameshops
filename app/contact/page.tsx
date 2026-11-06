@@ -1,27 +1,29 @@
 import type { Metadata } from "next";
+import { ArticlePage } from "@/components/article-page";
 import { ContactForm } from "@/components/forms";
-import { PageShell } from "@/components/page-shell";
 import { absoluteUrl } from "@/lib/jsonld";
 import { BRAND } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: { absolute: `Contact | ${BRAND}` },
-  description:
-    "Contact videogameshops to correct a store address, hours, phone number, or platform list.",
+  description: "Contact videogameshops to correct a store address, hours, phone number, or platform list.",
   alternates: { canonical: absoluteUrl("/contact") },
 };
 
 export default function ContactPage() {
   return (
-    <PageShell>
-      <article className="mx-auto max-w-3xl px-4 py-16">
-        <h1 className="text-4xl font-semibold tracking-tight">Contact</h1>
-        <p className="mt-4 text-lg text-[#3c4550]">
-          Send a correction for a store that is already listed, or a question about the directory. Include
-          the store name and city so the right page can be updated.
-        </p>
-        <ContactForm />
-      </article>
-    </PageShell>
+    <ArticlePage
+      title="Contact"
+      lede="Send a correction for a store that is already listed, or a question about the directory. Include the store name and city so the right page can be updated."
+    >
+      <div className="mt-6 rounded-2xl border border-line bg-card p-4 text-base text-ink-soft">
+        <p className="font-bold text-ink">Helpful to include</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          <li>The store name and city</li>
+          <li>The address, phone, hours, or platform that needs a fix</li>
+        </ul>
+      </div>
+      <ContactForm />
+    </ArticlePage>
   );
 }

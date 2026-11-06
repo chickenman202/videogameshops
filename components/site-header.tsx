@@ -1,46 +1,99 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useId, useRef, useState } from "react";
+import { Mark } from "@/components/mark";
+
 const links = [
   { href: "/directory", label: "Stores" },
   { href: "/directory/states", label: "States" },
   { href: "/directory/platforms", label: "Platforms" },
   { href: "/about", label: "About" },
+  { href: "/contact", label: "Contact" },
 ];
 
-export function SiteHeader({ tone }: { tone: "solid" | "hero" }) {
-  const bar =
-    tone === "hero"
-      ? "border border-white/15 bg-white/95 text-[#090b10] shadow-[0_10px_40px_rgba(0,0,0,0.18)]"
-      : "border-b border-[#d5dbe3] bg-white/90 text-[#090b10] backdrop-blur";
+export function SiteHeader() {
+  const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuId = useId();
+
+  useEffect(() => {
+    if (!open) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      buttonRef.current?.focus();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
 
   return (
-    <header className={tone === "solid" ? `sticky top-0 z-20 ${bar}` : ""}>
-      <div className={tone === "hero" ? `mx-auto flex max-w-6xl items-center justify-between gap-4 rounded-full px-3 py-2 ${bar}` : "mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"}>
-        <a href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#155eef] text-white" aria-hidden="true">
-            <span className="h-2.5 w-2.5 rounded-full bg-white shadow-[0_0_0_3px_rgba(255,255,255,0.35)]" />
-          </span>
-          videogameshops
-        </a>
-        <nav aria-label="Main" className="hidden items-center gap-5 text-sm text-[#3c4550] md:flex">
+    <header className="sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+        <Link href="/" className="flex min-w-0 items-center gap-2 font-display text-lg font-semibold tracking-tight text-ink">
+          <Mark className="size-8 shrink-0" />
+          <span className="truncate">videogameshops</span>
+        </Link>
+        <nav aria-label="Main" className="hidden items-center gap-5 text-sm font-semibold text-ink-soft lg:flex">
           {links.map((link) => (
-            <a key={link.href} href={link.href} className="hover:text-[#090b10]">
+            <Link key={link.href} href={link.href} className="hover:text-ink">
               {link.label}
-            </a>
+            </Link>
           ))}
         </nav>
-        <a
-          href="/submit"
-          className="rounded-full bg-[#155eef] px-4 py-2 text-sm font-medium text-white hover:bg-[#0f4ed0]"
-        >
-          Add a store
-        </a>
+        <div className="flex items-center gap-2">
+          <Link href="/submit" className="btn btn-primary hidden lg:inline-flex">
+            Add a store
+          </Link>
+          <button
+            ref={buttonRef}
+            type="button"
+            className="inline-flex size-11 items-center justify-center rounded-xl border border-line bg-card text-ink lg:hidden"
+            aria-expanded={open}
+            aria-controls={menuId}
+            onClick={() => setOpen((value) => !value)}
+          >
+            <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
+            {open ? <CloseIcon /> : <MenuIcon />}
+          </button>
+        </div>
       </div>
-      <nav aria-label="Mobile" className={tone === "hero" ? "mx-auto flex max-w-6xl gap-4 overflow-x-auto px-1 py-3 text-sm text-white/80 md:hidden" : "mx-auto flex max-w-6xl gap-4 overflow-x-auto px-4 py-2 text-sm text-[#3c4550] md:hidden"}>
-        {links.map((link) => (
-          <a key={link.href} href={link.href}>
-            {link.label}
-          </a>
-        ))}
-      </nav>
+      {open ? (
+        <nav id={menuId} aria-label="Mobile" className="border-t border-line px-4 py-3 lg:hidden">
+          <ul className="space-y-1">
+            {links.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  className="flex min-h-11 items-center rounded-xl px-3 font-semibold text-ink hover:bg-paper-deep"
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <Link href="/submit" className="btn btn-primary mt-3 w-full lg:hidden">
+            Add a store
+          </Link>
+        </nav>
+      ) : null}
     </header>
+  );
+}
+
+function MenuIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M6 6l12 12M18 6 6 18" strokeLinecap="round" />
+    </svg>
   );
 }
