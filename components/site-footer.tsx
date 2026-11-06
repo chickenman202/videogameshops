@@ -6,6 +6,7 @@ const groups = [
     title: "Directory",
     links: [
       { href: "/directory", label: "All stores" },
+      { href: "/#countries", label: "Countries" },
       { href: "/directory/states", label: "States" },
       { href: "/directory/platforms", label: "Platforms" },
     ],
@@ -44,7 +45,7 @@ export function SiteFooter() {
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
           {groups.map((group) => (
             <div key={group.title}>
-              <p className="kicker text-blue">{group.title}</p>
+              <p className="kicker text-blue-mist">{group.title}</p>
               <ul className="mt-3 space-y-2">
                 {group.links.map((link) => (
                   <li key={link.href}>

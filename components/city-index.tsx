@@ -39,7 +39,7 @@ export function CityIndex({ cities }: { cities: CityItem[] }) {
         <ul className="mt-4 border-t border-ink">
           {shown.map((city) => (
             <li key={city.href} className="border-b border-line">
-              <a href={city.href} className="flex min-h-12 items-baseline justify-between gap-3 py-2 hover:text-blue">
+              <a href={city.href} className="flex min-h-12 items-baseline justify-between gap-3 py-2 hover:text-blue-ink">
                 <span className="font-display text-2xl font-bold uppercase">{city.name}</span>
                 <span className="kicker text-muted">
                   {city.count.toLocaleString("en-US")}

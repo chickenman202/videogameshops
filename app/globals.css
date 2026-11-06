@@ -19,6 +19,9 @@
   --silver: #d5dbe3;
   --blue: #155eef;
   --blue-deep: #0e46c4;
+  /* Darker blue for small text on white and silver. Lighter blue for text on black. */
+  --blue-ink: #0e46c4;
+  --blue-mist: #c5d4ff;
   --signal: #155eef;
   --danger: #0a2f86;
   --danger-soft: #e7eefb;
@@ -39,6 +42,8 @@
   --color-silver: var(--silver);
   --color-blue: var(--blue);
   --color-blue-deep: var(--blue-deep);
+  --color-blue-ink: var(--blue-ink);
+  --color-blue-mist: var(--blue-mist);
   --color-signal: var(--signal);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);

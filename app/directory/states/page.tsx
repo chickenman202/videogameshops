@@ -45,7 +45,7 @@ export default async function StatesPage() {
           <ul className="mt-8 border-t border-ink">
             {states.map((state) => (
               <li key={state.slug} className="border-b border-line">
-                <a href={statePath(state.slug)} className="flex min-h-14 items-baseline justify-between gap-3 py-3 hover:text-blue">
+                <a href={statePath(state.slug)} className="flex min-h-14 items-baseline justify-between gap-3 py-3 hover:text-blue-ink">
                   <span className="font-display text-3xl font-bold uppercase">{state.name}</span>
                   <span className="kicker text-muted">
                     {state.abbreviation}

@@ -42,7 +42,7 @@ function Field({
       <span className="text-sm font-bold text-ink">
         {label}
         {required ? (
-          <span className="text-blue" aria-hidden="true">
+          <span className="text-blue-ink" aria-hidden="true">
             {" "}
             *
           </span>
@@ -62,7 +62,7 @@ export function ContactForm() {
       <label className="block">
         <span className="text-sm font-bold text-ink">
           Message
-          <span className="text-blue" aria-hidden="true">
+          <span className="text-blue-ink" aria-hidden="true">
             {" "}
             *
           </span>
@@ -99,7 +99,7 @@ export function SubmitStoreForm() {
             <label className="block">
               <span className="text-sm font-bold text-ink">
                 State
-                <span className="text-blue" aria-hidden="true">
+                <span className="text-blue-ink" aria-hidden="true">
                   {" "}
                   *
                 </span>

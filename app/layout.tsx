@@ -13,6 +13,7 @@ const display = Barlow_Condensed({
 const serif = Newsreader({
   subsets: ["latin"],
   weight: ["400", "600"],
+  style: ["normal", "italic"],
   variable: "--font-newsreader",
   display: "swap",
 });
