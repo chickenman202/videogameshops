@@ -21,7 +21,7 @@ export function StoreCard({ store, priority = false }: { store: CatalogStore; pr
       {store.photo ? (
         <img
           src={store.photo}
-          alt={store.name}
+          alt={store.displayName}
           width={160}
           height={160}
           loading={priority ? "eager" : "lazy"}
@@ -33,11 +33,11 @@ export function StoreCard({ store, priority = false }: { store: CatalogStore; pr
           aria-hidden="true"
           className="grid h-20 w-full place-items-center rounded-2xl bg-[linear-gradient(160deg,#ffffff,#d5dbe3)] text-2xl font-semibold text-[#155eef] sm:w-20"
         >
-          {store.name.slice(0, 1)}
+          {store.displayName.slice(0, 1)}
         </span>
       )}
       <span className="min-w-0 flex-1">
-        <span className="block text-lg font-semibold text-[#090b10]">{store.name}</span>
+        <span className="block text-lg font-semibold text-[#090b10]">{store.displayName}</span>
         <span className="mt-1 block text-sm text-muted">
           {formatStorePlace(store) || store.countryName || "Address not listed"}
         </span>

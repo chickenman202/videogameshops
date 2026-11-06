@@ -6,12 +6,13 @@ import { describe, it } from "node:test";
 import { buildCatalog, existingFromRows } from "./build-catalog";
 import { shopIsIndexable, toCatalogStore } from "./catalog";
 import { countryEntries, regionLinks } from "./country-browse";
+import { DISPLAY_NAME_RULE, cleanShopName } from "./display-name";
 import { COUNTRY_URL_SCHEME } from "./country-route";
 import { countryBySlug, normalizeCountry } from "./countries";
 import { NEAR_MISS_RULE, reviewNearMisses } from "./near-miss-review";
 import { parseOsmOpeningHours } from "./osm-hours";
 import { countryPath, statePath, unitedStatesDirectoryPath } from "./paths";
-import { PLACE_FOLD_RULE, groupPlaceNames, placeSlug, preferredPlaceName } from "./place-fold";
+import { PLACE_FOLD_RULE, groupPlaceNames, placeSlug, preferredPlaceName, readablePlace } from "./place-fold";
 import { canonicalRegion } from "./regions";
 import { isSameShop, namesSimilar } from "./shop-dedupe";
 import { shopsToRows, SLUG_RULE, type ShopDraft, type StoreRow, type WikidataFill } from "./shop-record";
@@ -98,6 +99,42 @@ describe("place fold", () => {
     assert.equal(rome.get("Roma"), rome.get("Rome"));
     assert.notEqual(groupPlaceNames(["Bateau Bay", "Batemans Bay"]).get("Bateau Bay"), groupPlaceNames(["Bateau Bay", "Batemans Bay"]).get("Batemans Bay"));
     assert.equal(PLACE_FOLD_RULE.includes("Tirana and Tiranë"), true);
+    assert.equal(PLACE_FOLD_RULE.includes("Eugene stays eugene"), true);
+    assert.equal(groupPlaceNames(["Eugene"]).get("Eugene"), "eugene");
+
+    const taipei = groupPlaceNames(["台北市", "臺北市", "台北市"]);
+    assert.equal(taipei.get("台北市"), taipei.get("臺北市"));
+    assert.equal(taipei.get("台北市"), placeSlug("台北市"));
+    assert.equal(groupPlaceNames(["臺南市"]).get("臺南市"), placeSlug("臺南市"));
+    assert.notEqual(placeSlug("Taipei"), placeSlug("台北市"));
+    assert.notEqual(groupPlaceNames(["Lisbon", "Lisboa"]).get("Lisbon"), groupPlaceNames(["Lisbon", "Lisboa"]).get("Lisboa"));
+    assert.notEqual(groupPlaceNames(["Warsaw", "Warszawa"]).get("Warsaw"), groupPlaceNames(["Warsaw", "Warszawa"]).get("Warszawa"));
+    assert.notEqual(groupPlaceNames(["Genoa", "Genova"]).get("Genoa"), groupPlaceNames(["Genoa", "Genova"]).get("Genova"));
+  });
+
+  it("shows place labels in title case without adding accents", () => {
+    assert.equal(readablePlace("la Massana"), "La Massana");
+    assert.equal(readablePlace("karachi"), "Karachi");
+    assert.equal(readablePlace("palma de Mallorca"), "Palma de Mallorca");
+    assert.equal(readablePlace("côte d'azur"), "Côte d'Azur");
+    assert.equal(readablePlace("Côte d'Azur"), "Côte d'Azur");
+    assert.equal(readablePlace("São Paulo"), "São Paulo");
+    assert.equal(readablePlace("SAO PAULO"), "Sao Paulo");
+    assert.equal(readablePlace("Île-de-France"), "Île-de-France");
+    assert.equal(readablePlace("ES"), "ES");
+    assert.equal(readablePlace("臺北市"), "臺北市");
+    assert.equal(readablePlace("St. John's"), "St. John's");
+    assert.equal(readablePlace("Bogotá D.C."), "Bogotá D.C.");
+    assert.equal(readablePlace("Klagenfurt am Wörthersee"), "Klagenfurt am Wörthersee");
+    assert.equal(readablePlace("Chavannes-près-Renens"), "Chavannes-près-Renens");
+    assert.equal(readablePlace("San Antonio de los Banos"), "San Antonio de los Banos");
+    assert.equal(readablePlace("Barrow in Furness"), "Barrow in Furness");
+    assert.equal(readablePlace("Vilanova i la Geltru"), "Vilanova i la Geltru");
+    assert.equal(readablePlace("Dar es Salaam"), "Dar es Salaam");
+    assert.equal(readablePlace("Kingston upon Thames"), "Kingston upon Thames");
+    assert.equal(readablePlace("Gatteo a Mare"), "Gatteo a Mare");
+    assert.equal(readablePlace("Lido di Pomposa-Lido degli Scacchi"), "Lido di Pomposa-Lido degli Scacchi");
+    assert.equal(readablePlace("Beit ed Dine"), "Beit ed Dine");
   });
 
   it("gives Tirana and Tiranë one city slug and keeps both spellings", () => {
@@ -158,6 +195,22 @@ describe("place fold", () => {
     assert.equal(links[0]?.name, "Sao Paulo");
     assert.equal(links[0]?.count, 3);
     assert.equal(links[0]?.href, "/directory/countries/br/sao-paulo");
+  });
+});
+
+describe("shop titles", () => {
+  it("hides a trailing keyword list and keeps the original name", () => {
+    const raw = "Culture Shock Houston Premium Outlets- Anime, Pop Culture, Pokemon, Video Games, Funko";
+    const cleaned = cleanShopName(raw);
+    assert.equal(cleaned.displayName, "Culture Shock Houston Premium Outlets");
+    assert.deepEqual(cleaned.platforms, []);
+    assert.equal(cleanShopName("Hi-Score Video Games").displayName, "Hi-Score Video Games");
+    assert.equal(cleanShopName("Disc Traders - Battle Creek").displayName, "Disc Traders - Battle Creek");
+    assert.equal(cleanShopName("Game Mechanix - West Monroe").displayName, "Game Mechanix - West Monroe");
+    const retro = cleanShopName("Summit Gaming & Collectibles - Retro Games, Records & Toys");
+    assert.equal(retro.displayName, "Summit Gaming & Collectibles");
+    assert.deepEqual(retro.platforms, ["Retro"]);
+    assert.equal(DISPLAY_NAME_RULE.includes("original text"), true);
   });
 });
 
@@ -287,8 +340,11 @@ describe("shop file", () => {
     assert.equal(built.rows.length >= 6700, true);
     assert.equal(new Set(built.rows.map((row) => row.slug)).size, built.rows.length);
     assert.equal(new Set(built.rows.map((row) => `${row.source}:${row.source_id}`)).size, built.rows.length);
+    assert.equal(built.rows.every((row) => row.sells_new === false && row.sells_used === false), true);
     assert.equal(
-      built.rows.every((row) => row.platforms.length === 0 && row.sells_new === false && row.sells_used === false),
+      built.rows.every(
+        (row) => JSON.stringify(row.platforms) === JSON.stringify(cleanShopName(row.name).platforms),
+      ),
       true,
     );
 
@@ -333,6 +389,8 @@ describe("shop file", () => {
       near_miss_rule: string;
       slug_rule: string;
       place_fold_rule: string;
+      display_name_rule: string;
+      display_names_cleaned: number;
       stores_json_sha256: string;
       supabase: string;
       country_url_scheme: { canonical: string };
@@ -390,6 +448,21 @@ describe("shop file", () => {
     assert.equal(report.near_miss_rule, NEAR_MISS_RULE);
     assert.equal(report.slug_rule, SLUG_RULE);
     assert.equal(report.place_fold_rule, PLACE_FOLD_RULE);
+    assert.equal(report.display_name_rule, DISPLAY_NAME_RULE);
+    assert.equal(
+      report.display_names_cleaned,
+      built.rows.filter((row) => cleanShopName(row.name).displayName !== row.name.trim()).length,
+    );
+    const shock = built.rows.find((row) => row.name.includes("Culture Shock Houston"));
+    assert.equal(shock?.name.includes("Funko"), true);
+    assert.equal(cleanShopName(shock?.name ?? "").displayName, "Culture Shock Houston Premium Outlets");
+    assert.deepEqual(shock?.platforms, []);
+    const massana = built.rows.find((row) => row.country === "AD" && (row.city ?? "").toLowerCase() === "la massana");
+    assert.equal(massana?.city, "La Massana");
+    const taipeiTraditional = built.rows.filter((row) => row.country === "TW" && (row.city === "台北市" || row.city === "臺北市"));
+    assert.equal(new Set(taipeiTraditional.map((row) => row.city_slug)).size, 1);
+    const taipeiEnglish = built.rows.find((row) => row.country === "TW" && row.city === "Taipei");
+    assert.notEqual(taipeiEnglish?.city_slug, taipeiTraditional[0]?.city_slug);
     const albania = built.rows.filter(
       (row) => row.country === "AL" && (row.city === "Tirana" || row.city === "Tiranë"),
     );

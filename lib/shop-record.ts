@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { Database } from "./database.types";
-import { groupPlaceNames, placeSlug } from "./place-fold";
+import { cleanShopName } from "./display-name";
+import { groupPlaceNames, placeSlug, readablePlace, writtenPlaceKey } from "./place-fold";
 import { slugify, storeSlug } from "./slug";
 import { canonicalRegion, usStateFor } from "./regions";
 import { aboutFromShopInfo } from "./shop-details";
@@ -377,12 +378,38 @@ function foldedCitySlugs(shops: ShopDraft[]): string[] {
   const citySlug = new Map<string, Map<string, string>>();
   for (const [bucket, names] of buckets) citySlug.set(bucket, groupPlaceNames(names));
 
-  return shops.map((shop, index) => {
+  const slugs = shops.map((shop, index) => {
     const city = shop.city?.trim() ?? "";
     const bucket = bucketKeys[index] ?? "";
     if (!city || !bucket) return "";
     return citySlug.get(bucket)?.get(city) ?? placeSlug(city);
   });
+  // The same written city can sit in a blank region and in a named one.
+  // 臺 and 台 still share one slug. The a/e rule stays inside each region.
+  const written = new Map<string, number[]>();
+  shops.forEach((shop, index) => {
+    const city = shop.city?.trim() ?? "";
+    if (!city || !slugs[index]) return;
+    const key = `${shop.country ?? ""}\n${writtenPlaceKey(city)}`;
+    const list = written.get(key) ?? [];
+    list.push(index);
+    written.set(key, list);
+  });
+  for (const indexes of written.values()) {
+    if (new Set(indexes.map((index) => slugs[index])).size < 2) continue;
+    const counts = new Map<string, number>();
+    for (const index of indexes) {
+      const city = shops[index]?.city?.trim() ?? "";
+      counts.set(city, (counts.get(city) ?? 0) + 1);
+    }
+    const best = [...counts.entries()].sort(
+      (left, right) => right[1] - left[1] || left[0].localeCompare(right[0], "en"),
+    )[0]?.[0];
+    if (!best) continue;
+    const slug = placeSlug(best);
+    for (const index of indexes) slugs[index] = slug;
+  }
+  return slugs;
 }
 
 export function shopsToRows(shops: ShopDraft[], existing: ExistingStore[]): StoreRow[] {
@@ -436,9 +463,9 @@ export function shopsToRows(shops: ShopDraft[], existing: ExistingStore[]): Stor
       slug: slugs[index] ?? slugify(item.shop.sourceId),
       name: item.shop.name,
       address: item.shop.address,
-      city: item.shop.city,
+      city: item.shop.city ? readablePlace(item.shop.city) : null,
       city_slug: citySlugs[index] ?? "",
-      state: item.shop.region || null,
+      state: item.shop.region ? readablePlace(item.shop.region) || null : null,
       zip_code: item.shop.postalCode,
       country: item.shop.country,
       country_name: item.shop.countryName,
@@ -450,7 +477,7 @@ export function shopsToRows(shops: ShopDraft[], existing: ExistingStore[]): Stor
       about: aboutFromShopInfo(item.shop.storeInfo),
       opening_hours: item.shop.openingHours as StoreRow["opening_hours"],
       opening_hours_raw: item.shop.openingHoursRaw,
-      platforms: [],
+      platforms: cleanShopName(item.shop.name).platforms,
       sells_new: false,
       sells_used: false,
       accepts_trade_ins: false,

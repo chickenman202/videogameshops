@@ -72,6 +72,7 @@ function applyUserFilters(stores: CatalogStore[], filters: Filters): CatalogStor
     if (!query) return true;
     return (
       store.name.toLowerCase().includes(query) ||
+      store.displayName.toLowerCase().includes(query) ||
       store.city.toLowerCase().includes(query) ||
       store.state.toLowerCase().includes(query) ||
       store.country.toLowerCase().includes(query) ||
@@ -138,7 +139,7 @@ export function storeAbout(store: CatalogStore): string {
   const platforms = store.platforms.length ? ` Platforms: ${joinList(store.platforms)}.` : "";
   const place = formatStorePlace(store);
   const where = place ? ` at ${place}` : "";
-  return `${store.name} is a video game store${where}. ${offer}${platforms}`.replace(/\s+/g, " ").trim();
+  return `${store.displayName} is a video game store${where}. ${offer}${platforms}`.replace(/\s+/g, " ").trim();
 }
 
 export async function buildListing(input: {

@@ -63,7 +63,7 @@ export async function generateMetadata(props: PageProps<"/store/[slug]">): Promi
   }
   const { store } = result;
   const title = storeTitle(
-    store.name,
+    store.displayName,
     store.city || store.countryName || "Shop",
     store.country === "US" ? store.stateAbbr : store.country,
     store.platforms,
@@ -127,7 +127,7 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
     else if (store.state) pageCrumbs.push({ name: store.state });
     if (store.city) pageCrumbs.push({ name: store.city });
   }
-  pageCrumbs.push({ name: store.name });
+  pageCrumbs.push({ name: store.displayName });
 
   return (
     <PageShell>
@@ -140,7 +140,7 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
             {store.photo ? (
               <img
                 src={store.photo}
-                alt={store.name}
+                alt={store.displayName}
                 width={960}
                 height={540}
                 loading="eager"
@@ -148,8 +148,8 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
                 className="mb-6 h-64 w-full rounded-3xl object-cover"
               />
             ) : null}
-            <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">{store.name}</h1>
-            {store.brand && store.brand.toLowerCase() !== store.name.toLowerCase() ? (
+            <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">{store.displayName}</h1>
+            {store.brand && store.brand.toLowerCase() !== store.displayName.toLowerCase() ? (
               <p className="mt-2 text-sm text-muted">{store.brand}</p>
             ) : null}
             <p className="mt-4 max-w-3xl text-lg text-[#3c4550]">{storeAbout(store)}</p>
@@ -226,7 +226,7 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
             <h2 className="text-lg font-semibold">Hours</h2>
             {store.hours ? (
               <table className="mt-4 w-full text-sm">
-                <caption className="sr-only">Weekly hours for {store.name}</caption>
+                <caption className="sr-only">Weekly hours for {store.displayName}</caption>
                 <tbody>
                   {WEEKDAYS.map(([key, label]) => (
                     <tr key={key} className="border-t border-[#eef1f5]">

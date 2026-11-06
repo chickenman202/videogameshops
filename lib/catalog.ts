@@ -7,7 +7,8 @@ import { readableShopInfo } from "@/lib/shop-details";
 import { getPlatformByLabel, type PlatformLabel } from "@/lib/platforms";
 import { sourceLabel } from "@/lib/place";
 import { normalizeCountry } from "@/lib/countries";
-import { placeSlug } from "@/lib/place-fold";
+import { cleanShopName } from "@/lib/display-name";
+import { placeSlug, readablePlace } from "@/lib/place-fold";
 import { slugify, storeSlug } from "@/lib/slug";
 import { usStateFor } from "@/lib/regions";
 import { createReadClient } from "@/lib/supabase";
@@ -15,7 +16,10 @@ import { createReadClient } from "@/lib/supabase";
 export type CatalogStore = {
   id: string;
   slug: string;
+  /** Original name from the shop file. */
   name: string;
+  /** Name shown in titles. A trailing keyword list is hidden. The stored name is unchanged. */
+  displayName: string;
   address: string;
   city: string;
   citySlug: string;
@@ -123,9 +127,10 @@ export function toCatalogStore(row: StoreRow): CatalogStore | null {
     slugify(row.source_id ?? "");
   if (!slug) return null;
 
+  const cleaned = cleanShopName(name);
   const platforms = [
     ...new Set(
-      (row.platforms ?? [])
+      [...(row.platforms ?? []), ...cleaned.platforms]
         .map((item) => getPlatformByLabel(item)?.label)
         .filter((item): item is PlatformLabel => Boolean(item)),
     ),
@@ -138,10 +143,11 @@ export function toCatalogStore(row: StoreRow): CatalogStore | null {
     id: row.id,
     slug,
     name,
+    displayName: cleaned.displayName,
     address: row.address?.trim() ?? "",
-    city,
+    city: readablePlace(city),
     citySlug: row.city_slug?.trim() || (city ? placeSlug(city) : ""),
-    state: us?.name || region,
+    state: us?.name || readablePlace(region),
     stateSlug: us?.slug ?? "",
     regionSlug,
     stateAbbr: us?.abbreviation ?? "",

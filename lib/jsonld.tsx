@@ -64,7 +64,7 @@ export function collectionJsonLd(input: {
     itemListElement: input.stores.map((store, index) => ({
       "@type": "ListItem",
       position: (input.page - 1) * PAGE_SIZE + index + 1,
-      name: store.name,
+      name: store.displayName,
       url: absoluteUrl(storePath(store.slug)),
     })),
   };
@@ -120,7 +120,7 @@ export function storeJsonLd(store: CatalogStore) {
 
   const business: Record<string, unknown> = {
     "@type": "LocalBusiness",
-    name: store.name,
+    name: store.displayName,
     url: absoluteUrl(storePath(store.slug)),
   };
   if (Object.keys(address).length > 1) business.address = address;
@@ -160,6 +160,6 @@ export function storeCrumbs(
     if (extra?.country) crumbs.push({ name: extra.country.name, path: extra.country.href });
     if (extra?.region) crumbs.push({ name: extra.region.name, path: extra.region.href });
   }
-  crumbs.push({ name: store.name, path: storePath(store.slug) });
+  crumbs.push({ name: store.displayName, path: storePath(store.slug) });
   return crumbs;
 }
