@@ -5,11 +5,14 @@
  * If Supabase is configured, the same rows are saved there.
  * Existing slugs are kept. No secret values are printed.
  */
+import { createHash } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { buildCatalog, catalogReport, existingFromRows, nearMisses } from "../lib/build-catalog";
+import { COUNTRY_URL_SCHEME } from "../lib/country-route";
 import { NEAR_MISS_RULE, reviewNearMisses } from "../lib/near-miss-review";
+import { SLUG_RULE } from "../lib/shop-record";
 import { toCatalogStore } from "../lib/catalog";
 import { parseCsv } from "../lib/csv";
 import type { Database } from "../lib/database.types";
@@ -37,15 +40,24 @@ async function main() {
   const drafts = parseCsv(csvText)
     .map((record) => draftFromCsv(record, fills))
     .filter((shop) => shop.name && shop.source && shop.sourceId);
+  const catalogText = `${JSON.stringify(built.rows.map(publishedShop))}\n`;
+  const slugs = built.rows.map((row) => row.slug);
   const report = {
     ...catalogReport(built.csvRows, built.mergedGroups, built.dropped, built.rows),
+    country_url_scheme: COUNTRY_URL_SCHEME,
+    slug_rule: SLUG_RULE,
+    duplicate_slugs: slugs.length - new Set(slugs).size,
     near_miss_rule: NEAR_MISS_RULE,
     near_misses_within_40m: nearMisses(drafts),
     near_miss_decisions: reviewNearMisses(built.rows),
+    stores_json_sha256: createHash("sha256").update(catalogText).digest("hex"),
     supabase: database.configured ? "upserted" : "skipped_no_service_role",
+    supabase_note: database.configured
+      ? "Rows were saved to Supabase after the SQL migrations had been applied."
+      : "Neither NEXT_PUBLIC_SUPABASE_URL nor SUPABASE_SERVICE_ROLE_KEY was set, so Supabase was not updated. To seed the database, run supabase/migrations/0001_stores.sql, then supabase/migrations/0002_store_import_fields.sql, set both variables, and run npm run import:shops. 0002 keeps a blank country blank. It does not rewrite it to US.",
   };
 
-  writeFileSync(jsonPath, `${JSON.stringify(built.rows.map(publishedShop))}\n`);
+  writeFileSync(jsonPath, catalogText);
   writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`);
 
   if (database.client) {
@@ -88,6 +100,7 @@ function publishedShop(row: StoreRow) {
     ...row,
     country_code: store?.countryCode ?? "",
     country_slug: store?.countrySlug ?? "",
+    state_slug: store?.regionSlug ?? "",
     region_slug: store?.regionSlug ?? "",
     indexable: store?.indexable ?? false,
   };

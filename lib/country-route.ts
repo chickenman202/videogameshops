@@ -4,6 +4,15 @@ import { filtersFromRecord, hrefWithFilters } from "@/lib/filters";
 import { redirectUnitedStatesAlias } from "@/lib/legacy-redirect";
 import { countryPath, countryRegionPath, pagePath } from "@/lib/paths";
 
+/** The country URL contract shared with the SEO pages. Names stay in titles, not in the path. */
+export const COUNTRY_URL_SCHEME = {
+  canonical: "/directory/countries/{iso2}",
+  examples: ["/directory/countries/fr", "/directory/countries/gb", "/directory/countries/us"],
+  aliases: { uk: "gb", usa: "us", france: "fr" },
+  us_state: "/directory/{state}",
+  us_state_redirect: "308 /directory/countries/us/{state} -> /directory/{state}",
+} as const;
+
 /**
  * Country URLs use the ISO code. /uk and /france move to /gb and /fr.
  * /directory/countries/us/texas moves to /directory/texas.

@@ -316,6 +316,15 @@ export function uuidFromIdentity(identity: string): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
+/**
+ * A shop keeps the slug it already has.
+ * A new United States shop uses name-city-state. A shop in another country uses name-city-country.
+ * If that slug is already taken, the source id is added. If that is taken too, a number is added.
+ * Running the import again does not create a second row for the same shop.
+ */
+export const SLUG_RULE =
+  "A shop keeps the slug it already has. A new United States shop uses name-city-state. A shop in another country uses name-city-country. If that slug is already taken, the source id is added, then a number if needed. Running the import again does not create a second row for the same shop.";
+
 function desiredSlug(shop: ShopDraft): string {
   const us = shop.country ? usStateFor(shop.country, shop.region) : null;
   const namePart = slugify(shop.name);

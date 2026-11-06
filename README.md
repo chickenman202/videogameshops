@@ -31,8 +31,8 @@ That command:
 
 1. Reads every row in the CSV.
 2. Folds a shop that appears in both OpenStreetMap and Game-Route into one listing when the name, initials, address, or website shows it is the same place. Pairs that are only nearby stay as two listings. Those decisions are listed in `data/import-report.json`.
-3. Keeps the existing web address (`slug`) when that shop was already imported.
-4. Writes `data/stores.json` and a short `data/import-report.json`.
+3. Keeps the existing web address (`slug`) when that shop was already imported. A new United States shop uses name-city-state. A shop in another country uses name-city-country. If that address is already taken, the source id is added, then a number. A second run does not create a duplicate shop.
+4. Writes `data/stores.json` and `data/import-report.json`. The report includes `public_listings`, `indexable_listings`, `noindex_listings`, the country URL scheme, the near-miss decisions, the Supabase note, and `stores_json_sha256` (the SHA-256 of `data/stores.json`).
 5. If `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are both set, it also saves the rows to Supabase. If only one of those two is set, the command stops and names the missing variable. If neither is set, it only writes the JSON file.
 
 Do not commit `.env.local`. The service role key must never be pasted into the repo.
@@ -40,7 +40,7 @@ Do not commit `.env.local`. The service role key must never be pasted into the r
 To save into Supabase the first time:
 
 1. In the Supabase SQL editor, run `supabase/migrations/0001_stores.sql`.
-2. Then run `supabase/migrations/0002_store_import_fields.sql`.
+2. Then run `supabase/migrations/0002_store_import_fields.sql`. That migration stops forcing a blank country to `US`.
 3. Put `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`.
 4. Run `npm run import:shops`.
 

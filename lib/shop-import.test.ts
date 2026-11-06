@@ -1,22 +1,73 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, it } from "node:test";
-import { buildCatalog } from "./build-catalog";
-import { toCatalogStore } from "./catalog";
-import { shopIsIndexable } from "./catalog";
+import { buildCatalog, existingFromRows } from "./build-catalog";
+import { shopIsIndexable, toCatalogStore } from "./catalog";
 import { countryEntries, regionLinks } from "./country-browse";
-import { countryBySlug } from "./countries";
-import { NEAR_MISS_RULE } from "./near-miss-review";
-import { reviewNearMisses } from "./near-miss-review";
+import { COUNTRY_URL_SCHEME } from "./country-route";
+import { countryBySlug, normalizeCountry } from "./countries";
+import { NEAR_MISS_RULE, reviewNearMisses } from "./near-miss-review";
 import { parseOsmOpeningHours } from "./osm-hours";
-import { countryPath, statePath } from "./paths";
-import { stableSlug } from "./slug";
+import { countryPath, statePath, unitedStatesDirectoryPath } from "./paths";
 import { canonicalRegion } from "./regions";
 import { isSameShop, namesSimilar } from "./shop-dedupe";
-import type { WikidataFill } from "./shop-record";
+import { shopsToRows, SLUG_RULE, type ShopDraft, type StoreRow, type WikidataFill } from "./shop-record";
+import { stableSlug } from "./slug";
 
 const root = path.join(import.meta.dirname, "..");
+
+describe("country urls", () => {
+  it("uses the ISO code and sends uk and usa to the official code", () => {
+    assert.equal(countryBySlug("fr")?.country.code, "FR");
+    assert.equal(countryBySlug("fr")?.country.slug, "fr");
+    assert.equal(countryBySlug("fr")?.redirectSlug, null);
+    assert.equal(countryBySlug("uk")?.redirectSlug, "gb");
+    assert.equal(countryBySlug("uk")?.country.code, "GB");
+    assert.equal(countryBySlug("usa")?.redirectSlug, "us");
+    assert.equal(countryBySlug("usa")?.country.code, "US");
+    assert.equal(countryPath("fr"), "/directory/countries/fr");
+    assert.equal(COUNTRY_URL_SCHEME.canonical, "/directory/countries/{iso2}");
+  });
+
+  it("keeps a blank country blank", () => {
+    assert.equal(normalizeCountry("").code, "");
+    assert.equal(normalizeCountry("").slug, "");
+    assert.equal(normalizeCountry(null).code, "");
+    assert.equal(normalizeCountry("   ").name, "");
+    assert.notEqual(normalizeCountry("").code, "US");
+    const row = shopsToRows([draft("node/blank", { country: null, countryName: null, name: "No Country Shop" })], []);
+    assert.equal(row[0]?.country, null);
+  });
+
+  it("sends a US state under /directory/countries/us to the state page", () => {
+    assert.equal(unitedStatesDirectoryPath({ regionSlug: "texas" }), "/directory/texas");
+    assert.equal(unitedStatesDirectoryPath({ regionSlug: "texas", page: 2 }), "/directory/texas/page/2");
+    assert.equal(statePath("georgia"), "/directory/georgia");
+    assert.equal(countryPath("ge"), "/directory/countries/ge");
+    assert.equal(countryBySlug("georgia")?.redirectSlug, "ge");
+    assert.notEqual(countryPath("ge"), statePath("georgia"));
+  });
+
+  it("marks a shop indexable only when it has a street, phone, or website", () => {
+    assert.equal(shopIsIndexable({ address: "", phone: "", website: "" }), false);
+    assert.equal(shopIsIndexable({ address: "  ", phone: null, website: null }), false);
+    assert.equal(shopIsIndexable({ address: "1 Main St", phone: "", website: "" }), true);
+    assert.equal(shopIsIndexable({ address: "", phone: "555-0100", website: "" }), true);
+    assert.equal(shopIsIndexable({ address: "", phone: "", website: "https://example.com" }), true);
+  });
+
+  it("gives two shops with the same name different slugs and keeps them on a second run", () => {
+    const first = shopsToRows([draft("node/1"), draft("node/2")], []);
+    assert.equal(first.length, 2);
+    assert.notEqual(first[0]?.slug, first[1]?.slug);
+    const second = shopsToRows([draft("node/1"), draft("node/2")], existingFromRows(first));
+    assert.equal(second.length, 2);
+    assert.deepEqual(second.map((row) => row.slug).sort(), first.map((row) => row.slug).sort());
+    assert.equal(SLUG_RULE.includes("does not create a second row"), true);
+  });
+});
 
 describe("opening hours", () => {
   it("reads a weekday range and leaves Sunday blank", () => {
@@ -186,7 +237,12 @@ describe("shop file", () => {
       public_listings: number;
       indexable_listings: number;
       noindex_listings: number;
+      duplicate_slugs: number;
       near_miss_rule: string;
+      slug_rule: string;
+      stores_json_sha256: string;
+      supabase: string;
+      country_url_scheme: { canonical: string };
       near_miss_decisions: { label: string; decision: string }[];
     };
     assert.deepEqual(
@@ -229,13 +285,68 @@ describe("shop file", () => {
     assert.equal(shopIsIndexable({ address: "", phone: "", website: "" }), false);
     assert.equal(shopIsIndexable({ address: "1 Main St", phone: "", website: "" }), true);
     assert.equal(stores.some((store) => !store.indexable), true);
-    assert.equal(stores.filter((store) => store.indexable).every((store) => store.address || store.phone || store.website), true);
+    assert.equal(
+      stores.every((store) => store.indexable === shopIsIndexable(store)),
+      true,
+    );
     assert.equal(report.public_listings, built.rows.length);
     assert.equal(report.public_listings, stores.length);
     assert.equal(report.indexable_listings + report.noindex_listings, report.public_listings);
+    assert.equal(report.indexable_listings, stores.filter((store) => store.indexable).length);
+    assert.equal(report.duplicate_slugs, 0);
     assert.equal(report.near_miss_rule, NEAR_MISS_RULE);
+    assert.equal(report.slug_rule, SLUG_RULE);
+    assert.equal(report.country_url_scheme.canonical, "/directory/countries/{iso2}");
+    assert.equal(report.supabase, "skipped_no_service_role");
+    const fileBytes = readFileSync(path.join(root, "data", "stores.json"));
+    const savedRows = JSON.parse(fileBytes.toString("utf8")) as StoreRow[];
+    assert.equal(savedRows.length, report.public_listings);
+    assert.equal(new Set(savedRows.map((row) => row.slug)).size, savedRows.length);
+    assert.equal(
+      savedRows.every((row) => row.country == null || /^[A-Z]{2}$/.test(row.country)),
+      true,
+    );
+    assert.equal(createHash("sha256").update(fileBytes).digest("hex"), report.stores_json_sha256);
+    const rerun = buildCatalog(csv, fills, existingFromRows(savedRows));
+    assert.equal(rerun.rows.length, savedRows.length);
+    assert.equal(rerun.rows.length, built.rows.length);
   });
 });
+
+function draft(sourceId: string, patch: Partial<ShopDraft> = {}): ShopDraft {
+  return {
+    name: "Same Name Games",
+    brand: null,
+    address: null,
+    city: "Austin",
+    region: "Texas",
+    postalCode: null,
+    country: "US",
+    countryName: "United States",
+    latitude: null,
+    longitude: null,
+    phone: null,
+    website: null,
+    websiteDomain: null,
+    facebook: null,
+    instagram: null,
+    twitter: null,
+    otherSocials: [],
+    imageUrl: null,
+    openingHoursRaw: null,
+    openingHours: null,
+    storeInfo: null,
+    source: "osm",
+    sourceId,
+    osmUrl: null,
+    wikidataUrl: null,
+    fetchedAt: "2026-11-06T00:00:00.000Z",
+    dataUpdatedAt: null,
+    enrichmentNotes: null,
+    alternateIdentities: [],
+    ...patch,
+  };
+}
 
 function shop(input: {
   name: string;
