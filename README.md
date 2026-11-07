@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# videogameshops
 
-## Getting Started
+A directory of physical video game shops. The shop list can come from Supabase, or from `data/stores.json` when the database is not connected. That fallback is what `npm run build` uses in CI.
 
-First, run the development server:
+Shops are not only in the United States. Each row has a country code. The country page uses that code in lowercase, such as `/directory/countries/fr`, `/directory/countries/ca`, `/directory/countries/jp`, and `/directory/countries/us`. The country name, such as France, is only used in the title. Older spellings redirect: `/directory/countries/france` goes to `/directory/countries/fr`, `/directory/countries/uk` goes to `/directory/countries/gb`, and `/directory/countries/usa` goes to `/directory/countries/us`.
+
+US state pages stay at `/directory/texas`. A United States address written under the country prefix, such as `/directory/countries/us/texas`, redirects there. A region inside another country gets its own page when that region has at least three shops, such as `/directory/countries/fr/ile-de-france`. Smaller regions stay on the country page. Region and city names on the page are spellings already stored on a shop, shown in readable title case. An accent is kept when the source has it, and none is added. Capital letters and accents are the same place: Sao Paulo and São Paulo share one page, and Tirana and Tiranë share one page. 台北市 and 臺北市 share one page, and English Taipei uses that same page. Taichung and Tainan do the same with their Chinese names. Lisbon and Lisboa stay separate. A town that is only nearby, with a different name, stays on its own page. The shop row keeps the spelling it came with.
+
+A shop title hides a trailing keyword list, such as “Anime, Pop Culture, Pokemon”, only when that list is appended after a dash. The original name stays in the shop file. Hi-Score and “Disc Traders - Battle Creek” stay whole. A name stored in all capitals, such as GAME POINT, is shown in title case. Small words such as of and the are lowercase unless they start the name, so MASTER OF GAMES shows as Master of Games and GAME ON shows as Game On. A known acronym, a letter group with no vowel, and a token with & or a digit stay in capitals, including PUBG, YPDS, C&AS, and PS3. GameStop, EB Games, and CeX keep those spellings. A name that already mixes capitals and lowercase is left as stored.
+
+A shop with a name and a country stays in the catalog even when the street, phone, and website are blank. Those thin shops are marked `indexable: false`. Their pages use `noindex, follow` and are left out of the sitemap until a street, phone, or website is added from a real source.
+
+## Show the site
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+No Supabase keys are required for the pages to show the imported shops.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Import or update shops
 
-## Learn More
+The source file is `data/video-game-stores.csv`.
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run import:shops
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+That command:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Reads every row in the CSV.
+2. Folds a shop that appears in both OpenStreetMap and Game-Route into one listing when the name, initials, address, or website shows it is the same place. Pairs that are only nearby stay as two listings. Those decisions are listed in `data/import-report.json`.
+3. Keeps the existing web address (`slug`) when that shop was already imported. A new United States shop uses name-city-state. A shop in another country uses name-city-country. If that address is already taken, the source id is added, then a number. A second run does not create a duplicate shop.
+4. Writes `data/stores.json` and `data/import-report.json`. The report includes `public_listings`, `indexable_listings`, `noindex_listings`, the country URL scheme, the near-miss decisions, the place-fold rule, the Supabase note, and `stores_json_sha256` (the SHA-256 of `data/stores.json`).
+5. If `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are both set, it also saves the rows to Supabase. If only one of those two is set, the command stops and names the missing variable. If neither is set, it only writes the JSON file.
 
-## Deploy on Vercel
+Do not commit `.env.local`. The service role key must never be pasted into the repo.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+To save into Supabase the first time:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. In the Supabase SQL editor, run `supabase/migrations/0001_stores.sql`.
+2. Then run `supabase/migrations/0002_store_import_fields.sql`. That migration stops forcing a blank country to `US`.
+3. Put `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`.
+4. Run `npm run import:shops`.
+
+`data/import-report.json` records `public_listings`, the number of shops that become public pages. That is the count to use everywhere. It also records which nearby pairs were merged and which were kept separate.
+
+Platforms, trade-ins, and repair flags are left off. The import does not guess which consoles a shop sells. A blank phone, website, hour, or photo stays blank.
+
+A few missing fields were filled from Wikidata records that were already linked in the CSV. Those fills are listed in `data/wikidata-fills.json`. The notes on each row say where a filled value came from.
+
+## Checks
+
+```bash
+npm test
+npm run build
+```
+
+## Sources
+
+Shop locations include data from OpenStreetMap contributors, Game-Route, Wikidata, and Dallas Retro Gamers. OpenStreetMap data is used under the Open Database License. Each store page links to its source when a link was in the file.

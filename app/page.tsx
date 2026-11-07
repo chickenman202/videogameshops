@@ -1,27 +1,25 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { PageShell } from "@/components/page-shell";
-import { SearchForm } from "@/components/search-form";
-import { SiteHeader } from "@/components/site-header";
 import { loadCatalog } from "@/lib/catalog";
+import { FIXTURE_SHOPS } from "@/lib/fixture-shops";
 import { homeJsonLd, JsonLd } from "@/lib/jsonld";
-import { platformPath } from "@/lib/paths";
-import { PLATFORMS } from "@/lib/platforms";
-import { toMetaDescription } from "@/lib/copy";
+import { storePath } from "@/lib/paths";
 import { BRAND, SITE_URL } from "@/lib/site";
+import { shopCountryName, shopLocation, type ShopView } from "@/lib/shop-view";
 import { US_STATES } from "@/lib/states";
 
-const description = toMetaDescription(
-  "Find physical video game stores in the United States. Compare hours, trade-ins, used games, retro stock, and which platforms each shop carries.",
-);
+const description = "Find video game stores you can walk into. Search by country, city, or shop name.";
 
-export const revalidate = 86400;
+// Rendered per CDN miss so the proxy's Vary: Accept reaches the response; a prerender drops it.
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: { absolute: `Video Game Stores Near You | ${BRAND}` },
+  title: { absolute: `Video Game Stores Worldwide | ${BRAND}` },
   description,
   alternates: { canonical: SITE_URL },
   openGraph: {
-    title: `Video Game Stores Near You | ${BRAND}`,
+    title: `Video Game Stores Worldwide | ${BRAND}`,
     description,
     url: SITE_URL,
     siteName: BRAND,
@@ -29,153 +27,225 @@ export const metadata: Metadata = {
   },
 };
 
-const facts = [
-  {
-    title: "Hours you can read",
-    body: "Weekly hours stay on the page. If a line cannot be read, it stays as text and is left out of the search-engine hours block.",
-  },
-  {
-    title: "What the shop does",
-    body: "New games, used games, trade-ins, and console repair are yes-or-no facts, not a guess from the store name.",
-  },
-  {
-    title: "Platforms that match",
-    body: "PlayStation, Xbox, Nintendo, PC, handheld, retro, and VR only appear when that store actually carries them.",
-  },
-];
-
-const questions = [
-  {
-    q: "Where do the hours and platforms come from?",
-    a: "They come from public business listings and from store owners who submit or correct a page. The site does not invent hours.",
-  },
-  {
-    q: "Why does a small city not have its own roundup?",
-    a: "A city roundup is for places with at least three stores. A town with one shop still has that store’s own page.",
-  },
-  {
-    q: "How do I fix a wrong address or hour?",
-    a: "Use the contact page. Include the store name, the city, and the correction. Public pages refresh within a day after the listing is updated.",
-  },
-];
-
 export default async function HomePage() {
   const catalog = await loadCatalog();
-  const count = catalog.ok ? catalog.stores.length : null;
-  const states = catalog.ok
-    ? US_STATES.map((state) => ({
-        ...state,
-        count: catalog.stores.filter((store) => store.stateSlug === state.slug).length,
-      })).filter((state) => state.count > 0)
-    : [];
+  const preview = catalog.ok && catalog.stores.length === 0;
+  const shops = catalog.ok ? (preview ? FIXTURE_SHOPS : catalog.stores) : [];
+  const featured = shops.find((store) => store.photo) ?? shops[0];
+  const states = US_STATES.map((state) => ({
+    ...state,
+    count: shops.filter((store) => store.stateSlug === state.slug).length,
+  }))
+    .filter((state) => state.count > 0)
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "en"));
+  const countries = countryIndex(shops);
 
   return (
-    <PageShell header="none">
+    <PageShell>
       <JsonLd data={homeJsonLd()} />
-      <section className="relative bg-[#090b10] text-white">
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(21,94,239,0.55),transparent_52%)]" />
-          <div className="absolute inset-0 bg-[linear-gradient(115deg,transparent_32%,rgba(255,255,255,0.16)_48%,transparent_64%)]" />
-        </div>
-        <div className="relative mx-auto max-w-6xl px-4 pb-20 pt-6">
-          <SiteHeader tone="hero" />
-          <div className="mx-auto max-w-3xl pt-16 text-center">
-            <p className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-sm text-[#d5dbe3]">
-              {count == null
-                ? "The store count could not be loaded."
-                : `${count.toLocaleString("en-US")} video game stores`}
-            </p>
-            <h1 className="mt-6 text-5xl font-semibold tracking-tight text-balance md:text-6xl">
-              Video game stores near you
-            </h1>
-            <p className="mx-auto mt-4 max-w-2xl text-lg text-white/75">
-              Find a physical shop, see when it is open, and check whether it sells used games, takes trade-ins, or stocks retro.
-            </p>
+      <section className="overflow-hidden bg-stage text-paper">
+        <div className="mx-auto grid max-w-6xl lg:grid-cols-12">
+          <div className="relative z-10 flex flex-col justify-between px-4 py-10 lg:col-span-5 lg:py-14 lg:pr-10">
+            <div>
+              <p className="kicker text-blue-mist">Worldwide</p>
+              <h1 className="mt-8">
+                <span className="block font-serif text-[1.65rem] leading-none font-normal text-silver italic sm:text-3xl">
+                  video game
+                </span>
+                <span className="mt-2 block font-display text-[clamp(4.6rem,17vw,7.75rem)] leading-[0.76] font-bold tracking-[-0.045em] text-white uppercase">
+                  shops
+                </span>
+              </h1>
+              <span className="mt-5 block h-1 w-16 bg-blue" aria-hidden="true" />
+              <p className="mt-6 max-w-sm font-serif text-lg leading-relaxed text-silver">{description}</p>
+              {shops.length > 0 ? (
+                <p className="mt-4 kicker text-blue-mist">
+                  {shops.length.toLocaleString("en-US")} {shops.length === 1 ? "shop" : "shops"}
+                </p>
+              ) : null}
+            </div>
           </div>
+          {featured?.photo ? (
+            <div className="relative lg:col-span-7">
+              <figure className="relative aspect-[5/4] lg:absolute lg:inset-0 lg:aspect-auto">
+                <img
+                  src={featured.photo}
+                  alt=""
+                  width={1200}
+                  height={900}
+                  className="h-full w-full object-cover lg:absolute lg:inset-0"
+                />
+                <figcaption className="absolute bottom-4 left-4 max-w-[min(100%-2rem,22rem)] bg-silver px-3 py-2 text-ink sm:bottom-6 sm:left-6 lg:-left-6">
+                  <span className="block font-serif text-lg leading-tight font-semibold break-words">
+                    {featured.name}
+                  </span>
+                  {shopLocation(featured).line || shopLocation(featured).country ? (
+                    <span className="mt-1 block font-mono text-xs tracking-wide text-ink-soft">
+                      {[shopLocation(featured).line, shopLocation(featured).country].filter(Boolean).join(" · ")}
+                    </span>
+                  ) : null}
+                </figcaption>
+              </figure>
+            </div>
+          ) : (
+            <div className="hidden border-l border-white/15 lg:col-span-7 lg:block" />
+          )}
         </div>
-      </section>
-      <div className="relative z-10 mx-auto -mt-8 max-w-3xl px-4">
-        <SearchForm />
-      </div>
-
-      <section className="mx-auto max-w-6xl px-4 pb-8 pt-12">
-        <h2 className="text-3xl font-semibold tracking-tight">Browse by platform</h2>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {PLATFORMS.map((platform) => (
-            <a
-              key={platform.slug}
-              href={platformPath(platform.slug)}
-              className="rounded-3xl border border-[#d5dbe3] bg-[linear-gradient(180deg,#ffffff,#eef1f5)] p-5 shadow-[0_8px_24px_rgba(9,11,16,0.04)] hover:border-[#155eef]"
-            >
-              <span className="block text-lg font-semibold">{platform.label}</span>
-              <span className="mt-2 block text-sm text-muted">Open the {platform.label} list</span>
-            </a>
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto grid max-w-6xl gap-4 px-4 py-8 md:grid-cols-3">
-        {facts.map((fact) => (
-          <article key={fact.title} className="rounded-3xl border border-[#d5dbe3] bg-white p-6">
-            <h2 className="text-xl font-semibold">{fact.title}</h2>
-            <p className="mt-3 text-[#3c4550]">{fact.body}</p>
-          </article>
-        ))}
+        <form action="/directory" method="get" role="search" className="border-t border-white/15 bg-silver text-ink">
+          <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-end">
+            <div className="sm:w-44 sm:pb-2">
+              <label htmlFor="home-lookup" className="kicker text-ink">
+                Search the directory
+              </label>
+              <p id="home-lookup-hint" className="mt-1 text-sm text-ink-soft">
+                City, country, or the name on the sign.
+              </p>
+            </div>
+            <input
+              id="home-lookup"
+              name="q"
+              placeholder="City, country, or shop name"
+              autoComplete="off"
+              aria-describedby="home-lookup-hint"
+              className="min-h-11 w-full min-w-0 flex-1 border-0 border-b-2 border-ink bg-transparent px-0 font-serif text-lg text-ink placeholder:text-muted focus:border-blue-ink"
+            />
+            <button type="submit" className="btn btn-primary w-full sm:w-auto">
+              Search
+            </button>
+          </div>
+        </form>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-8">
-        <div className="flex items-end justify-between gap-4">
-          <h2 className="text-3xl font-semibold tracking-tight">Browse by state</h2>
-          <a href="/directory/states" className="text-sm font-medium text-[#155eef]">
-            All states
-          </a>
-        </div>
-        {states.length > 0 ? (
-          <ul className="mt-6 flex flex-wrap gap-2">
-            {states.slice(0, 12).map((state) => (
-              <li key={state.slug}>
-                <a
-                  href={`/directory/${state.slug}`}
-                  className="inline-flex rounded-full border border-[#d5dbe3] bg-white px-3 py-1.5 text-sm hover:border-[#155eef]"
-                >
-                  {state.name} ({state.count})
-                </a>
-              </li>
-            ))}
-          </ul>
+      {shops.length > 0 ? (
+        <section className="mx-auto max-w-6xl px-4 py-10" aria-labelledby="place-index-heading">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <h2 id="place-index-heading" className="font-serif text-3xl font-normal text-ink italic">
+              Shops
+            </h2>
+            <Link href="/directory" className="link">
+              All stores
+            </Link>
+          </div>
+          <div className="mt-5 hidden border-b border-ink pb-2 sm:grid sm:grid-cols-[11rem_minmax(0,1fr)_10rem] sm:gap-6">
+            <span className="kicker text-muted">Place</span>
+            <span className="kicker text-muted">Shop</span>
+            <span className="kicker text-right text-muted">Country</span>
+          </div>
+          <ol className="border-t border-ink sm:border-t-0">
+            {shops.slice(0, 6).map((store) => {
+              const place = shopLocation(store);
+              return (
+                <li key={store.id} className="border-b border-silver">
+                  <Link
+                    href={storePath(store.slug)}
+                    className="group grid gap-1 py-4 sm:grid-cols-[11rem_minmax(0,1fr)_10rem] sm:items-baseline sm:gap-6 hover:bg-white"
+                  >
+                    {place.line ? (
+                      <span className="font-mono text-xs tracking-wide text-blue-ink">{place.line}</span>
+                    ) : (
+                      <span />
+                    )}
+                    <span className="min-w-0 font-serif text-xl leading-snug font-semibold break-words text-ink group-hover:text-blue-ink-ink">
+                      {store.displayName}
+                    </span>
+                    {place.country ? <span className="kicker text-muted sm:text-right">{place.country}</span> : <span />}
+                  </Link>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      ) : null}
+
+      <section id="countries" className="mx-auto max-w-6xl scroll-mt-24 px-4 pb-12">
+        <h2 className="text-4xl text-ink uppercase sm:text-5xl">Cities and countries</h2>
+        {states.length > 0 || countries.length > 0 ? (
+          <div className="mt-6 grid gap-10 lg:grid-cols-2">
+            {states.length > 0 ? (
+              <div>
+                <h3 className="kicker text-muted">States with shops</h3>
+                <ul className="mt-3 border-t border-ink">
+                  {states.map((state) => (
+                    <li key={state.slug} className="border-b border-line">
+                      <Link
+                        href={`/directory/${state.slug}`}
+                        className="flex min-h-12 items-baseline justify-between gap-3 py-2 hover:text-blue-ink"
+                      >
+                        <span className="font-display text-2xl font-bold uppercase">{state.name}</span>
+                        <span className="kicker text-muted">{state.count.toLocaleString("en-US")}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3">
+                  <Link href="/directory/states" className="link text-sm">
+                    All states
+                  </Link>
+                </p>
+              </div>
+            ) : null}
+            {countries.length > 0 ? (
+              <div>
+                <h3 className="kicker text-muted">Countries</h3>
+                <ul className="mt-3 border-t border-ink">
+                  {countries.map((country) => (
+                    <li key={country.name} className="border-b border-line">
+                      <Link
+                        href={`/directory?q=${encodeURIComponent(country.name)}`}
+                        className="flex min-h-12 items-baseline justify-between gap-3 py-2 hover:text-blue-ink"
+                      >
+                        <span className="font-display text-2xl font-bold uppercase">{country.name}</span>
+                        <span className="kicker text-muted">{country.count.toLocaleString("en-US")}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
         ) : (
-          <p className="mt-4 text-[#3c4550]">
-            State pages fill in as stores are added. The full list is on the states page.
-          </p>
+          <div className="mt-6 border-t border-ink py-8">
+            <p className="text-ink-soft">No shops are listed yet.</p>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <Link href="/directory" className="btn btn-primary">
+                All stores
+              </Link>
+              <Link href="/submit" className="btn btn-ghost">
+                Add a store
+              </Link>
+            </div>
+          </div>
         )}
       </section>
 
-      <section className="mx-auto max-w-3xl px-4 py-8">
-        <h2 className="text-3xl font-semibold tracking-tight">Questions</h2>
-        <div className="mt-4 space-y-3">
-          {questions.map((item) => (
-            <details key={item.q} className="rounded-2xl border border-[#d5dbe3] bg-white px-5 py-4">
-              <summary className="cursor-pointer font-medium">{item.q}</summary>
-              <p className="mt-3 text-[#3c4550]">{item.a}</p>
-            </details>
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-4 py-10">
-        <div className="relative overflow-hidden rounded-[2rem] bg-[#090b10] px-8 py-12 text-white">
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_30%,rgba(255,255,255,0.14)_50%,transparent_70%)]" />
-          <div className="relative max-w-2xl">
-            <h2 className="text-3xl font-semibold tracking-tight">Own a video game store?</h2>
-            <p className="mt-3 text-white/75">
-              Send the address, hours, and platforms. Listings are reviewed before they go on the public site.
+      <section className="border-t border-ink bg-white">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-12 sm:items-end">
+          <div className="sm:col-span-7">
+            <p className="kicker text-blue-ink">Shop owners</p>
+            <h2 className="mt-3 font-serif text-4xl font-normal text-ink italic sm:text-5xl">This shop is yours</h2>
+            <p className="mt-3 max-w-xl text-lg text-ink-soft">
+              If the shop is yours, send the name, the street, and the city. We’ll read it before the page goes up.
             </p>
-            <a href="/submit" className="mt-6 inline-flex rounded-full bg-[#155eef] px-5 py-2.5 text-sm font-medium text-white">
-              Submit a store
-            </a>
+          </div>
+          <div className="sm:col-span-5 sm:text-right">
+            <Link href="/submit" className="btn btn-primary">
+              Add a store
+            </Link>
           </div>
         </div>
       </section>
     </PageShell>
   );
+}
+
+function countryIndex(shops: ShopView[]): { name: string; count: number }[] {
+  const counts = new Map<string, number>();
+  for (const store of shops) {
+    const name = shopCountryName(store);
+    if (!name) continue;
+    counts.set(name, (counts.get(name) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "en"));
 }

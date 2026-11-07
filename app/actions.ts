@@ -22,17 +22,20 @@ async function saveMessage(row: InboxInsert): Promise<FormState> {
   if (!supabase) {
     return {
       status: "error",
-      message: "Nothing was saved. The store database is not connected yet.",
+      message: "That didn’t save. Try again in a little while.",
     };
   }
   const { error } = await supabase.from("inbox_messages").insert(row);
   if (error) {
     console.error(error.message);
-    return { status: "error", message: "That could not be saved. Please try again." };
+    return { status: "error", message: "That didn’t save. Please try again." };
   }
   return {
     status: "ok",
-    message: "Saved. We review it before anything goes on the public site.",
+    message:
+      row.kind === "store_submission"
+        ? "Got it. We’ll read this before the shop goes up."
+        : "Got it. We’ll check the listing.",
   };
 }
 
@@ -41,7 +44,7 @@ export async function submitContact(_previous: FormState, formData: FormData): P
   const email = text(formData, "email", 180);
   const message = text(formData, "message", 2000);
   if (name.length < 2 || !emailOk(email) || message.length < 10) {
-    return { status: "error", message: "Add your name, a real email, and a short message." };
+    return { status: "error", message: "Add your name, a real email, and a short note." };
   }
   return saveMessage({ kind: "contact", name, email, message });
 }
@@ -50,7 +53,9 @@ export async function submitStore(_previous: FormState, formData: FormData): Pro
   const storeName = text(formData, "storeName", 160);
   const address = text(formData, "address", 200);
   const city = text(formData, "city", 80);
-  const state = getStateFromInput(text(formData, "state", 80));
+  const country = text(formData, "country", 80);
+  const region = text(formData, "region", 80);
+  const usState = getStateFromInput(region);
   const email = text(formData, "email", 180);
   const phone = text(formData, "phone", 40);
   const website = text(formData, "website", 200);
@@ -59,14 +64,14 @@ export async function submitStore(_previous: FormState, formData: FormData): Pro
     (label) => formData.get(`platform-${label}`) === "on",
   );
 
-  if (storeName.length < 2 || address.length < 4 || city.length < 2 || !state) {
+  if (storeName.length < 2 || address.length < 4 || city.length < 2 || country.length < 2) {
     return {
       status: "error",
-      message: "Store name, street address, city, and state are required.",
+      message: "We need the store name, street, city, and country.",
     };
   }
   if (email && !emailOk(email)) {
-    return { status: "error", message: "That email does not look complete." };
+    return { status: "error", message: "That email doesn’t look complete." };
   }
 
   return saveMessage({
@@ -76,7 +81,7 @@ export async function submitStore(_previous: FormState, formData: FormData): Pro
     store_name: storeName,
     address,
     city,
-    state: state.name,
+    state: usState?.name || region || country,
     phone: phone || null,
     website: website || null,
     platforms,
@@ -84,6 +89,6 @@ export async function submitStore(_previous: FormState, formData: FormData): Pro
     sells_used: formData.get("sellsUsed") === "on",
     accepts_trade_ins: formData.get("tradeIns") === "on",
     repairs_consoles: formData.get("repairs") === "on",
-    message: note || null,
+    message: [note, `Country: ${country}`].filter(Boolean).join("\n\n") || null,
   });
 }

@@ -1,8 +1,7 @@
 import type { CatalogStore } from "@/lib/catalog";
-import { parseDayHours, WEEKDAYS } from "@/lib/hours";
 import { cityPath, statePath, storePath } from "@/lib/paths";
 import { BRAND, PAGE_SIZE, SITE_URL } from "@/lib/site";
-import type { UsState } from "@/lib/states";
+import { schemaOpeningHours, shopCountry, socialLinks, type ShopView } from "@/lib/shop-view";
 
 export function absoluteUrl(path: string): string {
   return `${SITE_URL}${path}`;
@@ -35,6 +34,7 @@ export function homeJsonLd() {
         "@type": "WebSite",
         name: BRAND,
         url: SITE_URL,
+        description: "Find video game stores you can walk into. Search by country, city, or shop name.",
       },
     ],
   };
@@ -65,7 +65,7 @@ export function collectionJsonLd(input: {
     itemListElement: input.stores.map((store, index) => ({
       "@type": "ListItem",
       position: (input.page - 1) * PAGE_SIZE + index + 1,
-      name: store.name,
+      name: store.displayName,
       url: absoluteUrl(storePath(store.slug)),
     })),
   };
@@ -79,69 +79,81 @@ export function collectionJsonLd(input: {
   };
 }
 
-const SCHEMA_DAYS: Record<string, string> = {
-  monday: "https://schema.org/Monday",
-  tuesday: "https://schema.org/Tuesday",
-  wednesday: "https://schema.org/Wednesday",
-  thursday: "https://schema.org/Thursday",
-  friday: "https://schema.org/Friday",
-  saturday: "https://schema.org/Saturday",
-  sunday: "https://schema.org/Sunday",
-};
+function stored(value: string | null | undefined): string {
+  return typeof value === "string" ? value.trim() : "";
+}
 
-export function storeJsonLd(store: CatalogStore) {
-  const openingHoursSpecification = [];
-  if (store.hours) {
-    for (const [key] of WEEKDAYS) {
-      const value = store.hours[key];
-      if (!value) continue;
-      const parsed = parseDayHours(value);
-      if (parsed.status !== "parsed") continue;
-      for (const range of parsed.ranges) {
-        openingHoursSpecification.push({
-          "@type": "OpeningHoursSpecification",
-          dayOfWeek: SCHEMA_DAYS[key],
-          opens: range.opens,
-          closes: range.closes,
-        });
-      }
-    }
-  }
+function httpUrl(value: string | null | undefined): string | null {
+  const url = stored(value);
+  return /^https?:\/\//i.test(url) ? url : null;
+}
+
+/** LocalBusiness from stored fields only. Missing facts are omitted, not filled in. */
+export function storeJsonLd(store: ShopView): Record<string, unknown> {
+  const country = shopCountry(store) || (stored(store.stateAbbr) ? "US" : "");
+  const street = stored(store.address);
+  const locality = stored(store.city);
+  const region = stored(store.stateAbbr) || stored(store.state);
+  const postal = stored(store.zip);
+  const address: Record<string, unknown> = { "@type": "PostalAddress" };
+  if (street) address.streetAddress = street;
+  if (locality) address.addressLocality = locality;
+  if (region) address.addressRegion = region;
+  if (postal) address.postalCode = postal;
+  if (country) address.addressCountry = country;
 
   const business: Record<string, unknown> = {
     "@type": "LocalBusiness",
-    name: store.name,
+    name: stored(store.displayName) || stored(store.name),
     url: absoluteUrl(storePath(store.slug)),
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: store.address,
-      addressLocality: store.city,
-      addressRegion: store.stateAbbr,
-      ...(store.zip ? { postalCode: store.zip } : {}),
-      addressCountry: "US",
-    },
   };
-  if (store.phone) business.telephone = store.phone;
-  if (store.lat != null && store.lng != null) {
+  if (street || locality || region || postal || country) business.address = address;
+
+  const phone = stored(store.phone);
+  if (phone) business.telephone = phone;
+
+  const sameAs: string[] = [];
+  const website = httpUrl(store.website);
+  if (website) sameAs.push(website);
+  for (const link of socialLinks(store)) {
+    if (!sameAs.includes(link.href)) sameAs.push(link.href);
+  }
+  if (sameAs.length > 0) business.sameAs = sameAs;
+
+  if (store.lat != null && store.lng != null && Number.isFinite(store.lat) && Number.isFinite(store.lng)) {
     business.geo = {
       "@type": "GeoCoordinates",
       latitude: store.lat,
       longitude: store.lng,
     };
   }
-  if (openingHoursSpecification.length > 0) {
-    business.openingHoursSpecification = openingHoursSpecification;
-  }
-  if (store.photo) business.image = store.photo;
+
+  const openingHours = schemaOpeningHours(store);
+  if (openingHours.length === 1) business.openingHours = openingHours[0];
+  else if (openingHours.length > 1) business.openingHours = openingHours;
+
+  const photo = stored(store.photo);
+  if (photo) business.image = photo;
   return { "@context": "https://schema.org", ...business };
 }
 
-export function storeCrumbs(store: CatalogStore, state: UsState) {
-  return [
+export function storeCrumbs(
+  store: CatalogStore,
+  extra?: { country?: { name: string; href: string } | null; region?: { name: string; href: string } | null },
+) {
+  const crumbs = [
     { name: "Home", path: "/" },
     { name: "Stores", path: "/directory" },
-    { name: state.name, path: statePath(state.slug) },
-    { name: store.city, path: cityPath(state.slug, store.citySlug) },
-    { name: store.name, path: storePath(store.slug) },
   ];
+  if (store.stateSlug) {
+    crumbs.push({ name: store.state, path: statePath(store.stateSlug) });
+    if (store.city && store.citySlug) {
+      crumbs.push({ name: store.city, path: cityPath(store.stateSlug, store.citySlug) });
+    }
+  } else {
+    if (extra?.country) crumbs.push({ name: extra.country.name, path: extra.country.href });
+    if (extra?.region) crumbs.push({ name: extra.region.name, path: extra.region.href });
+  }
+  crumbs.push({ name: store.displayName, path: storePath(store.slug) });
+  return crumbs;
 }

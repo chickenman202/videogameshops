@@ -8,37 +8,64 @@ export function Pagination({ listing }: { listing: ListingOk }) {
     const path = pagePath(listing.basePath, page);
     return listing.filtered ? hrefWithFilters(path, listing.filters) : path;
   };
-  const pages: number[] = [];
-  const start = Math.max(1, listing.page - 2);
+
+  let start = Math.max(1, listing.page - 2);
   const end = Math.min(listing.pageCount, start + 4);
+  start = Math.max(1, end - 4);
+  const pages: number[] = [];
   for (let page = start; page <= end; page += 1) pages.push(page);
 
   return (
-    <nav aria-label="Pages" className="mt-8 flex flex-wrap items-center gap-2">
-      {listing.page > 1 ? (
-        <a href={hrefFor(listing.page - 1)} className="rounded-full border border-[#d5dbe3] bg-white px-4 py-2 text-sm">
-          Previous
-        </a>
-      ) : null}
-      {pages.map((page) => (
-        <a
-          key={page}
-          href={hrefFor(page)}
-          aria-current={page === listing.page ? "page" : undefined}
-          className={
-            page === listing.page
-              ? "rounded-full bg-[#155eef] px-4 py-2 text-sm text-white"
-              : "rounded-full border border-[#d5dbe3] bg-white px-4 py-2 text-sm"
-          }
-        >
-          {page}
-        </a>
-      ))}
-      {listing.page < listing.pageCount ? (
-        <a href={hrefFor(listing.page + 1)} className="rounded-full border border-[#d5dbe3] bg-white px-4 py-2 text-sm">
-          Next
-        </a>
-      ) : null}
+    <nav aria-label="Pages" className="mt-8 flex flex-col gap-3 border-t border-line pt-5">
+      <p className="text-sm text-muted">
+        Page {listing.page.toLocaleString("en-US")} of {listing.pageCount.toLocaleString("en-US")}
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        {listing.page > 1 ? (
+          <a href={hrefFor(listing.page - 1)} className="btn btn-ghost">
+            Previous
+          </a>
+        ) : null}
+        {start > 1 ? (
+          <PageLink href={hrefFor(1)} page={1} current={false} />
+        ) : null}
+        {start > 2 ? (
+          <span aria-hidden="true" className="px-1 text-muted">
+            …
+          </span>
+        ) : null}
+        {pages.map((page) => (
+          <PageLink key={page} href={hrefFor(page)} page={page} current={page === listing.page} />
+        ))}
+        {end < listing.pageCount - 1 ? (
+          <span aria-hidden="true" className="px-1 text-muted">
+            …
+          </span>
+        ) : null}
+        {end < listing.pageCount ? (
+          <PageLink href={hrefFor(listing.pageCount)} page={listing.pageCount} current={false} />
+        ) : null}
+        {listing.page < listing.pageCount ? (
+          <a href={hrefFor(listing.page + 1)} className="btn btn-ghost">
+            Next
+          </a>
+        ) : null}
+      </div>
     </nav>
+  );
+}
+
+function PageLink({ href, page, current }: { href: string; page: number; current: boolean }) {
+  if (current) {
+    return (
+      <span aria-current="page" className="btn btn-primary min-w-11 px-3">
+        {page.toLocaleString("en-US")}
+      </span>
+    );
+  }
+  return (
+    <a href={href} className="btn btn-ghost min-w-11 px-3">
+      {page.toLocaleString("en-US")}
+    </a>
   );
 }

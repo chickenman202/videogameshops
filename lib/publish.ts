@@ -62,3 +62,15 @@ export function isUsableAbout(value: string | null | undefined): boolean {
   if (isKeyboardMash(text)) return false;
   return true;
 }
+
+/**
+ * A shop page stays public either way.
+ * It is indexable only when at least one of street, phone, or website is stored.
+ */
+export function isIndexableShop(store: {
+  address: string;
+  phone: string | null;
+  website: string | null;
+}): boolean {
+  return Boolean(store.address.trim() || store.phone?.trim() || store.website?.trim());
+}

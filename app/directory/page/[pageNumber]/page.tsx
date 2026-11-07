@@ -2,9 +2,10 @@ import { notFound, redirect } from "next/navigation";
 import { filtersFromRecord, hrefWithFilters } from "@/lib/filters";
 import { directoryMetadata, directoryPage, pathPage } from "@/lib/listing-page";
 
-// The address can include filters, so the page is drawn per visit.
-// The store list itself is reused for about a day.
-export const dynamic = "force-dynamic";
+export const revalidate = 86400;
+// This page reads filter queries, so it is rendered per visit.
+// Do not add generateStaticParams: a static page that also reads searchParams crashes in production.
+// The shop list itself is cached for a day inside loadCatalog.
 
 type Search = Record<string, string | string[] | undefined>;
 
