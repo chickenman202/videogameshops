@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { BRAND, SITE_URL } from "@/lib/site";
 import "./globals.css";
@@ -27,7 +28,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-screen bg-background text-foreground">{children}</body>
+      <body className="min-h-screen bg-background text-foreground">
+        {children}
+        {/* Counts page visits on the live Vercel site. No tracking id is stored in the code. */}
+        <Analytics />
+      </body>
     </html>
   );
 }
