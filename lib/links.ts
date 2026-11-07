@@ -39,10 +39,13 @@ export function relatedInCity(stores: CatalogStore[], store: CatalogStore, limit
 /** Links from a shop page back up to its city, region, country, and the home page. */
 export function storePlaceLinks(store: CatalogStore): { href: string; label: string }[] {
   const links: { href: string; label: string }[] = [];
-  if (store.city && store.citySlug && store.stateSlug) {
+  const regionPiece = store.countryCode === "US" ? store.stateSlug : store.regionSlug;
+  if (store.city && store.citySlug && regionPiece) {
     links.push({ href: cityPathFor(store), label: `Video game stores in ${store.city}` });
   }
-  if (store.state && store.stateSlug) {
+  // A US state page exists with one shop. Pages for other regions exist only
+  // when that region has enough shops, so this one-shop helper does not guess.
+  if (store.countryCode === "US" && store.state && store.stateSlug) {
     links.push({ href: regionPathFor(store), label: `Video game stores in ${store.state}` });
   }
   if (store.countryName && store.countrySlug) {

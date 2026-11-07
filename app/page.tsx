@@ -4,7 +4,7 @@ import { PageShell } from "@/components/page-shell";
 import { loadCatalog } from "@/lib/catalog";
 import { FIXTURE_SHOPS } from "@/lib/fixture-shops";
 import { homeJsonLd, JsonLd } from "@/lib/jsonld";
-import { storePath } from "@/lib/paths";
+import { countryPath, storePath } from "@/lib/paths";
 import { BRAND, SITE_URL } from "@/lib/site";
 import { shopCountryName, shopLocation, type ShopView } from "@/lib/shop-view";
 import { US_STATES } from "@/lib/states";
@@ -189,9 +189,9 @@ export default async function HomePage() {
                 <h3 className="kicker text-muted">Countries</h3>
                 <ul className="mt-3 border-t border-ink">
                   {countries.map((country) => (
-                    <li key={country.name} className="border-b border-line">
+                    <li key={country.slug} className="border-b border-line">
                       <Link
-                        href={`/directory?q=${encodeURIComponent(country.name)}`}
+                        href={countryPath(country.slug)}
                         className="flex min-h-12 items-baseline justify-between gap-3 py-2 hover:text-blue-ink"
                       >
                         <span className="font-display text-2xl font-bold uppercase">{country.name}</span>
@@ -238,14 +238,17 @@ export default async function HomePage() {
   );
 }
 
-function countryIndex(shops: ShopView[]): { name: string; count: number }[] {
-  const counts = new Map<string, number>();
+function countryIndex(shops: ShopView[]): { name: string; slug: string; count: number }[] {
+  const counts = new Map<string, { name: string; count: number }>();
   for (const store of shops) {
+    const slug = store.countrySlug;
     const name = shopCountryName(store);
-    if (!name) continue;
-    counts.set(name, (counts.get(name) ?? 0) + 1);
+    if (!slug || !name) continue;
+    const current = counts.get(slug);
+    if (!current) counts.set(slug, { name, count: 1 });
+    else current.count += 1;
   }
   return [...counts.entries()]
-    .map(([name, count]) => ({ name, count }))
+    .map(([slug, group]) => ({ slug, name: group.name, count: group.count }))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "en"));
 }

@@ -15,7 +15,9 @@ import { isUsableAbout } from "@/lib/publish";
 import {
   cityPath,
   countriesPath,
+  countryCityPath,
   countryPath,
+  countryPlatformCityPath,
   countryRegionPath,
   pagePath,
   platformCityPath,
@@ -102,6 +104,28 @@ function cityGroups(stores: CatalogStore[], state: UsState): CityLink[] {
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "en"));
 }
 
+/** Cities inside one country region. The link is the country city page, not a US state page. */
+function countryCityGroups(stores: CatalogStore[], countrySlug: string, regionSlug: string): CityLink[] {
+  const grouped = groupPlaceNames(stores.map((store) => store.city));
+  const groups = new Map<string, string[]>();
+  for (const store of stores) {
+    const name = store.city.trim();
+    const slug = grouped.get(name) ?? "";
+    if (!name || !slug) continue;
+    const names = groups.get(slug) ?? [];
+    names.push(name);
+    groups.set(slug, names);
+  }
+  return [...groups.entries()]
+    .map(([slug, names]) => ({
+      name: taiwanCityTitle(names) ?? preferredPlaceName(names),
+      slug,
+      count: names.length,
+      href: countryCityPath(countrySlug, regionSlug, slug),
+    }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "en"));
+}
+
 function platformGroups(stores: CatalogStore[], hrefFor: (slug: string) => string): PlatformLink[] {
   return PLATFORMS.map((platform) => {
     const count = stores.filter((store) => store.platforms.includes(platform.label)).length;
@@ -176,6 +200,29 @@ export async function buildListing(input: {
   if (state) pool = pool.filter((store) => store.stateSlug === state.slug);
   if (country) pool = countryStores;
 
+  // Narrow to the region before the city. A city with one or two shops still
+  // has a page. The region list itself stays hidden until it has enough shops.
+  let regionName: string | null = null;
+  let regionCount = 0;
+  if (country && input.regionSlug) {
+    const grouped = regionSlugByName(pool, country.code);
+    const inRegion = pool.filter((store) => grouped.get(store.state.trim()) === input.regionSlug);
+    regionCount = inRegion.length;
+    if (regionCount === 0) return { status: "not-found" };
+    if (!input.citySlug && regionCount < MIN_CITY_STORES) return { status: "not-found" };
+    regionName = preferredPlaceName(inRegion.map((store) => store.state)) || input.regionSlug;
+    pool = inRegion;
+  }
+
+  const cities =
+    state && !input.citySlug
+      ? cityGroups(pool, state)
+      : country && input.regionSlug && !input.citySlug
+        ? countryCityGroups(pool, country.slug, input.regionSlug)
+        : country && !input.regionSlug
+          ? regionLinks(pool, country)
+          : [];
+
   let cityName: string | null = null;
   if (input.citySlug) {
     const grouped = groupPlaceNames(pool.map((store) => store.city));
@@ -186,32 +233,21 @@ export async function buildListing(input: {
     pool = inCity;
   }
 
-  let regionName: string | null = null;
-  if (country && input.regionSlug) {
-    const grouped = regionSlugByName(pool, country.code);
-    const inRegion = pool.filter((store) => grouped.get(store.state.trim()) === input.regionSlug);
-    if (inRegion.length < MIN_CITY_STORES) return { status: "not-found" };
-    regionName = preferredPlaceName(inRegion.map((store) => store.state)) || input.regionSlug;
-    pool = inRegion;
-  }
-
-  const cities =
-    state && !input.citySlug
-      ? cityGroups(pool, state)
-      : country && !input.regionSlug
-        ? regionLinks(pool, country)
-        : [];
   const platformLinks =
     input.citySlug && state
       ? platformGroups(pool, (slug) => platformCityPath(state.slug, input.citySlug ?? "", slug))
-      : !state && !platform && !country
-        ? PLATFORMS.map((item) => ({
-            label: item.label,
-            slug: item.slug,
-            count: pool.filter((store) => store.platforms.includes(item.label)).length,
-            href: platformPath(item.slug),
-          })).filter((item) => item.count > 0)
-        : [];
+      : input.citySlug && country && input.regionSlug
+        ? platformGroups(pool, (slug) =>
+            countryPlatformCityPath(country.slug, input.regionSlug ?? "", input.citySlug ?? "", slug),
+          )
+        : !state && !platform && !country
+          ? PLATFORMS.map((item) => ({
+              label: item.label,
+              slug: item.slug,
+              count: pool.filter((store) => store.platforms.includes(item.label)).length,
+              href: platformPath(item.slug),
+            })).filter((item) => item.count > 0)
+          : [];
 
   if (platform) pool = pool.filter((store) => store.platforms.includes(platform.label));
 
@@ -229,7 +265,11 @@ export async function buildListing(input: {
   const platformLabel = platform?.label ?? null;
 
   let basePath = "/directory";
-  if (country && input.regionSlug) basePath = countryRegionPath(country.slug, input.regionSlug);
+  if (country && input.regionSlug && input.citySlug && platform) {
+    basePath = countryPlatformCityPath(country.slug, input.regionSlug, input.citySlug, platform.slug);
+  } else if (country && input.regionSlug && input.citySlug) {
+    basePath = countryCityPath(country.slug, input.regionSlug, input.citySlug);
+  } else if (country && input.regionSlug) basePath = countryRegionPath(country.slug, input.regionSlug);
   else if (country) basePath = countryPath(country.slug);
   else if (platform && !state) basePath = platformPath(platform.slug);
   else if (state && input.citySlug && platform) {
@@ -242,8 +282,12 @@ export async function buildListing(input: {
   const place =
     cityName && state
       ? `${cityName}, ${state.name}`
-      : state?.name ??
-        (regionName && country ? `${regionName}, ${country.name}` : country?.name ?? null);
+      : cityName && regionName
+        ? `${cityName}, ${regionName}`
+        : cityName && country
+          ? `${cityName}, ${country.name}`
+          : state?.name ??
+            (regionName && country ? `${regionName}, ${country.name}` : country?.name ?? null);
   const h1 = platformLabel
     ? place
       ? `${platformHeading(platformLabel)} in ${place}`
@@ -284,14 +328,25 @@ export async function buildListing(input: {
     crumbs.push({ name: "Countries", href: countriesPath() });
     crumbs.push({ name: country.name, href: countryPath(country.slug) });
     if (input.regionSlug && regionName) {
-      crumbs.push({ name: regionName, href: countryRegionPath(country.slug, input.regionSlug) });
+      crumbs.push(
+        regionCount >= MIN_CITY_STORES
+          ? { name: regionName, href: countryRegionPath(country.slug, input.regionSlug) }
+          : { name: regionName },
+      );
     }
   }
   if (state) crumbs.push({ name: state.name, href: statePath(state.slug) });
   if (state && input.citySlug && cityName) {
     crumbs.push({ name: cityName, href: cityPath(state.slug, input.citySlug) });
   }
+  if (country && input.regionSlug && input.citySlug && cityName) {
+    crumbs.push({
+      name: cityName,
+      href: countryCityPath(country.slug, input.regionSlug, input.citySlug),
+    });
+  }
   if (platform) crumbs.push({ name: platform.label });
+  else if (country && input.citySlug && cityName) crumbs[crumbs.length - 1] = { name: cityName };
   else if (input.regionSlug && regionName) crumbs[crumbs.length - 1] = { name: regionName };
   else if (country) crumbs[crumbs.length - 1] = { name: country.name };
   else if (input.citySlug && cityName) crumbs[crumbs.length - 1] = { name: cityName };

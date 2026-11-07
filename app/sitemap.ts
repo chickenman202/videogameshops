@@ -1,7 +1,18 @@
 import type { MetadataRoute } from "next";
 import { loadCatalog } from "@/lib/catalog";
 import { countryEntries, regionLinks, regionSlugByName } from "@/lib/country-browse";
-import { cityPath, countriesPath, countryPath, platformCityPath, platformPath, statePath, storePath } from "@/lib/paths";
+import { groupPlaceNames } from "@/lib/place-fold";
+import {
+  cityPath,
+  countriesPath,
+  countryCityPath,
+  countryPath,
+  countryPlatformCityPath,
+  platformCityPath,
+  platformPath,
+  statePath,
+  storePath,
+} from "@/lib/paths";
 import { PLATFORMS } from "@/lib/platforms";
 import { CONTENT_UPDATED, MIN_CITY_STORES, MIN_PLATFORM_CITY_STORES, SITE_URL } from "@/lib/site";
 import { US_STATES } from "@/lib/states";
@@ -111,6 +122,68 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }),
     );
 
+  // Cities outside the US. The slug is the same fold the city page uses, so a
+  // merged spelling is one URL. A city needs 3 shops before it is listed.
+  const worldPlaces = countries
+    .filter((country) => country.code !== "US")
+    .flatMap((country) => {
+      const regionNames = regionSlugByName(catalog.stores, country.code);
+      const inCountry = catalog.stores.filter((store) => store.country === country.code && store.city.trim());
+      const byRegion = new Map<string, typeof catalog.stores>();
+      for (const store of inCountry) {
+        const regionSlug = regionNames.get(store.state.trim());
+        if (!regionSlug) continue;
+        const list = byRegion.get(regionSlug) ?? [];
+        list.push(store);
+        byRegion.set(regionSlug, list);
+      }
+      return [...byRegion.entries()].map(([regionSlug, stores]) => ({
+        countrySlug: country.slug,
+        regionSlug,
+        stores,
+      }));
+    });
+  const worldCityEntries = worldPlaces.flatMap((region) => {
+    const grouped = groupPlaceNames(region.stores.map((store) => store.city));
+    const buckets = new Map<string, string[]>();
+    for (const store of region.stores) {
+      const slug = grouped.get(store.city.trim());
+      if (!slug) continue;
+      const updated = buckets.get(slug) ?? [];
+      updated.push(store.updatedAt);
+      buckets.set(slug, updated);
+    }
+    return [...buckets.entries()].flatMap(([citySlug, updated]) => {
+      if (updated.length < MIN_CITY_STORES) return [];
+      return [entry(countryCityPath(region.countrySlug, region.regionSlug, citySlug), newest(updated))];
+    });
+  });
+
+  const worldPlatformCityEntries: MetadataRoute.Sitemap = [];
+  for (const platform of PLATFORMS) {
+    for (const region of worldPlaces) {
+      const matching = region.stores.filter((store) => store.platforms.includes(platform.label));
+      const grouped = groupPlaceNames(matching.map((store) => store.city));
+      const buckets = new Map<string, string[]>();
+      for (const store of matching) {
+        const slug = grouped.get(store.city.trim());
+        if (!slug) continue;
+        const updated = buckets.get(slug) ?? [];
+        updated.push(store.updatedAt);
+        buckets.set(slug, updated);
+      }
+      for (const [citySlug, updated] of buckets) {
+        if (updated.length < MIN_PLATFORM_CITY_STORES) continue;
+        worldPlatformCityEntries.push(
+          entry(
+            countryPlatformCityPath(region.countrySlug, region.regionSlug, citySlug, platform.slug),
+            newest(updated),
+          ),
+        );
+      }
+    }
+  }
+
   const storeEntries = catalog.stores
     .filter((store) => store.indexable)
     .map((store) => entry(storePath(store.slug), store.updatedAt));
@@ -121,8 +194,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...countryPageEntries,
     ...regionPageEntries,
     ...cityEntries,
+    ...worldCityEntries,
     ...platformEntries,
     ...platformCityEntries,
+    ...worldPlatformCityEntries,
     ...storeEntries,
   ];
 }

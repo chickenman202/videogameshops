@@ -28,7 +28,7 @@ export async function generateMetadata(props: PlatformCityProps): Promise<Metada
   return directoryMetadata({
     page: 1,
     countrySlug,
-    stateSlug: regionSlug,
+    regionSlug,
     citySlug,
     platformSlug,
     searchParams,
@@ -43,5 +43,5 @@ export default async function CountryPlatformCityPage(props: PlatformCityProps) 
   if (known?.redirectSlug) {
     permanentRedirect(countryPlatformCityPath(known.redirectSlug, regionSlug, citySlug, platformSlug));
   }
-  return directoryPage({ page: 1, countrySlug, stateSlug: regionSlug, citySlug, platformSlug, searchParams });
+  return directoryPage({ page: 1, countrySlug, regionSlug, citySlug, platformSlug, searchParams });
 }

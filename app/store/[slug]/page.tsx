@@ -6,12 +6,15 @@ import { LoadError } from "@/components/load-error";
 import { PageShell } from "@/components/page-shell";
 import { StoreCard } from "@/components/store-card";
 import { loadCatalog } from "@/lib/catalog";
+import { regionSlugByName } from "@/lib/country-browse";
+import { groupPlaceNames } from "@/lib/place-fold";
 import { storeTitle, toMetaDescription } from "@/lib/copy";
 import { FIXTURE_SHOPS } from "@/lib/fixture-shops";
 import { WEEKDAYS } from "@/lib/hours";
 import { absoluteUrl, breadcrumbJsonLd, JsonLd, storeCrumbs, storeJsonLd } from "@/lib/jsonld";
 import type { Crumb } from "@/lib/listing";
-import { cityPath, countryPath, countryRegionPath, statePath, storePath } from "@/lib/paths";
+import { cityPath, countryCityPath, countryPath, countryRegionPath, statePath, storePath } from "@/lib/paths";
+import { MIN_CITY_STORES } from "@/lib/site";
 import {
   directionsUrl,
   displayPlace,
@@ -33,7 +36,15 @@ export function generateStaticParams() {
 }
 
 async function loadStore(slug: string): Promise<
-  | { status: "ok"; store: ShopView; nearby: ShopView[]; preview: boolean }
+  | {
+      status: "ok";
+      store: ShopView;
+      nearby: ShopView[];
+      preview: boolean;
+      regionShopCount: number;
+      publicRegionSlug: string;
+      publicCitySlug: string;
+    }
   | { status: "missing" }
   | { status: "error" }
 > {
@@ -53,7 +64,20 @@ async function loadStore(slug: string): Promise<
         item.state === store.state,
     )
     .slice(0, 4);
-  return { status: "ok", store, nearby, preview };
+  let regionShopCount = 0;
+  let publicRegionSlug = store.regionSlug;
+  let publicCitySlug = store.citySlug;
+  if (store.countryCode !== "US" && store.countryCode) {
+    const mates = pool.filter((item) => item.countryCode === store.countryCode);
+    const regionNames = regionSlugByName(mates, store.countryCode);
+    publicRegionSlug = regionNames.get(store.state.trim()) || store.regionSlug;
+    const inRegion = publicRegionSlug
+      ? mates.filter((item) => regionNames.get(item.state.trim()) === publicRegionSlug)
+      : [];
+    regionShopCount = inRegion.length;
+    publicCitySlug = groupPlaceNames(inRegion.map((item) => item.city)).get(store.city.trim()) || store.citySlug;
+  }
+  return { status: "ok", store, nearby, preview, regionShopCount, publicRegionSlug, publicCitySlug };
 }
 
 export async function generateMetadata(props: PageProps<"/store/[slug]">): Promise<Metadata> {
@@ -106,17 +130,30 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
   if (result.status === "missing") notFound();
   if (result.status === "error") return <LoadError />;
 
-  const { store, nearby, preview } = result;
+  const { store, nearby, preview, regionShopCount, publicRegionSlug, publicCitySlug } = result;
   const country = shopCountry(store);
   const countryName = shopCountryName(store);
+  const cityHref = preview
+    ? null
+    : store.countryCode === "US" && store.stateSlug && store.citySlug
+      ? cityPath(store.stateSlug, store.citySlug)
+      : store.countrySlug && publicRegionSlug && publicCitySlug
+        ? countryCityPath(store.countrySlug, publicRegionSlug, publicCitySlug)
+        : null;
+  const regionHref =
+    !preview &&
+    store.countryCode !== "US" &&
+    regionShopCount >= MIN_CITY_STORES &&
+    store.countrySlug &&
+    publicRegionSlug
+      ? countryRegionPath(store.countrySlug, publicRegionSlug)
+      : null;
   const crumbs = storeCrumbs(store, {
     country: store.countrySlug
       ? { name: countryName || country, href: countryPath(store.countrySlug) }
       : null,
-    region:
-      store.regionSlug && store.state
-        ? { name: store.state, href: countryRegionPath(store.countrySlug || store.country.toLowerCase(), store.regionSlug) }
-        : null,
+    region: regionHref && store.state ? { name: store.state, href: regionHref } : null,
+    city: cityHref && store.city ? { name: displayPlace(store.city), href: cityHref } : null,
   });
   const facts = [
     store.sellsNew ? "Sells new games" : null,
@@ -146,8 +183,19 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
       pageCrumbs.push({ name: displayPlace(store.city) });
     }
   } else {
-    if (countryName) pageCrumbs.push({ name: countryName });
-    if (store.city) pageCrumbs.push({ name: displayPlace(store.city) });
+    if (countryName && store.countrySlug) {
+      pageCrumbs.push({ name: countryName, href: countryPath(store.countrySlug) });
+    } else if (countryName) {
+      pageCrumbs.push({ name: countryName });
+    }
+    if (store.state) {
+      pageCrumbs.push(
+        regionHref ? { name: displayPlace(store.state), href: regionHref } : { name: displayPlace(store.state) },
+      );
+    }
+    if (store.city) {
+      pageCrumbs.push(cityHref ? { name: displayPlace(store.city), href: cityHref } : { name: displayPlace(store.city) });
+    }
   }
   pageCrumbs.push({ name: store.displayName });
   const about = store.about?.trim() ?? "";
@@ -305,6 +353,13 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
         {nearby.length > 0 ? (
           <section className="mt-14">
             <h2 className="text-4xl uppercase text-ink">More shops in {store.city}</h2>
+            {cityHref ? (
+              <p className="mt-3">
+                <Link href={cityHref} className="link">
+                  All shops in {displayPlace(store.city)}
+                </Link>
+              </p>
+            ) : null}
             <ul className="mt-4">
               {nearby.map((item) => (
                 <li key={item.id}>

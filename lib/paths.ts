@@ -38,25 +38,27 @@ type Place = {
   countryCode: string;
   countrySlug: string;
   stateSlug: string;
+  /** Region URL piece. Outside the US this is not the same as stateSlug, which stays blank. */
+  regionSlug: string;
   citySlug: string;
 };
 
 /** The one region URL for a shop. US states keep /directory/{state}. */
 export function regionPathFor(place: Place): string {
   if (place.countryCode === "US") return statePath(place.stateSlug);
-  return countryRegionPath(place.countrySlug, place.stateSlug);
+  return countryRegionPath(place.countrySlug, place.regionSlug);
 }
 
 /** The one city URL for a shop. */
 export function cityPathFor(place: Place): string {
   if (place.countryCode === "US") return cityPath(place.stateSlug, place.citySlug);
-  return countryCityPath(place.countrySlug, place.stateSlug, place.citySlug);
+  return countryCityPath(place.countrySlug, place.regionSlug, place.citySlug);
 }
 
 /** The one platform-in-a-city URL for a shop. */
 export function platformCityPathFor(place: Place, platformSlug: string): string {
   if (place.countryCode === "US") return platformCityPath(place.stateSlug, place.citySlug, platformSlug);
-  return countryPlatformCityPath(place.countrySlug, place.stateSlug, place.citySlug, platformSlug);
+  return countryPlatformCityPath(place.countrySlug, place.regionSlug, place.citySlug, platformSlug);
 }
 
 export function cityPath(stateSlug: string, citySlug: string): string {

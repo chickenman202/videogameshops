@@ -37,7 +37,7 @@ export async function generateMetadata(props: PlatformCityPageProps): Promise<Me
   return directoryMetadata({
     page,
     countrySlug,
-    stateSlug: regionSlug,
+    regionSlug,
     citySlug,
     platformSlug,
     searchParams,
@@ -59,7 +59,7 @@ export default async function CountryPlatformCityNumberPage(props: PlatformCityP
   return directoryPage({
     page,
     countrySlug,
-    stateSlug: regionSlug,
+    regionSlug,
     citySlug,
     platformSlug,
     searchParams,

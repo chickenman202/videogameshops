@@ -139,7 +139,11 @@ export function storeJsonLd(store: ShopView): Record<string, unknown> {
 
 export function storeCrumbs(
   store: CatalogStore,
-  extra?: { country?: { name: string; href: string } | null; region?: { name: string; href: string } | null },
+  extra?: {
+    country?: { name: string; href: string } | null;
+    region?: { name: string; href: string } | null;
+    city?: { name: string; href: string } | null;
+  },
 ) {
   const crumbs = [
     { name: "Home", path: "/" },
@@ -153,6 +157,7 @@ export function storeCrumbs(
   } else {
     if (extra?.country) crumbs.push({ name: extra.country.name, path: extra.country.href });
     if (extra?.region) crumbs.push({ name: extra.region.name, path: extra.region.href });
+    if (extra?.city) crumbs.push({ name: extra.city.name, path: extra.city.href });
   }
   crumbs.push({ name: store.displayName, path: storePath(store.slug) });
   return crumbs;

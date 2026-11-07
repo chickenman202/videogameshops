@@ -26,7 +26,7 @@ export async function generateMetadata(props: CityPageProps): Promise<Metadata> 
   redirectUnitedStatesAlias({ countrySlug, regionSlug, citySlug, page, searchParams });
   const known = countryBySlug(countrySlug);
   if (known?.redirectSlug) permanentRedirect(countryCityPath(known.redirectSlug, regionSlug, citySlug));
-  return directoryMetadata({ page, countrySlug, stateSlug: regionSlug, citySlug, searchParams });
+  return directoryMetadata({ page, countrySlug, regionSlug, citySlug, searchParams });
 }
 
 export default async function CountryCityNumberPage(props: CityPageProps) {
@@ -40,5 +40,5 @@ export default async function CountryCityNumberPage(props: CityPageProps) {
   if (page === 1) {
     redirect(hrefWithFilters(countryCityPath(countrySlug, regionSlug, citySlug), filtersFromRecord(searchParams)));
   }
-  return directoryPage({ page, countrySlug, stateSlug: regionSlug, citySlug, searchParams });
+  return directoryPage({ page, countrySlug, regionSlug, citySlug, searchParams });
 }
