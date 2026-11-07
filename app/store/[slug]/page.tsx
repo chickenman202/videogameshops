@@ -67,7 +67,7 @@ export async function generateMetadata(props: PageProps<"/store/[slug]">): Promi
   }
   if (result.status === "error") {
     return {
-      title: { absolute: "The directory did not load" },
+      title: { absolute: "The shop list didn’t load" },
       robots: { index: false, follow: true },
     };
   }
@@ -76,7 +76,9 @@ export async function generateMetadata(props: PageProps<"/store/[slug]">): Promi
   const regionLabel = store.stateAbbr || shopCountry(store);
   const title = storeTitle(store.name, placeLabel, regionLabel, store.platforms);
   const placeBit = [store.city, shopCountryName(store) || store.state].filter(Boolean).join(", ");
-  const description = toMetaDescription(store.about?.trim() || (placeBit ? `${store.name}, ${placeBit}.` : store.name));
+  const description = toMetaDescription(
+    store.about?.trim() || (placeBit ? `${store.name} is a video game store in ${placeBit}.` : store.name),
+  );
   return {
     title: { absolute: title },
     description,
@@ -173,7 +175,7 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
             {about ? <p className="max-w-3xl text-lg leading-relaxed text-ink-soft">{about}</p> : null}
             {store.platforms.length > 0 || facts.length > 0 ? (
               <div className="mt-8">
-                <h2 className="text-3xl uppercase text-ink">What they carry</h2>
+                <h2 className="text-3xl uppercase text-ink">They carry</h2>
                 <ul className="mt-3 flex flex-wrap gap-2">
                   {store.platforms.map((platform) => (
                     <li key={platform} className="border border-ink px-3 py-1 font-mono text-xs uppercase">
@@ -189,9 +191,9 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
               </div>
             ) : null}
             <p className="mt-8 text-sm text-muted">
-              Something wrong on this page?{" "}
+              Hours and details can change, so call ahead.{" "}
               <Link className="link" href="/contact">
-                Send a correction
+                Suggest an edit
               </Link>
             </p>
           </div>
@@ -207,7 +209,7 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
                     {hasAddress(store) ? (
                       store.address
                     ) : (
-                      <span className="text-ink-soft">No street address on this listing.</span>
+                      <span className="text-ink-soft">No street on file yet.</span>
                     )}
                     {localLine ? (
                       <>
@@ -299,7 +301,7 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
         </div>
         {nearby.length > 0 ? (
           <section className="mt-14">
-            <h2 className="text-4xl uppercase text-ink">Other stores in {store.city}</h2>
+            <h2 className="text-4xl uppercase text-ink">More shops in {store.city}</h2>
             <ul className="mt-4">
               {nearby.map((item) => (
                 <li key={item.id}>

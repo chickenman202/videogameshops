@@ -20,7 +20,7 @@ export function CityIndex({ cities }: { cities: CityItem[] }) {
           <h2 id="cities-heading" className="text-4xl uppercase text-ink sm:text-5xl">
             Cities
           </h2>
-          <p className="mt-2 text-sm text-muted">Pick a city. The number is how many shops are listed.</p>
+          <p className="mt-2 text-sm text-muted">Pick a city. The number is the shops there.</p>
         </div>
         {cities.length > 8 ? (
           <label className="block w-full sm:max-w-xs">
@@ -50,7 +50,7 @@ export function CityIndex({ cities }: { cities: CityItem[] }) {
           ))}
         </ul>
       ) : (
-        <p className="mt-4 text-ink-soft">No city on this page matches that name.</p>
+        <p className="mt-4 text-ink-soft">No city on this page matches.</p>
       )}
     </section>
   );

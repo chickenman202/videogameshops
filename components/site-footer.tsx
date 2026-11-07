@@ -38,7 +38,7 @@ export function SiteFooter() {
             <span className="font-display text-2xl font-bold uppercase">videogameshops</span>
           </Link>
           <p className="mt-4 max-w-sm font-serif text-base leading-relaxed text-paper/80">
-            Video Game Shops lists physical stores by country, region, and city.
+            Game shops you can walk into, listed by country and city.
           </p>
         </div>
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
@@ -60,7 +60,7 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-white/15">
         <p className="mx-auto max-w-6xl px-4 py-4 font-mono text-xs uppercase tracking-wider text-paper/70">
-          Physical video game shops, worldwide.
+          Game shops, worldwide.
         </p>
       </div>
     </footer>

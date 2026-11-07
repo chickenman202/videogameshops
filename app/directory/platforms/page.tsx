@@ -12,20 +12,10 @@ import { platformHeading, PLATFORMS } from "@/lib/platforms";
 
 export const revalidate = 86400;
 
-const notes: Record<string, string> = {
-  playstation: "Shops that carry PlayStation games",
-  xbox: "Shops that carry Xbox games",
-  nintendo: "Shops that carry Nintendo games",
-  pc: "Shops that carry PC games",
-  handheld: "Shops that carry handheld games",
-  retro: "Shops tagged for older games and consoles.",
-  vr: "Shops that carry VR games",
-};
-
 export const metadata: Metadata = {
   title: { absolute: toTitle("Video Game Stores by Platform") },
   description: toMetaDescription(
-    "Physical video game shops by what they carry: PlayStation, Xbox, Nintendo, PC, handheld, retro, and VR.",
+    "Video game stores by what they carry: PlayStation, Xbox, Nintendo, PC, handheld, retro, and VR.",
   ),
   alternates: { canonical: absoluteUrl("/directory/platforms") },
 };
@@ -48,7 +38,7 @@ export default async function PlatformsPage() {
         />
         <h1 className="mt-4 text-5xl uppercase text-ink sm:text-7xl">Video Game Stores by Platform</h1>
         <p className="mt-3 max-w-3xl text-lg text-ink-soft">
-          Each list is the shops that carry that platform. A shop appears only when the listing names it.
+          Shops grouped by the platforms their listings name: PlayStation, retro, and the rest.
         </p>
         {platforms.length > 0 ? (
           <ul className="mt-8 border-t border-ink">
@@ -56,7 +46,6 @@ export default async function PlatformsPage() {
               <li key={platform.slug} className="border-b border-line">
                 <a href={platformPath(platform.slug)} className="block py-4 hover:text-blue-ink">
                   <span className="font-display text-3xl font-bold uppercase text-ink">{platformHeading(platform.label)}</span>
-                  <span className="mt-1 block text-sm text-muted">{notes[platform.slug]}</span>
                   <span className="mt-2 block kicker text-ink">
                     {platform.count.toLocaleString("en-US")} {platform.count === 1 ? "store" : "stores"}
                   </span>
@@ -66,7 +55,7 @@ export default async function PlatformsPage() {
           </ul>
         ) : (
           <div className="mt-8 border-t border-ink py-8">
-            <p className="text-ink-soft">No platform has shops listed.</p>
+            <p className="text-ink-soft">No platforms have shops yet.</p>
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
               <Link href="/directory" className="btn btn-primary">
                 All stores

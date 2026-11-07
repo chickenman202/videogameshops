@@ -15,7 +15,7 @@ export const revalidate = 86400;
 export const metadata: Metadata = {
   title: { absolute: toTitle("Video Game Stores by State") },
   description: toMetaDescription(
-    "United States shops, filed by state. Open a state to see its cities and the shops listed there.",
+    "Video game stores in the US, listed state by state.",
   ),
   alternates: { canonical: absoluteUrl("/directory/states") },
 };
@@ -39,7 +39,7 @@ export default async function StatesPage() {
         />
         <h1 className="mt-4 text-5xl uppercase text-ink sm:text-7xl">Video Game Stores by State</h1>
         <p className="mt-3 max-w-3xl text-lg text-ink-soft">
-          United States shops, filed by state. The number is how many shops are listed there.
+          US video game stores, state by state. The number is how many shops we have there.
         </p>
         {states.length > 0 ? (
           <ul className="mt-8 border-t border-ink">
@@ -60,7 +60,7 @@ export default async function StatesPage() {
           </ul>
         ) : (
           <div className="mt-8 border-t border-ink py-8">
-            <p className="text-ink-soft">No states have shops listed.</p>
+            <p className="text-ink-soft">No states have shops yet.</p>
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
               <Link href="/directory" className="btn btn-primary">
                 All stores

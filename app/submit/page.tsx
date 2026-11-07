@@ -4,8 +4,7 @@ import { SubmitStoreForm } from "@/components/forms";
 import { absoluteUrl } from "@/lib/jsonld";
 import { BRAND } from "@/lib/site";
 
-const description =
-  "Shop owners can send a physical video game store for Video Game Shops. A person reads the note before it is listed.";
+const description = "Add a video game store to videogameshops. We read it before the page goes up.";
 
 export const metadata: Metadata = {
   title: { absolute: `Add a store | ${BRAND}` },
@@ -24,7 +23,7 @@ export default function SubmitPage() {
   return (
     <ArticlePage
       title="Add a store"
-      lede="Tell us about a shop with a street address. Include the country, wherever the shop is. We’ll read the note before the page goes up. For a correction to a shop that is already listed, use Contact."
+      lede="Got a shop with a street address? Send the name, the street, the city, and the country. We’ll read it before the page goes up. Already listed and something’s off? Use Contact."
     >
       <SubmitStoreForm />
     </ArticlePage>

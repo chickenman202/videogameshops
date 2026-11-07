@@ -6,6 +6,7 @@ import { Pagination } from "@/components/pagination";
 import { SearchForm } from "@/components/search-form";
 import { StoreCard } from "@/components/store-card";
 import { loadCatalog } from "@/lib/catalog";
+import { catalogNoun, listingIntro } from "@/lib/copy";
 import { hasFilters, hrefWithFilters, type Filters } from "@/lib/filters";
 import { breadcrumbJsonLd, collectionJsonLd, JsonLd } from "@/lib/jsonld";
 import type { ListingOk } from "@/lib/listing";
@@ -46,7 +47,17 @@ export async function DirectoryScreen({ listing }: { listing: ListingOk }) {
   const end = start === 0 ? 0 : start + visibleStores.length - 1;
   const placeName = listing.cityName && listing.state ? `${listing.cityName}, ${listing.state.name}` : listing.state?.name;
   const intro = preview
-    ? `${total.toLocaleString("en-US")} ${total === 1 ? "video game store" : "video game stores"}${placeName ? ` in ${placeName}` : ""}.`
+    ? listingIntro({
+        total,
+        noun: catalogNoun(listing.platformLabel),
+        place: placeName ?? null,
+        platform: Boolean(listing.platformLabel),
+        cities: new Set(pool.map((store) => store.citySlug || store.city).filter(Boolean)).size,
+        retro: pool.filter((store) => store.platforms.includes("Retro")).length,
+        used: pool.filter((store) => store.sellsUsed).length,
+        tradeIns: pool.filter((store) => store.tradeIns).length,
+        repairs: pool.filter((store) => store.repairs).length,
+      })
     : listing.intro;
 
   return (
@@ -75,7 +86,7 @@ export async function DirectoryScreen({ listing }: { listing: ListingOk }) {
             action={listing.basePath}
             filters={listing.filters}
             label="Search shops"
-            hint="A place or a shop name."
+            hint="City, country, or the name on the sign."
           />
         </div>
 
@@ -114,13 +125,13 @@ function EmptyResults({ listing }: { listing: ListingOk }) {
   const filtered = hasFilters(listing.filters) || Boolean(listing.filters.q);
   return (
     <div className="mt-4 border-t border-ink py-10">
-      <h3 className="text-4xl uppercase text-ink">{filtered ? "No shops match" : "No shops listed here"}</h3>
+      <h3 className="text-4xl uppercase text-ink">{filtered ? "No shops match" : "No shops here yet"}</h3>
       <p className="mt-3 max-w-md text-ink-soft">
         {listing.filters.q
-          ? `Nothing matched “${listing.filters.q}”. Try a city, a country, or a shop name.`
+          ? `Nothing for “${listing.filters.q}”. Try the city, the country, or the name on the sign.`
           : filtered
-            ? "Nothing matched these filters. Clear one, or search by place."
-            : "No shops are listed here."}
+            ? "Those filters came up empty. Clear one, or search by place."
+            : "No shops are listed for this page yet."}
       </p>
       <div className="mt-5 flex flex-col gap-3 sm:flex-row">
         {filtered ? (
@@ -165,7 +176,7 @@ function FilterBar({ listing, platformNav }: { listing: ListingOk; platformNav: 
       {platformNav.length > 0 ? (
         <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Platforms">
           {listing.state && !listing.citySlug ? (
-            <p className="w-full text-xs text-muted">These lists cover every state, not only {listing.state.name}.</p>
+            <p className="w-full text-xs text-muted">Platform lists cover every country, not only {listing.state.name}.</p>
           ) : null}
           {platformNav.map((platform) => (
             <a

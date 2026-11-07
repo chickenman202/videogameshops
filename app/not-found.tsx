@@ -10,9 +10,9 @@ export default function NotFound() {
   return (
     <StatusPanel
       title="Page Not Found"
-      body="That page is not in the directory. Search by city, country, or shop name."
+      body="That page isn’t here. Try a city, a country, or a shop name."
       actions={[
-        { href: "/directory", label: "Browse stores" },
+        { href: "/directory", label: "All stores" },
         { href: "/contact", label: "Contact", tone: "ghost" },
       ]}
     />

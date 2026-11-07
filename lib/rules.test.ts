@@ -1,7 +1,7 @@
 import { displayPlace, distinctPlace, shopLocation, type ShopView } from "./shop-view";
 import { isKeyboardMash, isPublishableStore, isUsableAbout } from "./publish";
 import { slugify, storeSlug } from "./slug";
-import { toMetaDescription, storeTitle } from "./copy";
+import { listingIntro, toMetaDescription, storeTitle } from "./copy";
 import { FIXTURE_SHOPS } from "./fixture-shops";
 import { storeJsonLd } from "./jsonld";
 
@@ -148,6 +148,63 @@ describe("titles and descriptions", () => {
     const text = toMetaDescription(long);
     assert.ok(text.length <= 160, text);
     assert.equal(text.includes("before you go"), false);
+  });
+
+  it("varies listing intros from real counts and skips tags that are not stored", () => {
+    const austin = listingIntro({
+      total: 6,
+      noun: "video game stores",
+      place: "Austin, Texas",
+      platform: false,
+      cities: 1,
+      retro: 2,
+      used: 4,
+      tradeIns: 1,
+      repairs: 0,
+    });
+    const dallas = listingIntro({
+      total: 6,
+      noun: "video game stores",
+      place: "Dallas, Texas",
+      platform: false,
+      cities: 1,
+      retro: 0,
+      used: 0,
+      tradeIns: 0,
+      repairs: 0,
+    });
+    assert.match(austin, /Austin, Texas/);
+    assert.match(austin, /retro/);
+    assert.equal(austin.includes("used"), false);
+    assert.equal(dallas.includes("retro"), false);
+    assert.equal(dallas.includes("used"), false);
+    assert.notEqual(austin, dallas);
+    const texas = listingIntro({
+      total: 264,
+      noun: "video game stores",
+      place: "Texas",
+      platform: false,
+      cities: 40,
+      retro: 0,
+      used: 10,
+      tradeIns: 0,
+      repairs: 0,
+    });
+    assert.match(texas, /40 cities/);
+    assert.match(texas, /used games/);
+    const one = listingIntro({
+      total: 1,
+      noun: "video game stores",
+      place: "Andorra",
+      platform: false,
+      cities: 1,
+      retro: 0,
+      used: 0,
+      tradeIns: 0,
+      repairs: 0,
+    });
+    assert.match(one, /one video game store/i);
+    assert.equal(one.includes("stores in"), false);
   });
 });
 

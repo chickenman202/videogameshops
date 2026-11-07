@@ -4,8 +4,7 @@ import { ContactForm } from "@/components/forms";
 import { absoluteUrl } from "@/lib/jsonld";
 import { BRAND } from "@/lib/site";
 
-const description =
-  "Write Video Game Shops about a listing. Send the shop name, the city, and the correction. There is no public office.";
+const description = "Tell videogameshops about a wrong hour, a closed shop, or a missing street.";
 
 export const metadata: Metadata = {
   title: { absolute: `Contact | ${BRAND}` },
@@ -18,14 +17,14 @@ export default function ContactPage() {
   return (
     <ArticlePage
       title="Contact"
-      lede="Write about a listing. The directory has no public office and no phone line. The form is how corrections reach a person."
+      lede="See a wrong hour, a shop that closed, or a street we missed? Send a note. We’ll read it."
     >
       <div className="mt-6 border-t border-ink pt-4 text-base text-ink-soft">
         <p className="font-bold text-ink">Include</p>
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>The shop name</li>
           <li>The city and country</li>
-          <li>The address, hours, phone, or platform that needs a change</li>
+          <li>What’s off: the street, the hours, the phone, or a platform</li>
         </ul>
       </div>
       <ContactForm />

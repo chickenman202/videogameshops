@@ -10,8 +10,8 @@ export default function RouteError({
 }) {
   return (
     <StatusPanel
-      title="The directory did not load"
-      body="The shop list did not come back. Try again in a minute."
+      title="The shop list didn’t load"
+      body="Give it a minute, then try again."
       actions={[{ href: "/directory", label: "Back to stores", tone: "ghost" }]}
     >
       <button type="button" className="btn btn-primary" onClick={() => reset()}>

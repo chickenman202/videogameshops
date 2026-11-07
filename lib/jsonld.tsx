@@ -35,7 +35,7 @@ export function homeJsonLd() {
         "@type": "WebSite",
         name: BRAND,
         url: SITE_URL,
-        description: "Find physical video game stores by country, region, and city.",
+        description: "Find video game stores you can walk into. Search by country, city, or shop name.",
       },
     ],
   };

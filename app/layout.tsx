@@ -28,11 +28,11 @@ const mono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `Video Game Stores Near You | ${BRAND}`,
+    default: `Video Game Stores Worldwide | ${BRAND}`,
     template: `%s | ${BRAND}`,
   },
   description:
-    "Find physical video game stores by country, region, and city.",
+    "Find video game stores you can walk into. Search by country, city, or shop name.",
   robots: { index: true, follow: true },
   icons: {
     icon: [

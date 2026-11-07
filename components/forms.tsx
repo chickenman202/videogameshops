@@ -108,7 +108,7 @@ export function SubmitStoreForm() {
   const [state, action, pending] = useActionState(submitStore, initial);
   return (
     <form action={action} aria-busy={pending || undefined} className="mt-8 space-y-6">
-      <p className="text-sm text-muted">Fields with a star are required.</p>
+      <p className="text-sm text-muted">Stars mark the fields we need.</p>
       <section className="border-t border-ink pt-6">
         <h2 className="text-2xl text-ink">About you</h2>
         <div className="mt-4 space-y-4">
@@ -147,7 +147,7 @@ export function SubmitStoreForm() {
           </div>
         </fieldset>
         <fieldset className="mt-5">
-          <legend className="text-sm font-bold text-ink">Also true</legend>
+          <legend className="text-sm font-bold text-ink">Also true of the shop</legend>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             <Choice name="sellsNew" label="Sells new games" />
             <Choice name="sellsUsed" label="Sells used games" />

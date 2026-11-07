@@ -22,20 +22,20 @@ async function saveMessage(row: InboxInsert): Promise<FormState> {
   if (!supabase) {
     return {
       status: "error",
-      message: "The note could not be saved. Try again in a little while.",
+      message: "That didn’t save. Try again in a little while.",
     };
   }
   const { error } = await supabase.from("inbox_messages").insert(row);
   if (error) {
     console.error(error.message);
-    return { status: "error", message: "That could not be saved. Please try again." };
+    return { status: "error", message: "That didn’t save. Please try again." };
   }
   return {
     status: "ok",
     message:
       row.kind === "store_submission"
-        ? "Received. A person reads the note before the shop is listed."
-        : "Received. We will use it to check the listing.",
+        ? "Got it. We’ll read this before the shop goes up."
+        : "Got it. We’ll check the listing.",
   };
 }
 
@@ -44,7 +44,7 @@ export async function submitContact(_previous: FormState, formData: FormData): P
   const email = text(formData, "email", 180);
   const message = text(formData, "message", 2000);
   if (name.length < 2 || !emailOk(email) || message.length < 10) {
-    return { status: "error", message: "Add your name, a complete email, and a short message." };
+    return { status: "error", message: "Add your name, a real email, and a short note." };
   }
   return saveMessage({ kind: "contact", name, email, message });
 }
@@ -67,11 +67,11 @@ export async function submitStore(_previous: FormState, formData: FormData): Pro
   if (storeName.length < 2 || address.length < 4 || city.length < 2 || country.length < 2) {
     return {
       status: "error",
-      message: "Store name, street address, city, and country are required.",
+      message: "We need the store name, street, city, and country.",
     };
   }
   if (email && !emailOk(email)) {
-    return { status: "error", message: "That email does not look complete." };
+    return { status: "error", message: "That email doesn’t look complete." };
   }
 
   return saveMessage({

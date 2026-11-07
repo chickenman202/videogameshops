@@ -9,17 +9,16 @@ import { BRAND, SITE_URL } from "@/lib/site";
 import { shopCountryName, shopLocation, type ShopView } from "@/lib/shop-view";
 import { US_STATES } from "@/lib/states";
 
-const description =
-  "Find physical video game stores by country, region, and city.";
+const description = "Find video game stores you can walk into. Search by country, city, or shop name.";
 
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
-  title: { absolute: `Video Game Stores Near You | ${BRAND}` },
+  title: { absolute: `Video Game Stores Worldwide | ${BRAND}` },
   description,
   alternates: { canonical: SITE_URL },
   openGraph: {
-    title: `Video Game Stores Near You | ${BRAND}`,
+    title: `Video Game Stores Worldwide | ${BRAND}`,
     description,
     url: SITE_URL,
     siteName: BRAND,
@@ -98,13 +97,13 @@ export default async function HomePage() {
                 Search the directory
               </label>
               <p id="home-lookup-hint" className="mt-1 text-sm text-ink-soft">
-                A place or a shop name.
+                City, country, or the name on the sign.
               </p>
             </div>
             <input
               id="home-lookup"
               name="q"
-              placeholder="Country, region, city, or shop name"
+              placeholder="City, country, or shop name"
               autoComplete="off"
               aria-describedby="home-lookup-hint"
               className="min-h-11 w-full min-w-0 flex-1 border-0 border-b-2 border-ink bg-transparent px-0 font-serif text-lg text-ink placeholder:text-muted focus:border-blue-ink"
@@ -186,7 +185,7 @@ export default async function HomePage() {
             ) : null}
             {countries.length > 0 ? (
               <div>
-                <h3 className="kicker text-muted">Countries in this list</h3>
+                <h3 className="kicker text-muted">Countries</h3>
                 <ul className="mt-3 border-t border-ink">
                   {countries.map((country) => (
                     <li key={country.name} className="border-b border-line">
@@ -205,7 +204,7 @@ export default async function HomePage() {
           </div>
         ) : (
           <div className="mt-6 border-t border-ink py-8">
-            <p className="text-ink-soft">No cities or countries have shops listed.</p>
+            <p className="text-ink-soft">No shops are listed yet.</p>
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
               <Link href="/directory" className="btn btn-primary">
                 All stores
@@ -224,7 +223,7 @@ export default async function HomePage() {
             <p className="kicker text-blue-ink">Shop owners</p>
             <h2 className="mt-3 font-serif text-4xl font-normal text-ink italic sm:text-5xl">This shop is yours</h2>
             <p className="mt-3 max-w-xl text-lg text-ink-soft">
-              Add it. Send the name, the street, and the city, wherever you are. We’ll read it before it goes up.
+              Add it. Send the name, the street, and the city, wherever the shop is. We’ll read it before it goes up.
             </p>
           </div>
           <div className="sm:col-span-5 sm:text-right">

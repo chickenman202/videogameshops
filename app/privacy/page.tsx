@@ -3,7 +3,7 @@ import { ArticlePage } from "@/components/article-page";
 import { absoluteUrl } from "@/lib/jsonld";
 import { BRAND } from "@/lib/site";
 
-const description = "How Video Game Shops handles public shop listings and notes sent through the contact form.";
+const description = "How videogameshops handles public shop listings and notes from the forms.";
 
 export const metadata: Metadata = {
   title: { absolute: `Privacy | ${BRAND}` },
@@ -23,14 +23,14 @@ export default function PrivacyPage() {
     <ArticlePage title="Privacy">
       <div className="article-body">
         <p>
-          Video Game Shops publishes business facts: shop names, streets, phone numbers, websites, and hours, when a
-          listing has them. Those facts are meant to be public.
+          videogameshops publishes shop details that are already public: the name, street, phone, website, and hours,
+          when we have them.
         </p>
         <p>
-          The contact and submit forms ask for a name, an email, and a message so a listing can be added or corrected.
-          Those notes are kept for review. They are not sold. The site has no shopper accounts.
+          The contact and submit forms ask for a name, an email, and a message so we can add or fix a listing. We keep
+          those notes for that. We don’t sell them, and there’s no shopper account.
         </p>
-        <p>Notes from the forms are not sent to an ad network.</p>
+        <p>Form notes aren’t sent to an ad network.</p>
       </div>
     </ArticlePage>
   );

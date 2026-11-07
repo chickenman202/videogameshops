@@ -3,7 +3,7 @@ import { ArticlePage } from "@/components/article-page";
 import { absoluteUrl } from "@/lib/jsonld";
 import { BRAND } from "@/lib/site";
 
-const description = "Terms for using Video Game Shops, a directory of physical video game stores.";
+const description = "Terms for using videogameshops, a directory of video game stores.";
 
 export const metadata: Metadata = {
   title: { absolute: `Terms | ${BRAND}` },
@@ -17,15 +17,15 @@ export default function TermsPage() {
     <ArticlePage title="Terms">
       <div className="article-body">
         <p>
-          Video Game Shops is a directory. Hours, stock, and phone numbers change. Check with the shop before you go.
-          Platform names such as PlayStation, Xbox, and Nintendo belong to their owners. This site is not affiliated
-          with them.
+          videogameshops is a directory of shops you can walk into. Hours, stock, and phone numbers change, so call the
+          shop before you go. Names like PlayStation, Xbox, and Nintendo belong to their owners. This site isn’t
+          affiliated with them.
         </p>
         <p>
-          A listing points to a shop. It is not a promise that a game is in stock, and it is not an offer to sell one.
-          A submission can be edited or declined. A listing needs a real shop name and a street address.
+          A listing points you to a shop. It doesn’t mean a game is on the shelf, and we aren’t selling it. We can edit
+          or decline a submission. A listing needs a real shop name and a street address.
         </p>
-        <p>Use the contact form for questions about a listing. The directory is for finding physical video game shops.</p>
+        <p>Questions about a listing go through the contact form.</p>
       </div>
     </ArticlePage>
   );
