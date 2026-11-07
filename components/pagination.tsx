@@ -17,13 +17,14 @@ export function Pagination({ listing }: { listing: ListingOk }) {
     <nav aria-label="Pages" className="mt-8 flex flex-wrap items-center gap-2">
       {listing.page > 1 ? (
         <a href={hrefFor(listing.page - 1)} className="rounded-full border border-[#d5dbe3] bg-white px-4 py-2 text-sm">
-          Previous
+          Previous page
         </a>
       ) : null}
       {pages.map((page) => (
         <a
           key={page}
           href={hrefFor(page)}
+          aria-label={`Page ${page}`}
           aria-current={page === listing.page ? "page" : undefined}
           className={
             page === listing.page
@@ -36,7 +37,7 @@ export function Pagination({ listing }: { listing: ListingOk }) {
       ))}
       {listing.page < listing.pageCount ? (
         <a href={hrefFor(listing.page + 1)} className="rounded-full border border-[#d5dbe3] bg-white px-4 py-2 text-sm">
-          Next
+          Next page
         </a>
       ) : null}
     </nav>

@@ -1,0 +1,261 @@
+{
+  "csv_rows": 6732,
+  "listings": 6704,
+  "public_listings": 6704,
+  "indexable_listings": 4539,
+  "noindex_listings": 2165,
+  "merged_twin_groups": 28,
+  "dropped_blank_names": 0,
+  "rows_folded_by_dedupe": 28,
+  "by_source": {
+    "osm": 6028,
+    "dallasretrogamers": 6,
+    "wikidata": 2,
+    "gameroute": 668
+  },
+  "countries": [
+    {
+      "code": "US",
+      "name": "United States",
+      "count": 3123
+    },
+    {
+      "code": "FR",
+      "name": "France",
+      "count": 388
+    },
+    {
+      "code": "CA",
+      "name": "Canada",
+      "count": 289
+    },
+    {
+      "code": "IT",
+      "name": "Italy",
+      "count": 273
+    },
+    {
+      "code": "GB",
+      "name": "United Kingdom",
+      "count": 201
+    },
+    {
+      "code": "ES",
+      "name": "Spain",
+      "count": 173
+    },
+    {
+      "code": "AU",
+      "name": "Australia",
+      "count": 150
+    },
+    {
+      "code": "JP",
+      "name": "Japan",
+      "count": 125
+    },
+    {
+      "code": "BR",
+      "name": "Brazil",
+      "count": 120
+    },
+    {
+      "code": "IR",
+      "name": "Iran",
+      "count": 111
+    },
+    {
+      "code": "DE",
+      "name": "Germany",
+      "count": 102
+    },
+    {
+      "code": "TW",
+      "name": "Taiwan",
+      "count": 93
+    },
+    {
+      "code": "MX",
+      "name": "Mexico",
+      "count": 75
+    },
+    {
+      "code": "CI",
+      "name": "Côte d'Ivoire",
+      "count": 68
+    },
+    {
+      "code": "AR",
+      "name": "Argentina",
+      "count": 64
+    },
+    {
+      "code": "PK",
+      "name": "Pakistan",
+      "count": 53
+    },
+    {
+      "code": "RU",
+      "name": "Russia",
+      "count": 52
+    },
+    {
+      "code": "IQ",
+      "name": "Iraq",
+      "count": 49
+    },
+    {
+      "code": "TZ",
+      "name": "Tanzania",
+      "count": 48
+    },
+    {
+      "code": "PL",
+      "name": "Poland",
+      "count": 47
+    }
+  ],
+  "country_count": 154,
+  "blank": {
+    "address": 3018,
+    "city": 11,
+    "region": 188,
+    "country": 0,
+    "phone": 5117,
+    "website": 3866,
+    "opening_hours": 5001,
+    "image": 6549,
+    "social": 6079
+  },
+  "opening_hours_parsed": 1519,
+  "opening_hours_left_as_text": 184,
+  "platforms_filled": 1,
+  "sells_new": 0,
+  "country_url_scheme": {
+    "canonical": "/directory/countries/{iso2}",
+    "examples": [
+      "/directory/countries/fr",
+      "/directory/countries/gb",
+      "/directory/countries/us"
+    ],
+    "aliases": {
+      "uk": "gb",
+      "usa": "us",
+      "france": "fr"
+    },
+    "us_state": "/directory/{state}",
+    "us_state_redirect": "308 /directory/countries/us/{state} -> /directory/{state}"
+  },
+  "slug_rule": "A shop keeps the slug it already has. A new United States shop uses name-city-state. A shop in another country uses name-city-country. If that slug is already taken, the source id is added, then a number if needed. Running the import again does not create a second row for the same shop.",
+  "place_fold_rule": "City and region pages treat capital letters and accents as the same place. Accents are removed. Letters such as ł, ø, đ, and ß become the plain letter. Apostrophes are dropped. Tiranë folds to tirane, and a final a and a final e are the same ending when both spellings are in the same country and region, so Tirana and Tiranë share one page. A spelling that appears on its own is kept: Eugene stays eugene. The characters 臺 and 台 are the same, so 台北市 and 臺北市 share one page. In Taiwan, Taipei and Taipei City use that same page, Taichung and Taichung City use the 台中市 page, and Tainan and Tainan City use the 臺南市 page. The page title stays the Chinese spelling already chosen by the majority. Lisbon and Lisboa, Warsaw and Warszawa, and Genoa and Genova stay separate. The shop keeps the city text it came with. Nearby shops with different names stay separate.",
+  "display_name_rule": "The stored name is the original text. A title hides a keyword list when that list is appended after a dash, colon, bar, or slash, or as a comma-separated category list, and every word in it is a category such as video games, anime, or retro. The list is kept when it is a place, a translation, or part of the name, as in Hi-Score or West Monroe. The platforms field is filled only when that list names exactly one of Retro, PlayStation, Xbox, Nintendo, PC, Handheld, or VR. No phone, website, hour, or address is created.",
+  "display_names_cleaned": 10,
+  "display_names_cleaned_beyond_dash": 4,
+  "duplicate_slugs": 0,
+  "near_miss_rule": "Merge a nearby pair only when the two rows are the same shop. Same street number plus a matching name or initials counts, as with CGR Games and Classic Games Revisited at 46 East State Street in Doylestown. Different names, different websites, or neighboring street numbers stay separate. The other eight pairs within 40 meters stay two listings.",
+  "near_misses_within_40m": [
+    "20m gameroute:FunTrade / osm:GameStop (Billings US)",
+    "4m osm:Backlight Gamez / gameroute:Revival Games (Idaho Falls US)",
+    "11m osm:Dial Up Games / gameroute:Gameroom Lincoln (Lincoln US)",
+    "7m gameroute:Mega Media Xchange Madison / osm:Preplayed East (Madison US)",
+    "5m osm:GameStar / gameroute:GameTime (McMinnville US)",
+    "22m osm:On the Draw / gameroute:Player's Choice Video Games (Pottstown US)",
+    "21m osm:Gamestersbay / gameroute:Level Up Racine Video Game Store & Lounge (Racine US)",
+    "5m gameroute:Game Mechanix - West Monroe / osm:Retro Fix (West Monroe US)"
+  ],
+  "near_miss_decisions": [
+    {
+      "label": "FunTrade and GameStop in Billings",
+      "meters": 20,
+      "ids": [
+        "gameroute:gameroute/1459",
+        "osm:way/1363234827"
+      ],
+      "decision": "kept_separate",
+      "reason": "Different shop names. The nearby GameStop row has no street address, so it stays its own listing."
+    },
+    {
+      "label": "CGR Games and Classic Games Revisited in Doylestown",
+      "meters": 6,
+      "ids": [
+        "osm:way/387026089",
+        "gameroute:gameroute/1699"
+      ],
+      "decision": "merged",
+      "reason": "Same address, 46 East State Street in Doylestown, and CGR matches the initials of Classic Games Revisited. Website and address come from those two rows."
+    },
+    {
+      "label": "Backlight Gamez and Revival Games in Idaho Falls",
+      "meters": 4,
+      "ids": [
+        "osm:node/9546408211",
+        "gameroute:gameroute/1226"
+      ],
+      "decision": "kept_separate",
+      "reason": "Same building at 540 2nd Street, but the names do not match and neither row has a website that ties them together."
+    },
+    {
+      "label": "Dial Up Games and Gameroom Lincoln in Lincoln",
+      "meters": 11,
+      "ids": [
+        "osm:node/11380818069",
+        "gameroute:gameroute/1463"
+      ],
+      "decision": "kept_separate",
+      "reason": "Same street address, but the names differ and the websites differ (dialupgames.com and thisisgameroom.com)."
+    },
+    {
+      "label": "Mega Media Xchange Madison and Preplayed East",
+      "meters": 7,
+      "ids": [
+        "gameroute:gameroute/1950",
+        "osm:node/956781246"
+      ],
+      "decision": "kept_separate",
+      "reason": "Different names. Preplayed East has no street address, and Mega Media Xchange is listed in Madison while Preplayed East is listed in Maple Bluff."
+    },
+    {
+      "label": "GameStar and GameTime in McMinnville",
+      "meters": 5,
+      "ids": [
+        "osm:node/12908842545",
+        "gameroute:gameroute/1691"
+      ],
+      "decision": "kept_separate",
+      "reason": "The names are different, GameStar has no street address, and the rows do not share a website."
+    },
+    {
+      "label": "On the Draw and Player's Choice Video Games in Pottstown",
+      "meters": 22,
+      "ids": [
+        "osm:node/13683336201",
+        "gameroute:gameroute/1714"
+      ],
+      "decision": "kept_separate",
+      "reason": "Neighbors, not the same shop. On the Draw is at 214 East High Street and Player's Choice is at 216."
+    },
+    {
+      "label": "Gamestersbay and Level Up Racine in Racine",
+      "meters": 21,
+      "ids": [
+        "osm:node/10676647698",
+        "gameroute:gameroute/1944"
+      ],
+      "decision": "kept_separate",
+      "reason": "Different names and different websites (gamestersbay.us and levelupracine.com). Gamestersbay's address is only \"6th Street\"."
+    },
+    {
+      "label": "Game Mechanix and Retro Fix in West Monroe",
+      "meters": 5,
+      "ids": [
+        "gameroute:gameroute/1327",
+        "osm:node/9108042931"
+      ],
+      "decision": "kept_separate",
+      "reason": "Same suite at 3212 Cypress Street #2, but the names do not match and the rows do not share a website."
+    }
+  ],
+  "stores_json_sha256": "d24ee4ee31ffadb8d18100cfe12128878b0da88babc3ef01ba928f1384b9d262",
+  "supabase": "skipped_no_service_role",
+  "supabase_note": "Neither NEXT_PUBLIC_SUPABASE_URL nor SUPABASE_SERVICE_ROLE_KEY was set, so Supabase was not updated. To seed the database, run supabase/migrations/0001_stores.sql, then supabase/migrations/0002_store_import_fields.sql, set both variables, and run npm run import:shops. 0002 keeps a blank country blank. It does not rewrite it to US."
+}

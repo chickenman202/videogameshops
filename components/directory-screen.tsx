@@ -38,6 +38,22 @@ export function DirectoryScreen({ listing }: { listing: ListingOk }) {
         <Breadcrumbs crumbs={listing.crumbs} />
         <h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">{listing.h1}</h1>
         <p className="mt-4 max-w-3xl text-lg text-muted">{listing.intro}</p>
+        {listing.countries.length > 0 ? (
+          <nav aria-label="Countries" className="mt-6">
+            <ul className="flex flex-wrap gap-2">
+              {listing.countries.map((country) => (
+                <li key={country.slug}>
+                  <a
+                    href={country.href}
+                    className="inline-flex rounded-full border border-[#d5dbe3] bg-white px-3 py-1.5 text-sm hover:border-[#155eef]"
+                  >
+                    Video game stores in {country.name} ({country.count})
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ) : null}
         {showPlatforms ? (
           <p className="mt-4 text-sm text-[#3c4550]">
             {listing.platformLinks.map((platform, index) => (
@@ -73,7 +89,7 @@ export function DirectoryScreen({ listing }: { listing: ListingOk }) {
               <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#8b95a3]">Filter</h2>
               {hasFilters(listing.filters) ? (
                 <a href={listing.basePath} className="text-sm text-[#155eef]">
-                  Clear
+                  Clear filters
                 </a>
               ) : null}
             </div>

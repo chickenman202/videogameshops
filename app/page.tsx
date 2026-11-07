@@ -3,58 +3,53 @@ import { PageShell } from "@/components/page-shell";
 import { SearchForm } from "@/components/search-form";
 import { SiteHeader } from "@/components/site-header";
 import { loadCatalog } from "@/lib/catalog";
+import { countryLinks } from "@/lib/links";
 import { homeJsonLd, JsonLd } from "@/lib/jsonld";
 import { platformPath } from "@/lib/paths";
 import { PLATFORMS } from "@/lib/platforms";
-import { toMetaDescription } from "@/lib/copy";
-import { BRAND, SITE_URL } from "@/lib/site";
+import { toMetaDescription, toTitle } from "@/lib/copy";
+import { pageMetadata } from "@/lib/seo";
+import { MIN_CITY_STORES } from "@/lib/site";
 import { US_STATES } from "@/lib/states";
 
 const description = toMetaDescription(
-  "Find physical video game stores in the United States. Compare hours, trade-ins, used games, retro stock, and which platforms each shop carries.",
+  "Find physical video game stores by country, region, and city.",
 );
 
 export const revalidate = 86400;
 
-export const metadata: Metadata = {
-  title: { absolute: `Video Game Stores Near You | ${BRAND}` },
+export const metadata: Metadata = pageMetadata({
+  title: toTitle("Video Game Stores Near You"),
   description,
-  alternates: { canonical: SITE_URL },
-  openGraph: {
-    title: `Video Game Stores Near You | ${BRAND}`,
-    description,
-    url: SITE_URL,
-    siteName: BRAND,
-    type: "website",
-  },
-};
+  canonicalPath: "/",
+});
 
 const facts = [
   {
-    title: "Hours you can read",
-    body: "Weekly hours stay on the page. If a line cannot be read, it stays as text and is left out of the search-engine hours block.",
+    title: "A page for every shop",
+    body: "Each listing names the shop and its country. A street, city, phone, website, or map point is shown when the listing includes it.",
   },
   {
-    title: "What the shop does",
-    body: "New games, used games, trade-ins, and console repair are yes-or-no facts, not a guess from the store name.",
+    title: "Details that are on file",
+    body: "Hours, platforms, trade-ins, and used games appear only when the listing includes them.",
   },
   {
-    title: "Platforms that match",
-    body: "PlayStation, Xbox, Nintendo, PC, handheld, retro, and VR only appear when that store actually carries them.",
+    title: "Platforms that are listed",
+    body: "PlayStation, Xbox, Nintendo, PC, handheld, retro, and VR appear for shops whose listing names them.",
   },
 ];
 
 const questions = [
   {
-    q: "Where do the hours and platforms come from?",
-    a: "They come from public business listings and from store owners who submit or correct a page. The site does not invent hours.",
+    q: "What does a store page show?",
+    a: "The details on file for that shop. A street, phone, website, or hours line is left off the page when the listing does not include it.",
   },
   {
     q: "Why does a small city not have its own roundup?",
     a: "A city roundup is for places with at least three stores. A town with one shop still has that store’s own page.",
   },
   {
-    q: "How do I fix a wrong address or hour?",
+    q: "How do I fix a wrong listing?",
     a: "Use the contact page. Include the store name, the city, and the correction. Public pages refresh within a day after the listing is updated.",
   },
 ];
@@ -65,9 +60,12 @@ export default async function HomePage() {
   const states = catalog.ok
     ? US_STATES.map((state) => ({
         ...state,
-        count: catalog.stores.filter((store) => store.stateSlug === state.slug).length,
-      })).filter((state) => state.count > 0)
+        count: catalog.stores.filter(
+          (store) => store.countryCode === "US" && store.stateSlug === state.slug,
+        ).length,
+      })).filter((state) => state.count >= MIN_CITY_STORES)
     : [];
+  const countries = catalog.ok ? countryLinks(catalog.stores) : [];
 
   return (
     <PageShell header="none">
@@ -89,7 +87,7 @@ export default async function HomePage() {
               Video game stores near you
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-white/75">
-              Find a physical shop, see when it is open, and check whether it sells used games, takes trade-ins, or stocks retro.
+              Find physical video game stores by country, region, and city.
             </p>
           </div>
         </div>
@@ -125,6 +123,33 @@ export default async function HomePage() {
 
       <section className="mx-auto max-w-6xl px-4 py-8">
         <div className="flex items-end justify-between gap-4">
+          <h2 className="text-3xl font-semibold tracking-tight">Browse by country</h2>
+          <a href="/directory/countries" className="text-sm font-medium text-[#155eef]">
+            All countries
+          </a>
+        </div>
+        {countries.length > 0 ? (
+          <ul className="mt-6 flex flex-wrap gap-2">
+            {countries.slice(0, 12).map((country) => (
+              <li key={country.slug}>
+                <a
+                  href={country.href}
+                  className="inline-flex rounded-full border border-[#d5dbe3] bg-white px-3 py-1.5 text-sm hover:border-[#155eef]"
+                >
+                  {country.name} ({country.count})
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-4 text-[#3c4550]">
+            The country list is on the countries page.
+          </p>
+        )}
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-8">
+        <div className="flex items-end justify-between gap-4">
           <h2 className="text-3xl font-semibold tracking-tight">Browse by state</h2>
           <a href="/directory/states" className="text-sm font-medium text-[#155eef]">
             All states
@@ -145,7 +170,7 @@ export default async function HomePage() {
           </ul>
         ) : (
           <p className="mt-4 text-[#3c4550]">
-            State pages fill in as stores are added. The full list is on the states page.
+            The state list is on the states page.
           </p>
         )}
       </section>
@@ -168,7 +193,7 @@ export default async function HomePage() {
           <div className="relative max-w-2xl">
             <h2 className="text-3xl font-semibold tracking-tight">Own a video game store?</h2>
             <p className="mt-3 text-white/75">
-              Send the address, hours, and platforms. Listings are reviewed before they go on the public site.
+              Send the shop name and the place details you have. Listings are reviewed before they go on the public site.
             </p>
             <a href="/submit" className="mt-6 inline-flex rounded-full bg-[#155eef] px-5 py-2.5 text-sm font-medium text-white">
               Submit a store

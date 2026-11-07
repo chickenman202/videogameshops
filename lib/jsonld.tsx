@@ -1,11 +1,13 @@
 import type { CatalogStore } from "@/lib/catalog";
+import { isUsableAbout } from "@/lib/publish";
 import { parseDayHours, WEEKDAYS } from "@/lib/hours";
-import { cityPath, statePath, storePath } from "@/lib/paths";
+import { countryPath, regionPathFor, cityPathFor, storePath } from "@/lib/paths";
 import { BRAND, PAGE_SIZE, SITE_URL } from "@/lib/site";
-import type { UsState } from "@/lib/states";
 
+/** The one public host. The homepage has no trailing slash. */
 export function absoluteUrl(path: string): string {
-  return `${SITE_URL}${path}`;
+  if (!path || path === "/") return SITE_URL;
+  return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 function jsonScript(data: unknown): string {
@@ -21,6 +23,17 @@ export function JsonLd({ data }: { data: unknown }) {
   );
 }
 
+function httpUrl(value: string | null): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
 export function homeJsonLd() {
   return {
     "@context": "https://schema.org",
@@ -29,12 +42,19 @@ export function homeJsonLd() {
         "@type": "Organization",
         name: BRAND,
         url: SITE_URL,
+        description: "Find physical video game stores by country, region, and city.",
         logo: `${SITE_URL}/logo.svg`,
       },
       {
         "@type": "WebSite",
         name: BRAND,
         url: SITE_URL,
+        description: "Find physical video game stores by country, region, and city.",
+        potentialAction: {
+          "@type": "SearchAction",
+          target: `${SITE_URL}/directory?q={search_term_string}`,
+          "query-input": "required name=search_term_string",
+        },
       },
     ],
   };
@@ -79,6 +99,30 @@ export function collectionJsonLd(input: {
   };
 }
 
+/** A list of places (countries, regions, or cities), not a list of shops. */
+export function placeListJsonLd(input: {
+  name: string;
+  path: string;
+  places: { name: string; path: string }[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: input.name,
+    url: absoluteUrl(input.path),
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: input.places.length,
+      itemListElement: input.places.map((place, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: place.name,
+        url: absoluteUrl(place.path),
+      })),
+    },
+  };
+}
+
 const SCHEMA_DAYS: Record<string, string> = {
   monday: "https://schema.org/Monday",
   tuesday: "https://schema.org/Tuesday",
@@ -89,6 +133,11 @@ const SCHEMA_DAYS: Record<string, string> = {
   sunday: "https://schema.org/Sunday",
 };
 
+/**
+ * LocalBusiness built only from fields stored on the shop.
+ * Hours are included only when the stored text can be read.
+ * There is no rating, review, price, or Offer block.
+ */
 export function storeJsonLd(store: CatalogStore) {
   const openingHoursSpecification = [];
   if (store.hours) {
@@ -108,20 +157,29 @@ export function storeJsonLd(store: CatalogStore) {
     }
   }
 
+  const address: Record<string, unknown> = { "@type": "PostalAddress" };
+  if (store.address) address.streetAddress = store.address;
+  if (store.city) address.addressLocality = store.city;
+  if (store.state) address.addressRegion = store.state;
+  if (store.zip) address.postalCode = store.zip;
+  if (store.countryCode) address.addressCountry = store.countryCode;
+  else if (store.countryName) address.addressCountry = store.countryName;
+
+  const pageUrl = absoluteUrl(storePath(store.slug));
   const business: Record<string, unknown> = {
+    "@context": "https://schema.org",
     "@type": "LocalBusiness",
+    "@id": pageUrl,
     name: store.name,
-    url: absoluteUrl(storePath(store.slug)),
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: store.address,
-      addressLocality: store.city,
-      addressRegion: store.stateAbbr,
-      ...(store.zip ? { postalCode: store.zip } : {}),
-      addressCountry: "US",
-    },
+    url: pageUrl,
   };
+  if (Object.keys(address).length > 1) business.address = address;
+  if (isUsableAbout(store.about)) business.description = store.about?.trim();
   if (store.phone) business.telephone = store.phone;
+  const website = httpUrl(store.website);
+  if (website) business.sameAs = website;
+  const photo = httpUrl(store.photo);
+  if (photo) business.image = photo;
   if (store.lat != null && store.lng != null) {
     business.geo = {
       "@type": "GeoCoordinates",
@@ -132,16 +190,21 @@ export function storeJsonLd(store: CatalogStore) {
   if (openingHoursSpecification.length > 0) {
     business.openingHoursSpecification = openingHoursSpecification;
   }
-  if (store.photo) business.image = store.photo;
-  return { "@context": "https://schema.org", ...business };
+  return business;
 }
 
-export function storeCrumbs(store: CatalogStore, state: UsState) {
-  return [
-    { name: "Home", path: "/" },
-    { name: "Stores", path: "/directory" },
-    { name: state.name, path: statePath(state.slug) },
-    { name: store.city, path: cityPath(state.slug, store.citySlug) },
-    { name: store.name, path: storePath(store.slug) },
-  ];
+/** Home → country → region → city → shop. A step is left out when that place was not stored. */
+export function storeCrumbs(store: CatalogStore) {
+  const crumbs = [{ name: "Home", path: "/" }];
+  if (store.countryName && store.countrySlug) {
+    crumbs.push({ name: store.countryName, path: countryPath(store.countrySlug) });
+  }
+  if (store.state && store.stateSlug) {
+    crumbs.push({ name: store.state, path: regionPathFor(store) });
+  }
+  if (store.city && store.citySlug && store.stateSlug) {
+    crumbs.push({ name: store.city, path: cityPathFor(store) });
+  }
+  crumbs.push({ name: store.name, path: storePath(store.slug) });
+  return crumbs;
 }

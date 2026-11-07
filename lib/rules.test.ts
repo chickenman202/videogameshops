@@ -52,33 +52,11 @@ describe("slugs and publish rules", () => {
   it("refuses placeholder stores", () => {
     assert.equal(isKeyboardMash("vvvvvvv"), true);
     assert.equal(isKeyboardMash("sadfadf"), true);
-    assert.equal(
-      isPublishableStore({
-        name: "vvvvvvv",
-        address: "1 Main St",
-        city: "Austin",
-        state: "Texas",
-      }),
-      false,
-    );
-    assert.equal(
-      isPublishableStore({
-        name: "Muv Games",
-        address: "",
-        city: "Austin",
-        state: "Texas",
-      }),
-      false,
-    );
-    assert.equal(
-      isPublishableStore({
-        name: "Muv Games",
-        address: "123 Main St",
-        city: "Austin",
-        state: "Texas",
-      }),
-      true,
-    );
+    assert.equal(isPublishableStore({ name: "vvvvvvv", country: "US" }), false);
+    assert.equal(isPublishableStore({ name: "n/a", country: "US" }), false);
+    assert.equal(isPublishableStore({ name: "Muv Games", country: "US" }), true);
+    assert.equal(isPublishableStore({ name: "Muv Games", country: "" }), false);
+    assert.equal(isPublishableStore({ name: "8", country: "CO" }), true);
   });
 
   it("throws away review text and website blurbs", () => {
@@ -107,18 +85,21 @@ describe("titles and descriptions", () => {
     assert.equal(title.includes("videogameshops"), false);
   });
 
-  it("uses one platform only when the store carries just that platform", () => {
+  it("names the shop and the place, and one platform only when that is all it carries", () => {
     const single = storeTitle("Muv Games", "Austin", "TX", ["Retro"]);
+    assert.match(single, /Muv Games in Austin, TX/);
     assert.match(single, /Retro/);
     const multi = storeTitle("Muv Games", "Austin", "TX", ["Retro", "PlayStation"]);
-    assert.match(multi, /Video Game Store/);
+    assert.equal(multi, "Muv Games in Austin, TX");
     assert.equal(multi.includes("Retro"), false);
   });
 
-  it("builds a description in the usual search length", () => {
-    const text = toMetaDescription(
-      "12 video game stores in Austin, Texas. Compare hours, trade-ins, and retro stock.",
-    );
-    assert.ok(text.length >= 140 && text.length <= 160, text);
+  it("keeps a description as written and does not add hours or stock claims", () => {
+    const lead = "12 video game stores in Austin, Texas.";
+    const text = toMetaDescription(lead);
+    assert.equal(text, lead);
+    assert.equal(text.includes("phone"), false);
+    assert.equal(text.includes("hours"), false);
+    assert.ok(text.length <= 160);
   });
 });

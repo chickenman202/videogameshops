@@ -13,7 +13,6 @@ const BLOCKED_NAMES = new Set([
   "sadfadf",
   "tbd",
   "n/a",
-  "na",
   "null",
   "undefined",
   "store",
@@ -33,19 +32,19 @@ export function isKeyboardMash(value: string): boolean {
   return false;
 }
 
+/**
+ * A public shop needs a real name and a country so the page can say where it is.
+ * A missing street, city, region, or map point does not hide the shop.
+ * Keyboard-mash and placeholder names stay off the site.
+ */
 export function isPublishableStore(input: {
   name: string;
-  address: string;
-  city: string;
-  state: string;
+  country: string;
 }): boolean {
   const name = input.name.trim();
-  const address = input.address.trim();
-  const city = input.city.trim();
-  const state = input.state.trim();
-  if (name.length < 2 || address.length < 4 || city.length < 2 || !state) return false;
+  const country = input.country.trim();
+  if (!name || !country) return false;
   if (isKeyboardMash(name)) return false;
-  if (isKeyboardMash(address)) return false;
   return true;
 }
 
@@ -53,6 +52,19 @@ export function isPublishableStore(input: {
  * Thrown-away "about" text: too short to be a sentence, a review quote,
  * or a line that just points at the official website.
  */
+/**
+ * A shop page stays public either way.
+ * It is indexable only when at least one of street, phone, or website is stored.
+ * A page with none of those is thin and should be noindex and left out of the sitemap.
+ */
+export function isIndexableShop(store: {
+  address: string;
+  phone: string | null;
+  website: string | null;
+}): boolean {
+  return Boolean(store.address.trim() || store.phone?.trim() || store.website?.trim());
+}
+
 export function isUsableAbout(value: string | null | undefined): boolean {
   const text = value?.trim() ?? "";
   const words = text.split(/\s+/).filter(Boolean);
