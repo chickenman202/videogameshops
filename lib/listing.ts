@@ -1,5 +1,8 @@
 import type { CatalogStore } from "@/lib/catalog";
 import { loadCatalog } from "@/lib/catalog";
+import { regionLinks, regionSlugByName } from "@/lib/country-browse";
+import { groupPlaceNames, preferredPlaceName, taiwanCityTitle } from "@/lib/place-fold";
+import { countryBySlug } from "@/lib/countries";
 import { joinList, toMetaDescription, toTitle } from "@/lib/copy";
 import {
   emptyFilters,
@@ -8,9 +11,13 @@ import {
   recordHasFilters,
   type Filters,
 } from "@/lib/filters";
+import { formatStorePlace } from "@/lib/place";
 import { isUsableAbout } from "@/lib/publish";
 import {
   cityPath,
+  countriesPath,
+  countryPath,
+  countryRegionPath,
   pagePath,
   platformCityPath,
   platformPath,
@@ -65,24 +72,32 @@ function applyUserFilters(stores: CatalogStore[], filters: Filters): CatalogStor
     if (!query) return true;
     return (
       store.name.toLowerCase().includes(query) ||
+      store.displayName.toLowerCase().includes(query) ||
       store.city.toLowerCase().includes(query) ||
-      store.state.toLowerCase().includes(query)
+      store.state.toLowerCase().includes(query) ||
+      store.country.toLowerCase().includes(query) ||
+      store.countryName.toLowerCase().includes(query) ||
+      (store.brand ?? "").toLowerCase().includes(query)
     );
   });
 }
 
 function cityGroups(stores: CatalogStore[], state: UsState): CityLink[] {
-  const groups = new Map<string, { name: string; count: number }>();
+  const grouped = groupPlaceNames(stores.map((store) => store.city));
+  const groups = new Map<string, string[]>();
   for (const store of stores) {
-    const current = groups.get(store.citySlug);
-    if (!current) groups.set(store.citySlug, { name: store.city, count: 1 });
-    else current.count += 1;
+    const name = store.city.trim();
+    const slug = grouped.get(name) ?? "";
+    if (!name || !slug) continue;
+    const names = groups.get(slug) ?? [];
+    names.push(name);
+    groups.set(slug, names);
   }
   return [...groups.entries()]
-    .map(([slug, group]) => ({
-      name: group.name,
+    .map(([slug, names]) => ({
+      name: taiwanCityTitle(names) ?? preferredPlaceName(names),
       slug,
-      count: group.count,
+      count: names.length,
       href: cityPath(state.slug, slug),
     }))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "en"));
@@ -120,15 +135,11 @@ export function storeAbout(store: CatalogStore): string {
   if (store.sellsUsed) facts.push("used games");
   if (store.tradeIns) facts.push("trade-ins");
   if (store.repairs) facts.push("console repair");
-  const offer = facts.length
-    ? `It offers ${joinList(facts)}.`
-    : "The page lists the address and the hours on file.";
-  const platforms = store.platforms.length
-    ? ` Platforms: ${joinList(store.platforms)}.`
-    : "";
-  return `${store.name} is a video game store at ${store.address}, ${store.city}, ${store.state}. ${offer}${platforms}`
-    .replace(/\s+/g, " ")
-    .trim();
+  const offer = facts.length ? `It offers ${joinList(facts)}.` : "";
+  const platforms = store.platforms.length ? ` Platforms: ${joinList(store.platforms)}.` : "";
+  const place = formatStorePlace(store);
+  const where = place ? ` at ${place}` : "";
+  return `${store.displayName} is a video game store${where}. ${offer}${platforms}`.replace(/\s+/g, " ").trim();
 }
 
 export async function buildListing(input: {
@@ -136,6 +147,8 @@ export async function buildListing(input: {
   stateSlug?: string;
   citySlug?: string;
   platformSlug?: string;
+  countrySlug?: string;
+  regionSlug?: string;
   searchParams?: Record<string, string | string[] | undefined>;
 }): Promise<ListingResult> {
   let page = input.page;
@@ -155,6 +168,25 @@ export async function buildListing(input: {
   const catalog = await loadCatalog();
   if (!catalog.ok) return { status: "error" };
 
+  const knownCountry = input.countrySlug ? countryBySlug(input.countrySlug) : null;
+  const requestedCountrySlug = knownCountry?.country.slug ?? input.countrySlug ?? "";
+  const countryStores = input.countrySlug
+    ? catalog.stores.filter((store) => store.countrySlug === requestedCountrySlug)
+    : [];
+  if (input.countrySlug && countryStores.length === 0) return { status: "not-found" };
+  const country = input.countrySlug
+    ? {
+        code: knownCountry?.country.code || countryStores[0]?.countryCode || "",
+        slug: requestedCountrySlug,
+        name:
+          countryStores.find((store) => store.countryName)?.countryName ||
+          knownCountry?.country.name ||
+          requestedCountrySlug.toUpperCase(),
+      }
+    : null;
+  // US regions already have state pages. Those URLs redirect before this runs.
+  if (country?.code === "US" && input.regionSlug) return { status: "not-found" };
+
   const filters = input.searchParams ? filtersFromRecord(input.searchParams) : emptyFilters();
   const filtered =
     (input.searchParams ? recordHasFilters(input.searchParams) : false) || hasFilters(filters);
@@ -164,20 +196,37 @@ export async function buildListing(input: {
 
   let pool = catalog.stores;
   if (state) pool = pool.filter((store) => store.stateSlug === state.slug);
+  if (country) pool = countryStores;
 
   let cityName: string | null = null;
   if (input.citySlug) {
-    const inCity = pool.filter((store) => store.citySlug === input.citySlug);
+    const grouped = groupPlaceNames(pool.map((store) => store.city));
+    const inCity = pool.filter((store) => grouped.get(store.city.trim()) === input.citySlug);
     if (inCity.length === 0) return { status: "not-found" };
-    cityName = inCity[0]?.city ?? null;
+    const cityNames = inCity.map((store) => store.city);
+    cityName = taiwanCityTitle(cityNames) ?? (preferredPlaceName(cityNames) || null);
     pool = inCity;
   }
 
-  const cities = state && !input.citySlug ? cityGroups(pool, state) : [];
+  let regionName: string | null = null;
+  if (country && input.regionSlug) {
+    const grouped = regionSlugByName(pool, country.code);
+    const inRegion = pool.filter((store) => grouped.get(store.state.trim()) === input.regionSlug);
+    if (inRegion.length < MIN_CITY_STORES) return { status: "not-found" };
+    regionName = preferredPlaceName(inRegion.map((store) => store.state)) || input.regionSlug;
+    pool = inRegion;
+  }
+
+  const cities =
+    state && !input.citySlug
+      ? cityGroups(pool, state)
+      : country && !input.regionSlug
+        ? regionLinks(pool, country)
+        : [];
   const platformLinks =
     input.citySlug && state
       ? platformGroups(pool, (slug) => platformCityPath(state.slug, input.citySlug ?? "", slug))
-      : !state && !platform
+      : !state && !platform && !country
         ? PLATFORMS.map((item) => ({
             label: item.label,
             slug: item.slug,
@@ -202,7 +251,9 @@ export async function buildListing(input: {
   const platformLabel = platform?.label ?? null;
 
   let basePath = "/directory";
-  if (platform && !state) basePath = platformPath(platform.slug);
+  if (country && input.regionSlug) basePath = countryRegionPath(country.slug, input.regionSlug);
+  else if (country) basePath = countryPath(country.slug);
+  else if (platform && !state) basePath = platformPath(platform.slug);
   else if (state && input.citySlug && platform) {
     basePath = platformCityPath(state.slug, input.citySlug, platform.slug);
   } else if (state && input.citySlug) basePath = cityPath(state.slug, input.citySlug);
@@ -210,7 +261,11 @@ export async function buildListing(input: {
 
   const selfPath = pagePath(basePath, page);
   const canonicalPath = filtered ? basePath : selfPath;
-  const place = cityName && state ? `${cityName}, ${state.name}` : state?.name ?? null;
+  const place =
+    cityName && state
+      ? `${cityName}, ${state.name}`
+      : state?.name ??
+        (regionName && country ? `${regionName}, ${country.name}` : country?.name ?? null);
   const h1 = platformLabel
     ? place
       ? `${platformHeading(platformLabel)} in ${place}`
@@ -230,6 +285,7 @@ export async function buildListing(input: {
   else if (input.citySlug) indexable = indexable && placeTotal >= MIN_CITY_STORES;
   else if (platform && !state) indexable = indexable && placeTotal >= 1;
   else if (state) indexable = indexable && placeTotal >= 1;
+  else if (country) indexable = indexable && placeTotal >= 1;
 
   // Page 2 and later stay self-canonical for people, but only page 1 is the
   // main indexed URL for city, state, and platform lists.
@@ -239,11 +295,20 @@ export async function buildListing(input: {
     { name: "Home", href: "/" },
     { name: "Stores", href: "/directory" },
   ];
+  if (country) {
+    crumbs.push({ name: "Countries", href: countriesPath() });
+    crumbs.push({ name: country.name, href: countryPath(country.slug) });
+    if (input.regionSlug && regionName) {
+      crumbs.push({ name: regionName, href: countryRegionPath(country.slug, input.regionSlug) });
+    }
+  }
   if (state) crumbs.push({ name: state.name, href: statePath(state.slug) });
   if (state && input.citySlug && cityName) {
     crumbs.push({ name: cityName, href: cityPath(state.slug, input.citySlug) });
   }
   if (platform) crumbs.push({ name: platform.label });
+  else if (input.regionSlug && regionName) crumbs[crumbs.length - 1] = { name: regionName };
+  else if (country) crumbs[crumbs.length - 1] = { name: country.name };
   else if (input.citySlug && cityName) crumbs[crumbs.length - 1] = { name: cityName };
   else if (state) crumbs[crumbs.length - 1] = { name: state.name };
   else crumbs[crumbs.length - 1] = { name: "Stores" };

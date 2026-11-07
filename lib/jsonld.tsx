@@ -2,7 +2,6 @@ import type { CatalogStore } from "@/lib/catalog";
 import { parseDayHours, WEEKDAYS } from "@/lib/hours";
 import { cityPath, statePath, storePath } from "@/lib/paths";
 import { BRAND, PAGE_SIZE, SITE_URL } from "@/lib/site";
-import type { UsState } from "@/lib/states";
 
 export function absoluteUrl(path: string): string {
   return `${SITE_URL}${path}`;
@@ -65,7 +64,7 @@ export function collectionJsonLd(input: {
     itemListElement: input.stores.map((store, index) => ({
       "@type": "ListItem",
       position: (input.page - 1) * PAGE_SIZE + index + 1,
-      name: store.name,
+      name: store.displayName,
       url: absoluteUrl(storePath(store.slug)),
     })),
   };
@@ -108,20 +107,28 @@ export function storeJsonLd(store: CatalogStore) {
     }
   }
 
+  const address: Record<string, unknown> = { "@type": "PostalAddress" };
+  if (store.address) address.streetAddress = store.address;
+  if (store.city) address.addressLocality = store.city;
+  if (store.country === "US" && (store.stateAbbr || store.state)) {
+    address.addressRegion = store.stateAbbr || store.state;
+  } else if (store.state) {
+    address.addressRegion = store.state;
+  }
+  if (store.zip) address.postalCode = store.zip;
+  if (store.country) address.addressCountry = store.country;
+
   const business: Record<string, unknown> = {
     "@type": "LocalBusiness",
-    name: store.name,
+    name: store.displayName,
     url: absoluteUrl(storePath(store.slug)),
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: store.address,
-      addressLocality: store.city,
-      addressRegion: store.stateAbbr,
-      ...(store.zip ? { postalCode: store.zip } : {}),
-      addressCountry: "US",
-    },
   };
+  if (Object.keys(address).length > 1) business.address = address;
   if (store.phone) business.telephone = store.phone;
+  const sameAs = [store.website, store.facebook, store.instagram, store.twitter, ...store.otherSocials].filter(
+    (item): item is string => Boolean(item),
+  );
+  if (sameAs.length > 0) business.sameAs = sameAs;
   if (store.lat != null && store.lng != null) {
     business.geo = {
       "@type": "GeoCoordinates",
@@ -136,12 +143,23 @@ export function storeJsonLd(store: CatalogStore) {
   return { "@context": "https://schema.org", ...business };
 }
 
-export function storeCrumbs(store: CatalogStore, state: UsState) {
-  return [
+export function storeCrumbs(
+  store: CatalogStore,
+  extra?: { country?: { name: string; href: string } | null; region?: { name: string; href: string } | null },
+) {
+  const crumbs = [
     { name: "Home", path: "/" },
     { name: "Stores", path: "/directory" },
-    { name: state.name, path: statePath(state.slug) },
-    { name: store.city, path: cityPath(state.slug, store.citySlug) },
-    { name: store.name, path: storePath(store.slug) },
   ];
+  if (store.stateSlug) {
+    crumbs.push({ name: store.state, path: statePath(store.stateSlug) });
+    if (store.city && store.citySlug) {
+      crumbs.push({ name: store.city, path: cityPath(store.stateSlug, store.citySlug) });
+    }
+  } else {
+    if (extra?.country) crumbs.push({ name: extra.country.name, path: extra.country.href });
+    if (extra?.region) crumbs.push({ name: extra.region.name, path: extra.region.href });
+  }
+  crumbs.push({ name: store.displayName, path: storePath(store.slug) });
+  return crumbs;
 }

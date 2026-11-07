@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { loadCatalog } from "@/lib/catalog";
-import { cityPath, platformCityPath, platformPath, statePath, storePath } from "@/lib/paths";
+import { countryEntries, regionLinks, regionSlugByName } from "@/lib/country-browse";
+import { cityPath, countriesPath, countryPath, platformCityPath, platformPath, statePath, storePath } from "@/lib/paths";
 import { PLATFORMS } from "@/lib/platforms";
 import { CONTENT_UPDATED, MIN_CITY_STORES, MIN_PLATFORM_CITY_STORES, SITE_URL } from "@/lib/site";
 import { US_STATES } from "@/lib/states";
@@ -24,6 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/",
     "/directory",
     "/directory/states",
+    countriesPath(),
     "/directory/platforms",
     "/about",
     "/contact",
@@ -43,6 +45,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const cityKeys = new Map<string, { stateSlug: string; citySlug: string; updated: string[] }>();
   for (const store of catalog.stores) {
+    if (!store.stateSlug || !store.citySlug) continue;
     const key = `${store.stateSlug}/${store.citySlug}`;
     const current = cityKeys.get(key);
     if (!current) {
@@ -70,6 +73,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const groups = new Map<string, { stateSlug: string; citySlug: string; updated: string[] }>();
     for (const store of catalog.stores) {
       if (!store.platforms.includes(platform.label)) continue;
+      if (!store.stateSlug || !store.citySlug) continue;
       const key = `${store.stateSlug}/${store.citySlug}`;
       const current = groups.get(key);
       if (!current) {
@@ -88,11 +92,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  const storeEntries = catalog.stores.map((store) => entry(storePath(store.slug), store.updatedAt));
+  const countries = countryEntries(catalog.stores);
+  const countryPageEntries = countries.map((country) => {
+    const stores = catalog.stores.filter((store) => store.country === country.code);
+    return entry(countryPath(country.slug), newest(stores.map((store) => store.updatedAt)));
+  });
+  // US regions already appear as state pages. Other countries get a page
+  // only when that region has enough shops.
+  const regionPageEntries = countries
+    .filter((country) => country.code !== "US")
+    .flatMap((country) =>
+      regionLinks(catalog.stores, country).map((region) => {
+        const grouped = regionSlugByName(catalog.stores, country.code);
+        const stores = catalog.stores.filter(
+          (store) => store.country === country.code && grouped.get(store.state.trim()) === region.slug,
+        );
+        return entry(region.href, newest(stores.map((store) => store.updatedAt)));
+      }),
+    );
+
+  const storeEntries = catalog.stores
+    .filter((store) => store.indexable)
+    .map((store) => entry(storePath(store.slug), store.updatedAt));
 
   return [
     ...staticPages,
     ...stateEntries,
+    ...countryPageEntries,
+    ...regionPageEntries,
     ...cityEntries,
     ...platformEntries,
     ...platformCityEntries,

@@ -1,5 +1,6 @@
 /**
- * Hand-written to match supabase/migrations/0001_stores.sql.
+ * Hand-written to match supabase/migrations/0001_stores.sql
+ * and 0002_store_import_fields.sql.
  * Use the full Database type with createClient, not Database["public"].
  */
 
@@ -13,18 +14,21 @@ export interface Database {
           id: string;
           slug: string;
           name: string;
-          address: string;
-          city: string;
+          address: string | null;
+          city: string | null;
           city_slug: string;
-          state: string;
+          state: string | null;
           zip_code: string | null;
-          country: string;
+          country: string | null;
+          country_name: string | null;
           phone: string | null;
           latitude: number | null;
           longitude: number | null;
           website: string | null;
+          website_domain: string | null;
           about: string | null;
           opening_hours: Json | null;
+          opening_hours_raw: string | null;
           platforms: string[];
           sells_new: boolean;
           sells_used: boolean;
@@ -33,6 +37,20 @@ export interface Database {
           is_active: boolean;
           google_place_id: string | null;
           photo_url: string | null;
+          brand: string | null;
+          facebook_url: string | null;
+          instagram_url: string | null;
+          twitter_url: string | null;
+          other_socials: string | null;
+          store_info: string | null;
+          source: string | null;
+          source_id: string | null;
+          osm_url: string | null;
+          wikidata_url: string | null;
+          fetched_at: string | null;
+          data_updated_at: string | null;
+          enrichment_notes: string | null;
+          alternate_source_ids: string[];
           created_at: string;
           updated_at: string;
         };
@@ -40,18 +58,21 @@ export interface Database {
           id?: string;
           slug: string;
           name: string;
-          address: string;
-          city: string;
+          address?: string | null;
+          city?: string | null;
           city_slug?: string;
-          state: string;
+          state?: string | null;
           zip_code?: string | null;
-          country?: string;
+          country?: string | null;
+          country_name?: string | null;
           phone?: string | null;
           latitude?: number | null;
           longitude?: number | null;
           website?: string | null;
+          website_domain?: string | null;
           about?: string | null;
           opening_hours?: Json | null;
+          opening_hours_raw?: string | null;
           platforms?: string[];
           sells_new?: boolean;
           sells_used?: boolean;
@@ -60,6 +81,20 @@ export interface Database {
           is_active?: boolean;
           google_place_id?: string | null;
           photo_url?: string | null;
+          brand?: string | null;
+          facebook_url?: string | null;
+          instagram_url?: string | null;
+          twitter_url?: string | null;
+          other_socials?: string | null;
+          store_info?: string | null;
+          source?: string | null;
+          source_id?: string | null;
+          osm_url?: string | null;
+          wikidata_url?: string | null;
+          fetched_at?: string | null;
+          data_updated_at?: string | null;
+          enrichment_notes?: string | null;
+          alternate_source_ids?: string[];
           created_at?: string;
           updated_at?: string;
         };
@@ -67,18 +102,21 @@ export interface Database {
           id?: string;
           slug?: string;
           name?: string;
-          address?: string;
-          city?: string;
+          address?: string | null;
+          city?: string | null;
           city_slug?: string;
-          state?: string;
+          state?: string | null;
           zip_code?: string | null;
-          country?: string;
+          country?: string | null;
+          country_name?: string | null;
           phone?: string | null;
           latitude?: number | null;
           longitude?: number | null;
           website?: string | null;
+          website_domain?: string | null;
           about?: string | null;
           opening_hours?: Json | null;
+          opening_hours_raw?: string | null;
           platforms?: string[];
           sells_new?: boolean;
           sells_used?: boolean;
@@ -87,6 +125,20 @@ export interface Database {
           is_active?: boolean;
           google_place_id?: string | null;
           photo_url?: string | null;
+          brand?: string | null;
+          facebook_url?: string | null;
+          instagram_url?: string | null;
+          twitter_url?: string | null;
+          other_socials?: string | null;
+          store_info?: string | null;
+          source?: string | null;
+          source_id?: string | null;
+          osm_url?: string | null;
+          wikidata_url?: string | null;
+          fetched_at?: string | null;
+          data_updated_at?: string | null;
+          enrichment_notes?: string | null;
+          alternate_source_ids?: string[];
           created_at?: string;
           updated_at?: string;
         };

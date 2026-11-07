@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { PageShell } from "@/components/page-shell";
 import { loadCatalog } from "@/lib/catalog";
+import { countStoresByCountry } from "@/lib/country-browse";
 import { LoadError } from "@/components/load-error";
 import { absoluteUrl } from "@/lib/jsonld";
 import { toMetaDescription, toTitle } from "@/lib/copy";
-import { statePath } from "@/lib/paths";
+import { countriesPath, statePath } from "@/lib/paths";
 import { BRAND } from "@/lib/site";
 import { US_STATES } from "@/lib/states";
 
@@ -22,12 +23,15 @@ export default async function StatesPage() {
   const catalog = await loadCatalog();
   if (!catalog.ok) return <LoadError />;
 
+  const usStores = catalog.stores.filter((store) => store.country === "US");
   const states = US_STATES.map((state) => ({
     ...state,
-    count: catalog.stores.filter((store) => store.stateSlug === state.slug).length,
+    count: usStores.filter((store) => store.stateSlug === state.slug).length,
   })).filter((state) => state.count > 0);
 
-  const total = catalog.stores.length;
+  const total = usStores.length;
+  const outside = countStoresByCountry(catalog.stores).filter((country) => country.code !== "US");
+  const outsideCount = outside.reduce((sum, country) => sum + country.count, 0);
 
   return (
     <PageShell>
@@ -35,6 +39,17 @@ export default async function StatesPage() {
         <h1 className="text-4xl font-semibold tracking-tight">Video Game Stores by State</h1>
         <p className="mt-4 text-lg text-muted">
           {total.toLocaleString("en-US")} video game {total === 1 ? "store" : "stores"} in the United States.
+          {outsideCount > 0 ? (
+            <>
+              {" "}
+              {outsideCount.toLocaleString("en-US")} {outsideCount === 1 ? "shop" : "shops"} outside the United
+              States {outsideCount === 1 ? "is" : "are"} listed{" "}
+              <a href={countriesPath()} className="text-[#155eef]">
+                by country
+              </a>
+              .
+            </>
+          ) : null}
         </p>
         {states.length > 0 ? (
           <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

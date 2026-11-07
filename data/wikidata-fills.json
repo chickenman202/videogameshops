@@ -1,0 +1,17 @@
+{
+  "Q16964881": {
+    "country": "NL",
+    "country_name": "Netherlands",
+    "note": "country<=wikidata:P17 (Q55 Netherlands, ISO 3166-1 NL)"
+  },
+  "Q125055846": {
+    "address_line": "大阪府大阪市北区梅田3-1-1 大丸梅田店13F",
+    "city": "Umeda",
+    "note": "address_line<=wikidata:P6375; city<=wikidata:P131 (Q1194307 Umeda)"
+  },
+  "Q125055824": {
+    "address_line": "京都市下京区四条通寺町東入2丁目御旅町35 京都髙島屋S.C.［T8］7階",
+    "city": "Shimogyō-ku",
+    "note": "address_line<=wikidata:P6375; city<=wikidata:P131 (Q1077022 Shimogyō-ku)"
+  }
+}
