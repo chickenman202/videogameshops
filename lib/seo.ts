@@ -6,7 +6,7 @@ export function listingMetadata(listing: ListingResult): Metadata {
   if (listing.status !== "ok") {
     const missing = listing.status === "not-found";
     return {
-      title: { absolute: missing ? "Page Not Found" : "Directory unavailable" },
+      title: { absolute: missing ? "Page Not Found" : "The shop list didn’t load" },
       robots: { index: false, follow: !missing },
     };
   }

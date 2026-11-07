@@ -1,6 +1,6 @@
 import type { CatalogStore } from "@/lib/catalog";
 import { loadCatalog } from "@/lib/catalog";
-import { joinList, toMetaDescription, toTitle } from "@/lib/copy";
+import { catalogNoun, listingIntro, toMetaDescription, toTitle } from "@/lib/copy";
 import {
   emptyFilters,
   filtersFromRecord,
@@ -100,35 +100,10 @@ function platformGroups(stores: CatalogStore[], hrefFor: (slug: string) => strin
   }).filter((platform) => platform.count >= MIN_PLATFORM_CITY_STORES);
 }
 
-function nounFor(platformLabel: PlatformLabel | null): string {
-  if (!platformLabel) return "video game stores";
-  if (platformLabel === "Retro") return "retro game stores";
-  if (platformLabel === "VR") return "VR game stores";
-  return `${platformLabel} game stores`;
-}
-
-function leadSentence(total: number, noun: string, place: string | null): string {
-  const count = total.toLocaleString("en-US");
-  const label = total === 1 ? noun.replace(/stores$/, "store") : noun;
-  return place ? `${count} ${label} in ${place}.` : `${count} ${label}.`;
-}
-
+/** Stored description only. Missing copy stays blank instead of a generated biography. */
 export function storeAbout(store: CatalogStore): string {
   if (isUsableAbout(store.about)) return store.about?.trim() ?? "";
-  const facts: string[] = [];
-  if (store.sellsNew) facts.push("new games");
-  if (store.sellsUsed) facts.push("used games");
-  if (store.tradeIns) facts.push("trade-ins");
-  if (store.repairs) facts.push("console repair");
-  const offer = facts.length
-    ? `It offers ${joinList(facts)}.`
-    : "The page lists the address and the hours on file.";
-  const platforms = store.platforms.length
-    ? ` Platforms: ${joinList(store.platforms)}.`
-    : "";
-  return `${store.name} is a video game store at ${store.address}, ${store.city}, ${store.state}. ${offer}${platforms}`
-    .replace(/\s+/g, " ")
-    .trim();
+  return "";
 }
 
 export async function buildListing(input: {
@@ -219,11 +194,18 @@ export async function buildListing(input: {
       ? `Video Game Stores in ${place}`
       : "Video Game Stores";
 
-  const noun = nounFor(platformLabel);
-  const intro = leadSentence(total, noun, place);
-  const compare = platformLabel
-    ? "Compare hours, trade-ins, and used games at shops that carry this platform."
-    : "Compare hours, trade-ins, used games, and retro stock.";
+  const noun = catalogNoun(platformLabel);
+  const intro = listingIntro({
+    total,
+    noun,
+    place,
+    platform: Boolean(platformLabel),
+    cities: new Set(visible.map((store) => store.citySlug || store.city).filter(Boolean)).size,
+    retro: visible.filter((store) => store.platforms.includes("Retro")).length,
+    used: visible.filter((store) => store.sellsUsed).length,
+    tradeIns: visible.filter((store) => store.tradeIns).length,
+    repairs: visible.filter((store) => store.repairs).length,
+  });
 
   let indexable = !filtered && page === 1;
   if (input.citySlug && platform) indexable = indexable && placeTotal >= MIN_PLATFORM_CITY_STORES;
@@ -260,7 +242,7 @@ export async function buildListing(input: {
     filtered,
     h1,
     title: toTitle(page > 1 ? `${h1}, Page ${page}` : h1),
-    description: toMetaDescription(`${intro} ${compare}`),
+    description: toMetaDescription(intro),
     intro,
     crumbs,
     state,

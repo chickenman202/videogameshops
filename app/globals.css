@@ -1,35 +1,212 @@
 @import "tailwindcss";
 
+/*
+  Original brand families only: black, white, blue, silver.
+  Tints and shades of those four are allowed. No cream and no red.
+*/
 :root {
+  color-scheme: light;
   --background: #f4f6f8;
   --foreground: #090b10;
-  --blue: #155eef;
-  --silver: #d5dbe3;
+  --stage: #090b10;
+  --news: #f4f6f8;
+  --card: #ffffff;
+  --paper: #ffffff;
+  --ink: #090b10;
+  --ink-soft: #1c2430;
   --muted: #5c6773;
+  --line: #d5dbe3;
+  --silver: #d5dbe3;
+  --blue: #155eef;
+  --blue-deep: #0e46c4;
+  /* Darker blue for small text on white and silver. Lighter blue for text on black. */
+  --blue-ink: #0e46c4;
+  --blue-mist: #c5d4ff;
+  --signal: #155eef;
+  --danger: #0a2f86;
+  --danger-soft: #e7eefb;
+  --ok: #155eef;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-blue: var(--blue);
-  --color-silver: var(--silver);
+  --color-stage: var(--stage);
+  --color-news: var(--news);
+  --color-card: var(--card);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
   --color-muted: var(--muted);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-line: var(--line);
+  --color-silver: var(--silver);
+  --color-blue: var(--blue);
+  --color-blue-deep: var(--blue-deep);
+  --color-blue-ink: var(--blue-ink);
+  --color-blue-mist: var(--blue-mist);
+  --color-signal: var(--signal);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-ok: var(--ok);
+  --font-sans: var(--font-newsreader), Georgia, serif;
+  --font-serif: var(--font-newsreader), Georgia, serif;
+  --font-display: var(--font-barlow), "Arial Narrow", Impact, sans-serif;
+  --font-mono: var(--font-plex), ui-monospace, monospace;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), "Segoe UI", sans-serif;
+@layer base {
+  /* Keeps focused fields and the skip target below the sticky header. */
+  html {
+    scroll-padding-top: 4.75rem;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-newsreader), Georgia, serif;
+    line-height: 1.5;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-barlow), "Arial Narrow", Impact, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 0.92;
+  }
 }
 
-a:focus-visible,
-button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible,
-summary:focus-visible {
+::selection {
+  background: #155eef;
+  color: #ffffff;
+}
+
+:focus-visible {
   outline: 2px solid var(--blue);
-  outline-offset: 2px;
+  outline-offset: 3px;
+}
+
+#content:focus {
+  outline: none;
+}
+
+@layer components {
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: 0.75rem;
+  z-index: 60;
+  transform: translateY(-200%);
+  background: var(--blue);
+  color: #fff;
+  padding: 0.7rem 1rem;
+  font-family: var(--font-plex), ui-monospace, monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+.btn {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  padding: 0.55rem 1rem;
+  font-family: var(--font-barlow), "Arial Narrow", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.btn-primary {
+  background: var(--blue);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--blue-deep);
+}
+
+.btn-light {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.btn-light:hover {
+  background: #fff;
+}
+
+.btn-ghost {
+  border-color: currentColor;
+  background: transparent;
+  color: inherit;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+}
+
+.field {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  border: 1px solid var(--ink);
+  background: #fff;
+  padding: 0.55rem 0.75rem;
+  color: var(--ink);
+  font-family: var(--font-newsreader), Georgia, serif;
+  font-size: 1rem;
+}
+
+.field:focus {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+.link {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.link:hover {
+  color: var(--blue);
+}
+
+.kicker {
+  font-family: var(--font-plex), ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.article-body {
+  margin-top: 1.5rem;
+  max-width: 40rem;
+  color: var(--ink-soft);
+  font-size: 1.125rem;
+  line-height: 1.65;
+}
+
+.article-body h2 {
+  margin-top: 2.25rem;
+  color: var(--ink);
+  font-size: 2rem;
+}
+
+.article-body p + p,
+.article-body h2 + p {
+  margin-top: 0.9rem;
+}
 }

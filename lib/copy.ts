@@ -1,20 +1,12 @@
 import { BRAND } from "./site";
 
-/** Keep search descriptions in the length Google usually shows in full. */
+/** Trim a description. Do not add sentences the listing did not supply. */
 export function toMetaDescription(lead: string): string {
-  let text = lead.replace(/\s+/g, " ").trim();
-  const extras = [
-    "Addresses, phone numbers, and weekly hours are on each store page.",
-    "See what each shop sells before you go.",
-  ];
-  for (const extra of extras) {
-    if (text.length >= 140) break;
-    text = `${text} ${extra}`.trim();
-  }
+  const text = lead.replace(/\s+/g, " ").trim();
   if (text.length <= 160) return text;
   const sliced = text.slice(0, 159);
   const space = sliced.lastIndexOf(" ");
-  const cut = space >= 140 ? sliced.slice(0, space) : sliced;
+  const cut = space >= 80 ? sliced.slice(0, space) : sliced;
   return cut.replace(/[.,;:\s]+$/, "");
 }
 
@@ -48,6 +40,87 @@ export function storeTitle(
   const suffix = ` | ${place}`;
   const room = Math.max(1, 60 - suffix.length);
   return `${name.slice(0, room).trimEnd()}${suffix}`.slice(0, 60);
+}
+
+export function catalogNoun(platformLabel: string | null): string {
+  if (!platformLabel) return "video game stores";
+  if (platformLabel === "Retro") return "retro game stores";
+  if (platformLabel === "VR") return "VR game stores";
+  return `${platformLabel} game stores`;
+}
+
+export type ListingIntroFacts = {
+  total: number;
+  noun: string;
+  place: string | null;
+  platform: boolean;
+  cities: number;
+  retro: number;
+  used: number;
+  tradeIns: number;
+  repairs: number;
+};
+
+/** A short intro from real counts. Wording shifts with the place, and extra clauses only use stored tags. */
+export function listingIntro(facts: ListingIntroFacts): string {
+  const noun = facts.total === 1 ? facts.noun.replace(/stores$/, "store") : facts.noun;
+  if (facts.total === 0) {
+    return facts.place ? `No ${facts.noun} listed in ${facts.place} yet.` : `No ${facts.noun} listed yet.`;
+  }
+
+  const count = facts.total.toLocaleString("en-US");
+  const cities = facts.cities.toLocaleString("en-US");
+  let lead: string;
+  if (!facts.place) {
+    lead = facts.cities > 1 ? `${count} ${noun} in ${cities} cities.` : `${count} ${noun}.`;
+  } else if (facts.cities > 1) {
+    const cityWord = facts.cities === 1 ? "city" : "cities";
+    lead = `${facts.place} has ${count} ${noun} in ${cities} ${cityWord}.`;
+  } else if (facts.total === 1) {
+    lead = placeFrame(facts.place, facts.total) === 0 ? `One ${noun} in ${facts.place}.` : `${facts.place} has one ${noun}.`;
+  } else if (placeFrame(facts.place, facts.total) === 0) {
+    lead = `${count} ${noun} in ${facts.place}.`;
+  } else {
+    lead = `${facts.place} has ${count} ${noun}.`;
+  }
+
+  const extra = introExtra(facts);
+  return extra ? `${lead} ${extra}` : lead;
+}
+
+function placeFrame(place: string, total: number): number {
+  let hash = total;
+  for (const char of place) hash += char.charCodeAt(0);
+  return hash % 2;
+}
+
+function introExtra(facts: ListingIntroFacts): string | null {
+  if (facts.total === 0) return null;
+  if (!facts.platform && facts.retro > 0) {
+    if (facts.retro === facts.total) return facts.total === 1 ? "It stocks retro games." : "Every shop stocks retro games.";
+    return ofThem(facts.retro, "stocks retro games", "stock retro games");
+  }
+  if (facts.used > 0) {
+    if (facts.used === facts.total) return facts.total === 1 ? "It stocks used games." : "Every shop stocks used games.";
+    return ofThem(facts.used, "stocks used games", "stock used games");
+  }
+  if (facts.tradeIns > 0) {
+    if (facts.tradeIns === facts.total) return facts.total === 1 ? "It does trade-ins." : "Every shop does trade-ins.";
+    return doesCount(facts.tradeIns, "does trade-ins", "do trade-ins");
+  }
+  if (facts.repairs > 0) {
+    if (facts.repairs === facts.total) return facts.total === 1 ? "It does repairs." : "Every shop does repairs.";
+    return doesCount(facts.repairs, "does repairs", "do repairs");
+  }
+  return null;
+}
+
+function ofThem(count: number, one: string, many: string): string {
+  return `${count.toLocaleString("en-US")} of them ${count === 1 ? one : many}.`;
+}
+
+function doesCount(count: number, one: string, many: string): string {
+  return `${count.toLocaleString("en-US")} ${count === 1 ? one : many}.`;
 }
 
 export function joinList(items: string[]): string {

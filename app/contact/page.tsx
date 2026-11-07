@@ -1,27 +1,33 @@
 import type { Metadata } from "next";
+import { ArticlePage } from "@/components/article-page";
 import { ContactForm } from "@/components/forms";
-import { PageShell } from "@/components/page-shell";
 import { absoluteUrl } from "@/lib/jsonld";
 import { BRAND } from "@/lib/site";
 
+const description = "Tell videogameshops about a wrong hour, a closed shop, or a missing street.";
+
 export const metadata: Metadata = {
   title: { absolute: `Contact | ${BRAND}` },
-  description:
-    "Contact videogameshops to correct a store address, hours, phone number, or platform list.",
+  description,
   alternates: { canonical: absoluteUrl("/contact") },
+  openGraph: { title: `Contact | ${BRAND}`, description, url: absoluteUrl("/contact"), siteName: BRAND, type: "website" },
 };
 
 export default function ContactPage() {
   return (
-    <PageShell>
-      <article className="mx-auto max-w-3xl px-4 py-16">
-        <h1 className="text-4xl font-semibold tracking-tight">Contact</h1>
-        <p className="mt-4 text-lg text-[#3c4550]">
-          Send a correction for a store that is already listed, or a question about the directory. Include
-          the store name and city so the right page can be updated.
-        </p>
-        <ContactForm />
-      </article>
-    </PageShell>
+    <ArticlePage
+      title="Contact"
+      lede="Wrong hours, a shop that closed, or a street we missed? Send a note and we’ll take a look."
+    >
+      <div className="mt-6 border-t border-ink pt-4 text-base text-ink-soft">
+        <p className="font-bold text-ink">Include</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          <li>The shop name</li>
+          <li>The city and country</li>
+          <li>What’s off: the street, the hours, the phone, or a platform</li>
+        </ul>
+      </div>
+      <ContactForm />
+    </ArticlePage>
   );
 }
