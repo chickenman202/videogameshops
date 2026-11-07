@@ -27,8 +27,8 @@ export default function PrivacyPage() {
           when we have them.
         </p>
         <p>
-          The contact and submit forms ask for a name, an email, and a message so we can add or fix a listing. We keep
-          those notes for that. We don’t sell them, and there’s no shopper account.
+          The contact and submit forms ask for a name, an email, and a message so we can add or fix a listing. We only
+          use those notes to update listings. We don’t sell them, and there’s no shopper account.
         </p>
         <p>Form notes aren’t sent to an ad network.</p>
       </div>

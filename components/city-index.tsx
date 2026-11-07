@@ -20,7 +20,7 @@ export function CityIndex({ cities }: { cities: CityItem[] }) {
           <h2 id="cities-heading" className="text-4xl uppercase text-ink sm:text-5xl">
             Cities
           </h2>
-          <p className="mt-2 text-sm text-muted">Pick a city. The number is the shops there.</p>
+          <p className="mt-2 text-sm text-muted">Pick a city to see its shops.</p>
         </div>
         {cities.length > 8 ? (
           <label className="block w-full sm:max-w-xs">

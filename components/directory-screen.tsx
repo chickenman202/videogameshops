@@ -128,7 +128,7 @@ function EmptyResults({ listing }: { listing: ListingOk }) {
       <h3 className="text-4xl uppercase text-ink">{filtered ? "No shops match" : "No shops here yet"}</h3>
       <p className="mt-3 max-w-md text-ink-soft">
         {listing.filters.q
-          ? `Nothing for “${listing.filters.q}”. Try the city, the country, or the name on the sign.`
+          ? `Nothing for “${listing.filters.q}”. Try a city, a country, or a shop name.`
           : filtered
             ? "Those filters came up empty. Clear one, or search by place."
             : "No shops are listed for this page yet."}

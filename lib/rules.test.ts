@@ -174,7 +174,8 @@ describe("titles and descriptions", () => {
       repairs: 0,
     });
     assert.match(austin, /Austin, Texas/);
-    assert.match(austin, /retro/);
+    assert.match(austin, /2 of them stock retro games/);
+    assert.equal(austin.includes("tagged"), false);
     assert.equal(austin.includes("used"), false);
     assert.equal(dallas.includes("retro"), false);
     assert.equal(dallas.includes("used"), false);
@@ -205,6 +206,31 @@ describe("titles and descriptions", () => {
     });
     assert.match(one, /one video game store/i);
     assert.equal(one.includes("stores in"), false);
+    const trades = listingIntro({
+      total: 4,
+      noun: "video game stores",
+      place: "Houston, Texas",
+      platform: false,
+      cities: 1,
+      retro: 0,
+      used: 0,
+      tradeIns: 3,
+      repairs: 1,
+    });
+    assert.match(trades, /3 do trade-ins/);
+    assert.equal(trades.includes("repair"), false);
+    const repairs = listingIntro({
+      total: 4,
+      noun: "video game stores",
+      place: "Houston, Texas",
+      platform: false,
+      cities: 1,
+      retro: 0,
+      used: 0,
+      tradeIns: 0,
+      repairs: 1,
+    });
+    assert.match(repairs, /1 does repairs/);
   });
 });
 

@@ -17,7 +17,7 @@ export default function ContactPage() {
   return (
     <ArticlePage
       title="Contact"
-      lede="See a wrong hour, a shop that closed, or a street we missed? Send a note. We’ll read it."
+      lede="Wrong hours, a shop that closed, or a street we missed? Send a note and we’ll take a look."
     >
       <div className="mt-6 border-t border-ink pt-4 text-base text-ink-soft">
         <p className="font-bold text-ink">Include</p>

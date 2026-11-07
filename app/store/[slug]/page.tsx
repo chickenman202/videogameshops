@@ -75,7 +75,13 @@ export async function generateMetadata(props: PageProps<"/store/[slug]">): Promi
   const placeLabel = store.city || shopCountryName(store) || "Shop";
   const regionLabel = store.stateAbbr || shopCountry(store);
   const title = storeTitle(store.name, placeLabel, regionLabel, store.platforms);
-  const placeBit = [store.city, shopCountryName(store) || store.state].filter(Boolean).join(", ");
+  const countryCode = shopCountry(store);
+  const inUs = countryCode === "US" || (!countryCode && Boolean(store.stateAbbr));
+  const placeBit = (
+    inUs ? [store.city, store.state] : [store.city, shopCountryName(store) || store.state]
+  )
+    .filter(Boolean)
+    .join(", ");
   const description = toMetaDescription(
     store.about?.trim() || (placeBit ? `${store.name} is a video game store in ${placeBit}.` : store.name),
   );
@@ -209,7 +215,7 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
                     {hasAddress(store) ? (
                       store.address
                     ) : (
-                      <span className="text-ink-soft">No street on file yet.</span>
+                      <span className="text-ink-soft">We don’t have a street for this shop yet.</span>
                     )}
                     {localLine ? (
                       <>

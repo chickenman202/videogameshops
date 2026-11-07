@@ -38,7 +38,7 @@ export default async function PlatformsPage() {
         />
         <h1 className="mt-4 text-5xl uppercase text-ink sm:text-7xl">Video Game Stores by Platform</h1>
         <p className="mt-3 max-w-3xl text-lg text-ink-soft">
-          Shops grouped by the platforms their listings name: PlayStation, retro, and the rest.
+          Shops grouped by what they carry: PlayStation, retro, and the rest.
         </p>
         {platforms.length > 0 ? (
           <ul className="mt-8 border-t border-ink">

@@ -223,7 +223,7 @@ export default async function HomePage() {
             <p className="kicker text-blue-ink">Shop owners</p>
             <h2 className="mt-3 font-serif text-4xl font-normal text-ink italic sm:text-5xl">This shop is yours</h2>
             <p className="mt-3 max-w-xl text-lg text-ink-soft">
-              Add it. Send the name, the street, and the city, wherever the shop is. We’ll read it before it goes up.
+              If the shop is yours, send the name, the street, and the city. We’ll read it before the page goes up.
             </p>
           </div>
           <div className="sm:col-span-5 sm:text-right">

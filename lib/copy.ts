@@ -97,27 +97,30 @@ function placeFrame(place: string, total: number): number {
 function introExtra(facts: ListingIntroFacts): string | null {
   if (facts.total === 0) return null;
   if (!facts.platform && facts.retro > 0) {
-    if (facts.retro === facts.total) return facts.total === 1 ? "It is tagged retro." : "Every shop is tagged retro.";
-    return ofThem(facts.retro, "is tagged retro", "are tagged retro");
+    if (facts.retro === facts.total) return facts.total === 1 ? "It stocks retro games." : "Every shop stocks retro games.";
+    return ofThem(facts.retro, "stocks retro games", "stock retro games");
   }
   if (facts.used > 0) {
-    if (facts.used === facts.total) return facts.total === 1 ? "It lists used games." : "Every shop lists used games.";
-    return ofThem(facts.used, "lists used games", "list used games");
+    if (facts.used === facts.total) return facts.total === 1 ? "It stocks used games." : "Every shop stocks used games.";
+    return ofThem(facts.used, "stocks used games", "stock used games");
   }
   if (facts.tradeIns > 0) {
-    if (facts.tradeIns === facts.total) return facts.total === 1 ? "It takes trade-ins." : "Every shop takes trade-ins.";
-    return ofThem(facts.tradeIns, "takes trade-ins", "take trade-ins");
+    if (facts.tradeIns === facts.total) return facts.total === 1 ? "It does trade-ins." : "Every shop does trade-ins.";
+    return doesCount(facts.tradeIns, "does trade-ins", "do trade-ins");
   }
   if (facts.repairs > 0) {
-    if (facts.repairs === facts.total) return facts.total === 1 ? "It repairs consoles." : "Every shop repairs consoles.";
-    return ofThem(facts.repairs, "repairs consoles", "repair consoles");
+    if (facts.repairs === facts.total) return facts.total === 1 ? "It does repairs." : "Every shop does repairs.";
+    return doesCount(facts.repairs, "does repairs", "do repairs");
   }
   return null;
 }
 
 function ofThem(count: number, one: string, many: string): string {
-  if (count === 1) return `One of them ${one}.`;
-  return `${count.toLocaleString("en-US")} of them ${many}.`;
+  return `${count.toLocaleString("en-US")} of them ${count === 1 ? one : many}.`;
+}
+
+function doesCount(count: number, one: string, many: string): string {
+  return `${count.toLocaleString("en-US")} ${count === 1 ? one : many}.`;
 }
 
 export function joinList(items: string[]): string {

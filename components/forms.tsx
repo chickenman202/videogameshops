@@ -147,7 +147,7 @@ export function SubmitStoreForm() {
           </div>
         </fieldset>
         <fieldset className="mt-5">
-          <legend className="text-sm font-bold text-ink">Also true of the shop</legend>
+          <legend className="text-sm font-bold text-ink">This shop also…</legend>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             <Choice name="sellsNew" label="Sells new games" />
             <Choice name="sellsUsed" label="Sells used games" />
