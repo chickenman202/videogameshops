@@ -218,6 +218,25 @@ export default async function HomePage() {
         )}
       </section>
 
+      <section className="border-t border-ink bg-white" aria-labelledby="float-heading">
+        <div className="mx-auto flex max-w-xl flex-col items-center px-4 py-14 text-center">
+          <a href="https://www.floatstash.com" className="group flex flex-col items-center">
+            {/* Empty alt: this link's text is already the word Float. */}
+            <img src="/float-logo.png" alt="" width={512} height={512} className="size-16" />
+            <h2
+              id="float-heading"
+              className="mt-4 font-serif text-4xl font-normal text-ink italic group-hover:text-blue-ink sm:text-5xl"
+            >
+              Float
+            </h2>
+          </a>
+          <p className="mt-2 text-lg text-ink-soft">Track your Physical Video Game Collection.</p>
+          <a href="https://www.floatstash.com" className="btn btn-primary mt-6">
+            Open Float
+          </a>
+        </div>
+      </section>
+
       <section className="border-t border-ink bg-white">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-12 sm:items-end">
           <div className="sm:col-span-7">

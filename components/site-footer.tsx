@@ -40,6 +40,13 @@ export function SiteFooter() {
           <p className="mt-4 max-w-sm font-serif text-base leading-relaxed text-paper/80">
             Game shops you can walk into, listed by country and city.
           </p>
+          {/* The www address is Float's one official link. The bare domain only redirects there. */}
+          <p className="mt-3 max-w-sm font-serif text-base leading-relaxed text-paper/80">
+            <a href="https://www.floatstash.com" className="underline decoration-paper/40 underline-offset-4 hover:text-paper">
+              Float
+            </a>
+            {" - Track your Physical Video Game Collection"}
+          </p>
         </div>
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
           {groups.map((group) => (

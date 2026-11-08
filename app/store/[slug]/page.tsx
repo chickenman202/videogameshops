@@ -247,6 +247,16 @@ export default async function StorePage(props: PageProps<"/store/[slug]">) {
                 Suggest an edit
               </Link>
             </p>
+            {/* Small Float card. Sits under the shop note so address and hours stay the main details. */}
+            <div className="mt-6 flex max-w-xl flex-wrap items-center gap-4 rounded-2xl border border-line bg-white p-4">
+              <img src="/float-logo.png" alt="" width={512} height={512} className="size-12 shrink-0" />
+              <p className="min-w-0 flex-1 basis-40 text-base leading-snug text-ink">
+                Track your video game collection with Float
+              </p>
+              <a href="https://www.floatstash.com" className="btn btn-primary w-full shrink-0 sm:w-auto">
+                Open Float
+              </a>
+            </div>
           </div>
           <aside className="space-y-8">
             <section aria-labelledby="visit-heading">
